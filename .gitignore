@@ -1,0 +1,6 @@
+# installed test deps
+tests/node_modules/
+
+# generated test artifacts (smoke7 fixtures; step-1 sed copies)
+tests/fixtures/
+tests/gen/

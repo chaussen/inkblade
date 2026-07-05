@@ -1,0 +1,566 @@
+{
+ "meta": {
+  "id": "core",
+  "intro": [
+   "一",
+   "人",
+   "木",
+   "火",
+   "休",
+   "众",
+   "林",
+   "炎",
+   "森",
+   "焱",
+   "口",
+   "日",
+   "山",
+   "水"
+  ]
+ },
+ "kinds": {
+  "tree": {
+   "cls": "structure",
+   "tags": [
+    "flammable",
+    "shelter"
+   ]
+  },
+  "resttree": {
+   "cls": "structure",
+   "tags": [
+    "flammable",
+    "shelter"
+   ]
+  },
+  "peak": {
+   "cls": "structure",
+   "tags": []
+  },
+  "ridge": {
+   "cls": "structure",
+   "tags": []
+  },
+  "terrace": {
+   "cls": "structure",
+   "tags": []
+  },
+  "horizon": {
+   "cls": "structure",
+   "tags": []
+  },
+  "path": {
+   "cls": "structure",
+   "tags": []
+  },
+  "seal": {
+   "cls": "structure",
+   "tags": []
+  },
+  "walker": {
+   "cls": "agent",
+   "tags": [
+    "living"
+   ]
+  },
+  "crowd": {
+   "cls": "agent",
+   "tags": [
+    "living"
+   ]
+  },
+  "fire": {
+   "cls": "event",
+   "tags": [
+    "heat",
+    "mortal"
+   ]
+  },
+  "sun": {
+   "cls": "structure",
+   "tags": [
+    "heat"
+   ]
+  },
+  "moon": {
+   "cls": "structure",
+   "tags": []
+  },
+  "field": {
+   "cls": "structure",
+   "tags": []
+  },
+  "water": {
+   "cls": "structure",
+   "tags": []
+  }
+ },
+ "chars": {
+  "一": {
+   "pinyin": "yī",
+   "gloss": "one",
+   "fx": {
+    "type": "beam",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "horizon",
+    "params": {
+     "vary": false
+    }
+   },
+   "expectVerbs": [
+    "heng"
+   ]
+  },
+  "二": {
+   "pinyin": "èr",
+   "gloss": "two",
+   "fx": {
+    "type": "beam",
+    "n": 2
+   },
+   "world": {
+    "tier": 1,
+    "kind": "ridge",
+    "params": {}
+   },
+   "expectVerbs": [
+    "heng",
+    "heng"
+   ]
+  },
+  "三": {
+   "pinyin": "sān",
+   "gloss": "three",
+   "fx": {
+    "type": "beam",
+    "n": 3
+   },
+   "world": {
+    "tier": 1,
+    "kind": "terrace",
+    "params": {}
+   },
+   "expectVerbs": [
+    "heng",
+    "heng",
+    "heng"
+   ]
+  },
+  "十": {
+   "pinyin": "shí",
+   "gloss": "ten",
+   "fx": {
+    "type": "cross",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "path",
+    "params": {}
+   },
+   "expectVerbs": [
+    "heng",
+    "shu"
+   ]
+  },
+  "人": {
+   "pinyin": "rén",
+   "gloss": "person",
+   "fx": {
+    "type": "figure",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "walker",
+    "params": {}
+   },
+   "expectVerbs": [
+    "pie",
+    "dr"
+   ]
+  },
+  "大": {
+   "pinyin": "dà",
+   "gloss": "big",
+   "fx": {
+    "type": "shockwave",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "peak",
+    "params": {
+     "scale": 1.1
+    }
+   },
+   "expectVerbs": [
+    "heng",
+    "pie",
+    "dr"
+   ]
+  },
+  "木": {
+   "pinyin": "mù",
+   "gloss": "tree",
+   "fx": {
+    "type": "tree",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "tree",
+    "params": {}
+   },
+   "expectVerbs": [
+    "heng",
+    "shu",
+    "pie",
+    "dr"
+   ]
+  },
+  "火": {
+   "pinyin": "huǒ",
+   "gloss": "fire",
+   "fx": {
+    "type": "fire",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "fire",
+    "params": {}
+   },
+   "expectVerbs": [
+    "dr",
+    "pie",
+    "pie",
+    "dr"
+   ]
+  },
+  "休": {
+   "pinyin": "xiū",
+   "gloss": "rest",
+   "fx": {
+    "type": "calm",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "resttree",
+    "params": {}
+   },
+   "expectVerbs": [
+    "pie",
+    "shu",
+    "heng",
+    "shu",
+    "pie",
+    "dr"
+   ]
+  },
+  "众": {
+   "pinyin": "zhòng",
+   "gloss": "crowd",
+   "fx": {
+    "type": "figure",
+    "n": 3
+   },
+   "world": {
+    "tier": 1,
+    "kind": "crowd",
+    "params": {}
+   },
+   "expectVerbs": [
+    "pie",
+    "dr",
+    "pie",
+    "dr",
+    "pie",
+    "dr"
+   ]
+  },
+  "林": {
+   "pinyin": "lín",
+   "gloss": "grove",
+   "fx": {
+    "type": "tree",
+    "n": 2
+   },
+   "world": {
+    "tier": 1,
+    "kind": "tree",
+    "params": {
+     "offsets": [
+      0.06
+     ]
+    }
+   },
+   "expectVerbs": [
+    "heng",
+    "shu",
+    "pie",
+    "dr",
+    "heng",
+    "shu",
+    "pie",
+    "dr"
+   ]
+  },
+  "炎": {
+   "pinyin": "yán",
+   "gloss": "blaze",
+   "fx": {
+    "type": "fire",
+    "n": 2
+   },
+   "world": {
+    "tier": 1,
+    "kind": "fire",
+    "params": {
+     "scale": 1.5
+    }
+   },
+   "expectVerbs": [
+    "dr",
+    "pie",
+    "pie",
+    "dr",
+    "dr",
+    "pie",
+    "pie",
+    "dr"
+   ]
+  },
+  "森": {
+   "pinyin": "sēn",
+   "gloss": "forest",
+   "fx": {
+    "type": "tree",
+    "n": 3
+   },
+   "world": {
+    "tier": 1,
+    "kind": "tree",
+    "params": {
+     "scale": 1.05,
+     "offsets": [
+      -0.06,
+      0.07
+     ]
+    }
+   },
+   "expectVerbs": [
+    "heng",
+    "shu",
+    "pie",
+    "dr",
+    "heng",
+    "shu",
+    "pie",
+    "dr",
+    "heng",
+    "shu",
+    "pie",
+    "dr"
+   ]
+  },
+  "焱": {
+   "pinyin": "yàn",
+   "gloss": "inferno",
+   "fx": {
+    "type": "fire",
+    "n": 3
+   },
+   "world": {
+    "tier": 1,
+    "kind": "fire",
+    "params": {
+     "scale": 2
+    }
+   },
+   "expectVerbs": [
+    "dr",
+    "pie",
+    "pie",
+    "dr",
+    "shu",
+    "pie",
+    "pie",
+    "dr",
+    "shu",
+    "pie",
+    "pie",
+    "dr"
+   ]
+  },
+  "口": {
+   "gloss": "mouth",
+   "fx": {
+    "type": "calm",
+    "n": 1
+   },
+   "world": null,
+   "expectVerbs": [
+    "shu",
+    "heng>shu",
+    "heng"
+   ]
+  },
+  "日": {
+   "gloss": "sun",
+   "fx": {
+    "type": "beam",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "sun",
+    "params": {
+     "vary": false
+    }
+   },
+   "expectVerbs": [
+    "shu",
+    "heng>shu",
+    "heng",
+    "heng"
+   ]
+  },
+  "月": {
+   "gloss": "moon",
+   "fx": {
+    "type": "calm",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "moon",
+    "params": {
+     "vary": false
+    }
+   },
+   "expectVerbs": [
+    "pie",
+    "heng>shu>hook",
+    "heng",
+    "heng"
+   ]
+  },
+  "田": {
+   "gloss": "field",
+   "fx": {
+    "type": "cross",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "field",
+    "params": {}
+   },
+   "expectVerbs": [
+    "shu",
+    "heng>shu",
+    "heng",
+    "shu",
+    "heng"
+   ]
+  },
+  "国": {
+   "gloss": "nation",
+   "fx": {
+    "type": "shockwave",
+    "n": 1
+   },
+   "world": null,
+   "expectVerbs": [
+    "shu",
+    "heng>shu",
+    "heng",
+    "heng",
+    "shu",
+    "heng",
+    "dr",
+    "heng"
+   ]
+  },
+  "土": {
+   "gloss": "earth",
+   "fx": {
+    "type": "shockwave",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "terrace",
+    "params": {
+     "scale": 0.8
+    }
+   },
+   "expectVerbs": [
+    "heng",
+    "shu",
+    "heng"
+   ]
+  },
+  "山": {
+   "gloss": "mountain",
+   "fx": {
+    "type": "shockwave",
+    "n": 1
+   },
+   "world": {
+    "tier": 1,
+    "kind": "peak",
+    "params": {}
+   },
+   "expectVerbs": [
+    "shu",
+    "shu>heng",
+    "shu"
+   ]
+  },
+  "水": {
+   "gloss": "water",
+   "fx": {
+    "type": "calm",
+    "n": 1
+   },
+   "world": {
+    "tier": 2,
+    "class": "water",
+    "params": {
+     "form": "spring"
+    }
+   },
+   "expectVerbs": [
+    "shu>hook",
+    "heng>pie",
+    "pie",
+    "dr"
+   ]
+  },
+  "川": {
+   "gloss": "river",
+   "fx": {
+    "type": "calm",
+    "n": 1
+   },
+   "world": {
+    "tier": 2,
+    "class": "water",
+    "params": {
+     "form": "stream"
+    }
+   },
+   "expectVerbs": [
+    "shu",
+    "shu",
+    "shu"
+   ]
+  }
+ }
+}

@@ -1,0 +1,1475 @@
+{
+ "version": 2,
+ "meta": {
+  "id": "core",
+  "generated": "2026-07-05",
+  "source": "hand-authored v1 roster, legacy carry from S1-M075-b2-20260705",
+  "intro": [
+   "一",
+   "人",
+   "木",
+   "火",
+   "休",
+   "众",
+   "林",
+   "炎",
+   "森",
+   "焱"
+  ]
+ },
+ "kinds": {
+  "tree": {
+   "cls": "structure",
+   "tags": [
+    "flammable",
+    "shelter"
+   ]
+  },
+  "resttree": {
+   "cls": "structure",
+   "tags": [
+    "flammable",
+    "shelter"
+   ]
+  },
+  "peak": {
+   "cls": "structure",
+   "tags": []
+  },
+  "ridge": {
+   "cls": "structure",
+   "tags": []
+  },
+  "terrace": {
+   "cls": "structure",
+   "tags": []
+  },
+  "horizon": {
+   "cls": "structure",
+   "tags": []
+  },
+  "path": {
+   "cls": "structure",
+   "tags": []
+  },
+  "seal": {
+   "cls": "structure",
+   "tags": []
+  },
+  "walker": {
+   "cls": "agent",
+   "tags": [
+    "living"
+   ]
+  },
+  "crowd": {
+   "cls": "agent",
+   "tags": [
+    "living"
+   ]
+  },
+  "fire": {
+   "cls": "event",
+   "tags": [
+    "heat",
+    "mortal"
+   ]
+  }
+ },
+ "chars": [
+  {
+   "ch": "一",
+   "pinyin": "yī",
+   "gloss": "one",
+   "fx": {
+    "type": "beam",
+    "n": 1
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       10,
+       52
+      ],
+      [
+       90,
+       52
+      ]
+     ]
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      0
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "horizon",
+    "params": {
+     "vary": false
+    }
+   }
+  },
+  {
+   "ch": "二",
+   "pinyin": "èr",
+   "gloss": "two",
+   "fx": {
+    "type": "beam",
+    "n": 2
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       16,
+       34
+      ],
+      [
+       84,
+       34
+      ]
+     ]
+    },
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       10,
+       68
+      ],
+      [
+       90,
+       68
+      ]
+     ]
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      1
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "ridge",
+    "params": {}
+   }
+  },
+  {
+   "ch": "三",
+   "pinyin": "sān",
+   "gloss": "three",
+   "fx": {
+    "type": "beam",
+    "n": 3
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       18,
+       26
+      ],
+      [
+       82,
+       26
+      ]
+     ]
+    },
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       22,
+       50
+      ],
+      [
+       78,
+       50
+      ]
+     ]
+    },
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       12,
+       76
+      ],
+      [
+       88,
+       76
+      ]
+     ]
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      2
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "terrace",
+    "params": {}
+   }
+  },
+  {
+   "ch": "十",
+   "pinyin": "shí",
+   "gloss": "ten",
+   "fx": {
+    "type": "cross",
+    "n": 1
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       10,
+       46
+      ],
+      [
+       90,
+       46
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       50,
+       10
+      ],
+      [
+       50,
+       90
+      ]
+     ]
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      1
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "path",
+    "params": {}
+   }
+  },
+  {
+   "ch": "人",
+   "pinyin": "rén",
+   "gloss": "person",
+   "fx": {
+    "type": "figure",
+    "n": 1
+   },
+   "strokes": [
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       53,
+       14
+      ],
+      [
+       18,
+       86
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       50,
+       42
+      ],
+      [
+       86,
+       86
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      1
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "walker",
+    "params": {}
+   }
+  },
+  {
+   "ch": "大",
+   "pinyin": "dà",
+   "gloss": "big",
+   "fx": {
+    "type": "shockwave",
+    "n": 1
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       14,
+       42
+      ],
+      [
+       86,
+       42
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       50,
+       12
+      ],
+      [
+       14,
+       88
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       53,
+       48
+      ],
+      [
+       88,
+       88
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      2
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "peak",
+    "params": {
+     "scale": 1.1
+    }
+   }
+  },
+  {
+   "ch": "木",
+   "pinyin": "mù",
+   "gloss": "tree",
+   "fx": {
+    "type": "tree",
+    "n": 1
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       14,
+       36
+      ],
+      [
+       86,
+       36
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       50,
+       10
+      ],
+      [
+       50,
+       90
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       47,
+       42
+      ],
+      [
+       16,
+       80
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       53,
+       42
+      ],
+      [
+       84,
+       80
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      3
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "tree",
+    "params": {}
+   }
+  },
+  {
+   "ch": "火",
+   "pinyin": "huǒ",
+   "gloss": "fire",
+   "fx": {
+    "type": "fire",
+    "n": 1
+   },
+   "strokes": [
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       26,
+       24
+      ],
+      [
+       36,
+       40
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       74,
+       20
+      ],
+      [
+       60,
+       40
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       53,
+       12
+      ],
+      [
+       18,
+       88
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       53,
+       46
+      ],
+      [
+       87,
+       88
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      3
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "fire",
+    "params": {}
+   }
+  },
+  {
+   "ch": "休",
+   "pinyin": "xiū",
+   "gloss": "rest",
+   "fx": {
+    "type": "calm",
+    "n": 1
+   },
+   "strokes": [
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       30,
+       12
+      ],
+      [
+       10,
+       44
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       22,
+       30
+      ],
+      [
+       22,
+       90
+      ]
+     ]
+    },
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       40,
+       34
+      ],
+      [
+       92,
+       34
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       66,
+       10
+      ],
+      [
+       66,
+       90
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       64,
+       40
+      ],
+      [
+       44,
+       78
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       68,
+       40
+      ],
+      [
+       90,
+       74
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      1
+     ]
+    },
+    {
+     "range": [
+      2,
+      5
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "resttree",
+    "params": {}
+   }
+  },
+  {
+   "ch": "众",
+   "pinyin": "zhòng",
+   "gloss": "crowd",
+   "fx": {
+    "type": "figure",
+    "n": 3
+   },
+   "strokes": [
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       52,
+       8
+      ],
+      [
+       28,
+       44
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       50,
+       20
+      ],
+      [
+       74,
+       44
+      ]
+     ],
+     "form": "na"
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       34,
+       50
+      ],
+      [
+       12,
+       88
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       32,
+       62
+      ],
+      [
+       44,
+       78
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       74,
+       50
+      ],
+      [
+       52,
+       88
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       70,
+       62
+      ],
+      [
+       92,
+       88
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      1
+     ]
+    },
+    {
+     "range": [
+      2,
+      3
+     ]
+    },
+    {
+     "range": [
+      4,
+      5
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "crowd",
+    "params": {}
+   }
+  },
+  {
+   "ch": "林",
+   "pinyin": "lín",
+   "gloss": "grove",
+   "fx": {
+    "type": "tree",
+    "n": 2
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       10,
+       32
+      ],
+      [
+       42,
+       32
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       26,
+       10
+      ],
+      [
+       26,
+       90
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       25,
+       40
+      ],
+      [
+       8,
+       72
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       28,
+       42
+      ],
+      [
+       40,
+       58
+      ]
+     ]
+    },
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       52,
+       34
+      ],
+      [
+       92,
+       34
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       72,
+       10
+      ],
+      [
+       72,
+       90
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       70,
+       40
+      ],
+      [
+       50,
+       76
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       74,
+       40
+      ],
+      [
+       94,
+       72
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      3
+     ]
+    },
+    {
+     "range": [
+      4,
+      7
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "tree",
+    "params": {
+     "offsets": [
+      0.06
+     ]
+    }
+   }
+  },
+  {
+   "ch": "炎",
+   "pinyin": "yán",
+   "gloss": "blaze",
+   "fx": {
+    "type": "fire",
+    "n": 2
+   },
+   "strokes": [
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       34,
+       10
+      ],
+      [
+       40,
+       20
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       64,
+       8
+      ],
+      [
+       56,
+       20
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       52,
+       6
+      ],
+      [
+       32,
+       44
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       52,
+       26
+      ],
+      [
+       64,
+       42
+      ]
+     ]
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       30,
+       52
+      ],
+      [
+       38,
+       64
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       70,
+       50
+      ],
+      [
+       62,
+       62
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       54,
+       48
+      ],
+      [
+       30,
+       92
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       54,
+       64
+      ],
+      [
+       78,
+       92
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      3
+     ]
+    },
+    {
+     "range": [
+      4,
+      7
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "fire",
+    "params": {
+     "scale": 1.5
+    }
+   }
+  },
+  {
+   "ch": "森",
+   "pinyin": "sēn",
+   "gloss": "forest",
+   "fx": {
+    "type": "tree",
+    "n": 3
+   },
+   "strokes": [
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       30,
+       18
+      ],
+      [
+       70,
+       18
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       50,
+       4
+      ],
+      [
+       50,
+       44
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       48,
+       22
+      ],
+      [
+       34,
+       42
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       52,
+       22
+      ],
+      [
+       68,
+       40
+      ]
+     ],
+     "form": "na"
+    },
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       8,
+       58
+      ],
+      [
+       44,
+       58
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       26,
+       48
+      ],
+      [
+       26,
+       94
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       24,
+       64
+      ],
+      [
+       10,
+       88
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       28,
+       66
+      ],
+      [
+       40,
+       80
+      ]
+     ]
+    },
+    {
+     "verbs": "heng",
+     "pts": [
+      [
+       56,
+       58
+      ],
+      [
+       92,
+       58
+      ]
+     ]
+    },
+    {
+     "verbs": "shu",
+     "pts": [
+      [
+       74,
+       48
+      ],
+      [
+       74,
+       94
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       72,
+       64
+      ],
+      [
+       56,
+       90
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       76,
+       64
+      ],
+      [
+       92,
+       86
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      3
+     ]
+    },
+    {
+     "range": [
+      4,
+      7
+     ]
+    },
+    {
+     "range": [
+      8,
+      11
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "tree",
+    "params": {
+     "scale": 1.05,
+     "offsets": [
+      -0.06,
+      0.07
+     ]
+    }
+   }
+  },
+  {
+   "ch": "焱",
+   "pinyin": "yàn",
+   "gloss": "inferno",
+   "fx": {
+    "type": "fire",
+    "n": 3
+   },
+   "strokes": [
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       38,
+       8
+      ],
+      [
+       44,
+       18
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       62,
+       6
+      ],
+      [
+       54,
+       18
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       52,
+       4
+      ],
+      [
+       34,
+       42
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       52,
+       22
+      ],
+      [
+       62,
+       36
+      ]
+     ]
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       12,
+       52
+      ],
+      [
+       19,
+       62
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       40,
+       50
+      ],
+      [
+       33,
+       61
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       30,
+       48
+      ],
+      [
+       12,
+       90
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       30,
+       62
+      ],
+      [
+       42,
+       76
+      ]
+     ]
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       60,
+       52
+      ],
+      [
+       67,
+       62
+      ]
+     ]
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       88,
+       50
+      ],
+      [
+       81,
+       61
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "pie",
+     "pts": [
+      [
+       78,
+       48
+      ],
+      [
+       60,
+       90
+      ]
+     ],
+     "form": "pie"
+    },
+    {
+     "verbs": "dr",
+     "pts": [
+      [
+       78,
+       62
+      ],
+      [
+       94,
+       88
+      ]
+     ],
+     "form": "na"
+    }
+   ],
+   "comps": [
+    {
+     "range": [
+      0,
+      3
+     ]
+    },
+    {
+     "range": [
+      4,
+      7
+     ]
+    },
+    {
+     "range": [
+      8,
+      11
+     ]
+    }
+   ],
+   "world": {
+    "tier": 1,
+    "kind": "fire",
+    "params": {
+     "scale": 2
+    }
+   }
+  }
+ ]
+}

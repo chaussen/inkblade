@@ -1,0 +1,89 @@
+/* ========================= 03 CANVAS + GEOMETRY ========================= */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1, S = 0;
+let GX = 0, GY = 0;
+let paperTex = null;
+let worldLayer = null, wx = null; // offscreen world layer (attention recession composites it, S1-D027)
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const QUERY = new URLSearchParams(location.search);
+const FORCED = QUERY.get('char');
+const PACK_URL = QUERY.get('pack');
+const SEED_PARAM = QUERY.get('seed');
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  S = Math.min(W, H) * 0.60;
+  GX = (W - S) / 2;
+  GY = (H - S) / 2 - Math.min(H * 0.03, 24);
+  makePaper();
+  worldLayer = document.createElement('canvas');
+  worldLayer.width = W * DPR; worldLayer.height = H * DPR;
+  wx = worldLayer.getContext('2d');
+  wx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+function makePaper() {
+  paperTex = document.createElement('canvas');
+  paperTex.width = W * DPR; paperTex.height = H * DPR;
+  const p = paperTex.getContext('2d');
+  p.setTransform(DPR, 0, 0, DPR, 0, 0);
+  p.fillStyle = PAPER; p.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1300; i++) {
+    const x = Math.random() * W, y = Math.random() * H;
+    const a = Math.random() * Math.PI, l = 2 + Math.random() * 9;
+    p.strokeStyle = Math.random() < 0.5 ? 'rgba(126,104,70,0.045)' : 'rgba(90,80,60,0.035)';
+    p.lineWidth = 0.8;
+    p.beginPath(); p.moveTo(x, y); p.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); p.stroke();
+  }
+  const g = p.createRadialGradient(W/2, H/2, Math.min(W,H)*0.35, W/2, H/2, Math.max(W,H)*0.75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(88,68,40,0.13)');
+  p.fillStyle = g; p.fillRect(0, 0, W, H);
+}
+window.addEventListener('resize', resize);
+resize();
+
+function toScreen(pt) { return [GX + pt[0] / 100 * S, GY + pt[1] / 100 * S]; }
+// Strokes are polylines (pts array) from M1a on; hand-authored strokes are
+// 2-point polylines, pipeline medians carry more.
+function strokeScreenPts(st) { return st.pts.map(toScreen); }
+function strokeLen(st) {
+  const p = strokeScreenPts(st);
+  let L = 0;
+  for (let i = 0; i < p.length - 1; i++) L += Math.hypot(p[i+1][0]-p[i][0], p[i+1][1]-p[i][1]);
+  return L;
+}
+function midOf(st) {
+  return pointAlong(st, 0.5);
+}
+// Point at fraction q of the stroke's arc length; also returns local direction.
+function pointAlong(st, q) {
+  const p = strokeScreenPts(st);
+  const total = strokeLen(st) || 1;
+  let want = q * total;
+  for (let i = 0; i < p.length - 1; i++) {
+    const seg = Math.hypot(p[i+1][0]-p[i][0], p[i+1][1]-p[i][1]);
+    if (want <= seg || i === p.length - 2) {
+      const t = seg ? Math.min(1, want / seg) : 0;
+      const pt = [p[i][0] + (p[i+1][0]-p[i][0]) * t, p[i][1] + (p[i+1][1]-p[i][1]) * t];
+      pt.dir = [p[i+1][0]-p[i][0], p[i+1][1]-p[i][1]];
+      return pt;
+    }
+    want -= seg;
+  }
+  return p[p.length - 1];
+}
+function glyphBBox(g, padPx) {
+  let x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+  for (const st of g.strokes) {
+    for (const pt of strokeScreenPts(st)) {
+      x1 = Math.min(x1, pt[0]); y1 = Math.min(y1, pt[1]);
+      x2 = Math.max(x2, pt[0]); y2 = Math.max(y2, pt[1]);
+    }
+  }
+  const pad = padPx || 0;
+  return [x1 - pad, y1 - pad, x2 - x1 + pad*2, y2 - y1 + pad*2];
+}

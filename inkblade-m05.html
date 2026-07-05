@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<!-- BUILD_ID: S1-M05-b1-20260705 -->
+<!-- Inkblade M0.5 — composite characters. Governed by inkblade-charter-v1.md.
+     Adds: component wash (segmentation via the character's own anatomy),
+     fractal combo mini-locks, breathing hint (flail/idle triggered),
+     merged down-right verb (dian/na disambiguated by target, S1-D013),
+     positional inflection data (木/火/人 compress 捺→点 when crowded).
+     Dev affordance: ?char=森 forces a single-character loop for playtesting.
+     Nothing here is real until logged in the charter. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>墨刃 Inkblade — M0.5</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#e9dfc9; }
+  #c { display:block; width:100vw; height:100vh; touch-action:none; cursor:crosshair; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+'use strict';
+const BUILD_ID = 'S1-M05-b1-20260705';
+
+// Hint tuning [LEAN — S1-D012]: flail path fires on the 2nd consecutive
+// non-gold resolution; idle path after 6s without a cut (12-stroke ghosts
+// need legitimate scanning time; 3s idle punished thinking in dry-runs).
+const HINT_FLAIL = 2;
+const HINT_IDLE_MS = 6000;
+
+/* ============================= DATA ============================= *
+ * Stroke geometry in a 0–100 box, y down. Array order IS canonical
+ * global stroke order. t = direction bucket:
+ *   heng →   shu ↓   pie ↙   na ↘(long)   dian ↘(short)
+ * na and dian share one slash verb ('dr'); the target's own type
+ * disambiguates (S1-D013).
+ * comps = contiguous stroke-index ranges [start,end] in component
+ * order. Positional inflection: crowded/left/top components compress
+ * 捺→点 per standard orthography (林 left 木, 炎 top 火, etc.).
+ * ================================================================ */
+const CHARS = [
+  { ch:'一', pinyin:'yī',   gloss:'one',    fx:'beam', n:1,
+    strokes:[ {t:'heng', a:[10,52], b:[90,52]} ], comps:[[0,0]] },
+  { ch:'二', pinyin:'èr',   gloss:'two',    fx:'beam', n:2,
+    strokes:[ {t:'heng', a:[16,34], b:[84,34]},
+              {t:'heng', a:[10,68], b:[90,68]} ], comps:[[0,1]] },
+  { ch:'三', pinyin:'sān',  gloss:'three',  fx:'beam', n:3,
+    strokes:[ {t:'heng', a:[18,26], b:[82,26]},
+              {t:'heng', a:[22,50], b:[78,50]},
+              {t:'heng', a:[12,76], b:[88,76]} ], comps:[[0,2]] },
+  { ch:'十', pinyin:'shí',  gloss:'ten',    fx:'cross', n:1,
+    strokes:[ {t:'heng', a:[10,46], b:[90,46]},
+              {t:'shu',  a:[50,10], b:[50,90]} ], comps:[[0,1]] },
+  { ch:'人', pinyin:'rén',  gloss:'person', fx:'figure', n:1,
+    strokes:[ {t:'pie',  a:[53,14], b:[18,86]},
+              {t:'na',   a:[50,42], b:[86,86]} ], comps:[[0,1]] },
+  { ch:'大', pinyin:'dà',   gloss:'big',    fx:'shockwave', n:1,
+    strokes:[ {t:'heng', a:[14,42], b:[86,42]},
+              {t:'pie',  a:[50,12], b:[14,88]},
+              {t:'na',   a:[53,48], b:[88,88]} ], comps:[[0,2]] },
+  { ch:'木', pinyin:'mù',   gloss:'tree',   fx:'tree', n:1,
+    strokes:[ {t:'heng', a:[14,36], b:[86,36]},
+              {t:'shu',  a:[50,10], b:[50,90]},
+              {t:'pie',  a:[47,42], b:[16,80]},
+              {t:'na',   a:[53,42], b:[84,80]} ], comps:[[0,3]] },
+  { ch:'火', pinyin:'huǒ',  gloss:'fire',   fx:'fire', n:1,
+    strokes:[ {t:'dian', a:[26,24], b:[36,40]},
+              {t:'pie',  a:[74,20], b:[60,40]},
+              {t:'pie',  a:[53,12], b:[18,88]},
+              {t:'na',   a:[53,46], b:[87,88]} ], comps:[[0,3]] },
+  /* ---- composites (M0.5) ---- */
+  { ch:'休', pinyin:'xiū',  gloss:'rest',   fx:'calm', n:1,
+    strokes:[ {t:'pie',  a:[30,12], b:[10,44]},   // 亻
+              {t:'shu',  a:[22,30], b:[22,90]},
+              {t:'heng', a:[40,34], b:[92,34]},   // 木
+              {t:'shu',  a:[66,10], b:[66,90]},
+              {t:'pie',  a:[64,40], b:[44,78]},
+              {t:'na',   a:[68,40], b:[90,74]} ],
+    comps:[[0,1],[2,5]] },
+  { ch:'众', pinyin:'zhòng', gloss:'crowd', fx:'figure', n:3,
+    strokes:[ {t:'pie',  a:[52,8],  b:[28,44]},   // top 人
+              {t:'na',   a:[50,20], b:[74,44]},
+              {t:'pie',  a:[34,50], b:[12,88]},   // bottom-left 人 (捺→点)
+              {t:'dian', a:[32,62], b:[44,78]},
+              {t:'pie',  a:[74,50], b:[52,88]},   // bottom-right 人
+              {t:'na',   a:[70,62], b:[92,88]} ],
+    comps:[[0,1],[2,3],[4,5]] },
+  { ch:'林', pinyin:'lín',  gloss:'grove',  fx:'tree', n:2,
+    strokes:[ {t:'heng', a:[10,32], b:[42,32]},   // left 木 (捺→点)
+              {t:'shu',  a:[26,10], b:[26,90]},
+              {t:'pie',  a:[25,40], b:[8,72]},
+              {t:'dian', a:[28,42], b:[40,58]},
+              {t:'heng', a:[52,34], b:[92,34]},   // right 木
+              {t:'shu',  a:[72,10], b:[72,90]},
+              {t:'pie',  a:[70,40], b:[50,76]},
+              {t:'na',   a:[74,40], b:[94,72]} ],
+    comps:[[0,3],[4,7]] },
+  { ch:'炎', pinyin:'yán',  gloss:'blaze',  fx:'fire', n:2,
+    strokes:[ {t:'dian', a:[34,10], b:[40,20]},   // top 火 (捺→点)
+              {t:'pie',  a:[64,8],  b:[56,20]},
+              {t:'pie',  a:[52,6],  b:[32,44]},
+              {t:'dian', a:[52,26], b:[64,42]},
+              {t:'dian', a:[30,52], b:[38,64]},   // bottom 火
+              {t:'pie',  a:[70,50], b:[62,62]},
+              {t:'pie',  a:[54,48], b:[30,92]},
+              {t:'na',   a:[54,64], b:[78,92]} ],
+    comps:[[0,3],[4,7]] },
+  { ch:'森', pinyin:'sēn',  gloss:'forest', fx:'tree', n:3,
+    strokes:[ {t:'heng', a:[30,18], b:[70,18]},   // top 木
+              {t:'shu',  a:[50,4],  b:[50,44]},
+              {t:'pie',  a:[48,22], b:[34,42]},
+              {t:'na',   a:[52,22], b:[68,40]},
+              {t:'heng', a:[8,58],  b:[44,58]},   // bottom-left 木 (捺→点)
+              {t:'shu',  a:[26,48], b:[26,94]},
+              {t:'pie',  a:[24,64], b:[10,88]},
+              {t:'dian', a:[28,66], b:[40,80]},
+              {t:'heng', a:[56,58], b:[92,58]},   // bottom-right 木
+              {t:'shu',  a:[74,48], b:[74,94]},
+              {t:'pie',  a:[72,64], b:[56,90]},
+              {t:'na',   a:[76,64], b:[92,86]} ],
+    comps:[[0,3],[4,7],[8,11]] },
+  { ch:'焱', pinyin:'yàn',  gloss:'inferno', fx:'fire', n:3,
+    strokes:[ {t:'dian', a:[38,8],  b:[44,18]},   // top 火 (捺→点)
+              {t:'pie',  a:[62,6],  b:[54,18]},
+              {t:'pie',  a:[52,4],  b:[34,42]},
+              {t:'dian', a:[52,22], b:[62,36]},
+              {t:'dian', a:[12,52], b:[19,62]},   // bottom-left 火 (捺→点)
+              {t:'pie',  a:[40,50], b:[33,61]},
+              {t:'pie',  a:[30,48], b:[12,90]},
+              {t:'dian', a:[30,62], b:[42,76]},
+              {t:'dian', a:[60,52], b:[67,62]},   // bottom-right 火
+              {t:'pie',  a:[88,50], b:[81,61]},
+              {t:'pie',  a:[78,48], b:[60,90]},
+              {t:'na',   a:[78,62], b:[94,88]} ],
+    comps:[[0,3],[4,7],[8,11]] },
+];
+
+// Curriculum intro: primitives that seed the composites, then the composites
+// in ascending stroke count. Remaining singles join the random pool after.
+const INTRO = ['一','人','木','火','休','众','林','炎','森','焱'];
+
+const INK      = '#1b1712';
+const ASH      = '#8f8a7c';
+const GHOST    = 'rgba(70,62,48,0.16)';
+const GOLD     = '#c9992b';
+const CINNABAR = '#b2392a';
+const PAPER    = '#ece3cf';
+const CHAR_FONT = '"Kaiti SC","KaiTi","STKaiti","AR PL UKai CN",serif';
+// Component wash tints — diluted ink-wash regions, the character's own
+// anatomy as the segmentation visual (S1-D011). No icons, no sprites.
+const WASHES = ['rgba(96,116,152,0.10)', 'rgba(118,134,84,0.10)', 'rgba(164,116,84,0.10)'];
+
+/* ============================= SETUP ============================= */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1, S = 0;
+let GX = 0, GY = 0;
+let paperTex = null;
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FORCED = new URLSearchParams(location.search).get('char');
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  S = Math.min(W, H) * 0.60;
+  GX = (W - S) / 2;
+  GY = (H - S) / 2 - Math.min(H * 0.03, 24);
+  makePaper();
+}
+function makePaper() {
+  paperTex = document.createElement('canvas');
+  paperTex.width = W * DPR; paperTex.height = H * DPR;
+  const p = paperTex.getContext('2d');
+  p.setTransform(DPR, 0, 0, DPR, 0, 0);
+  p.fillStyle = PAPER; p.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1300; i++) {
+    const x = Math.random() * W, y = Math.random() * H;
+    const a = Math.random() * Math.PI, l = 2 + Math.random() * 9;
+    p.strokeStyle = Math.random() < 0.5 ? 'rgba(126,104,70,0.045)' : 'rgba(90,80,60,0.035)';
+    p.lineWidth = 0.8;
+    p.beginPath(); p.moveTo(x, y); p.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); p.stroke();
+  }
+  const g = p.createRadialGradient(W/2, H/2, Math.min(W,H)*0.35, W/2, H/2, Math.max(W,H)*0.75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(88,68,40,0.13)');
+  p.fillStyle = g; p.fillRect(0, 0, W, H);
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ============================= STATE ============================= */
+const state = {
+  mode: 'title',
+  glyph: null,
+  introIdx: 0,
+  prevCh: null,
+  streak: 0,
+  locked: {},
+  trails: [],
+  particles: [],
+  effects: [],
+  shake: 0,
+  resolve: null,
+  banner: null,
+};
+const METRICS = window.__M0_METRICS = {
+  build: BUILD_ID, glyphs: 0, locks: 0, fizzles: 0,
+  cuts: 0, goldCuts: 0, deflects: 0, whiffs: 0,
+  comps: { gold: 0, ash: 0 },
+  hints: { breathe: 0, comet: 0 },
+  orderBreaks: { internal: 0, component: 0 },
+  perChar: {},
+};
+
+function toScreen(pt) { return [GX + pt[0] / 100 * S, GY + pt[1] / 100 * S]; }
+function strokeLen(st) { const [ax,ay]=toScreen(st.a), [bx,by]=toScreen(st.b); return Math.hypot(bx-ax, by-ay); }
+
+function newGlyph(def) {
+  const comps = def.comps.map((r, ci) => ({
+    range: r, idx: ci, done: false, gold: false, pulse: 0,
+  }));
+  state.glyph = {
+    def, comps,
+    strokes: def.strokes.map((s, i) => ({ ...s, idx: i, comp: def.comps.findIndex(r => i >= r[0] && i <= r[1]), cut: false, gold: false, cutT: 0, shiver: 0 })),
+    nextIdx: 0, intact: true, done: false, appearT: 0, brokeLogged: false,
+    // hint machinery
+    lastAct: performance.now(), flail: 0, hintLevel: 0,
+    breathe: 0, breatheComp: -1, comet: 0, cometStroke: -1,
+  };
+  METRICS.perChar[def.ch] = METRICS.perChar[def.ch] || { seen: 0, locks: 0, fizzles: 0 };
+  METRICS.perChar[def.ch].seen++;
+}
+function pickNext() {
+  if (FORCED) { const f = CHARS.find(c => c.ch === FORCED); if (f) return f; }
+  if (state.introIdx < INTRO.length) {
+    const ch = INTRO[state.introIdx++];
+    return CHARS.find(c => c.ch === ch);
+  }
+  const pool = [];
+  for (const c of CHARS) {
+    if (c.ch === state.prevCh) continue;
+    const w = state.locked[c.ch] ? 1 : 3;
+    for (let i = 0; i < w; i++) pool.push(c);
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function advance() {
+  const def = pickNext();
+  state.prevCh = def.ch;
+  newGlyph(def);
+  state.mode = 'play';
+}
+
+/* ============================= AUDIO ============================= */
+let AC = null;
+function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } return AC; }
+function tone(freq, dur, type, vol, when) {
+  const ac = audio(); if (!ac) return;
+  const t0 = ac.currentTime + (when || 0);
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.12, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function sfxGoldCut(n)  { tone(440 * Math.pow(1.12246, n), 0.22, 'triangle', 0.14); tone(880 * Math.pow(1.12246, n), 0.10, 'sine', 0.05); }
+function sfxAshCut()    { tone(150, 0.16, 'sine', 0.14); }
+function sfxDeflect()   { tone(1900, 0.05, 'square', 0.05); tone(2600, 0.08, 'sine', 0.04); }
+function sfxMiniLock()  { tone(660, 0.3, 'triangle', 0.12); tone(990, 0.2, 'sine', 0.05, 0.04); }
+function sfxMiniAsh()   { tone(220, 0.25, 'sine', 0.1); }
+function sfxLock()      { tone(196, 1.1, 'triangle', 0.16); tone(392, 0.9, 'sine', 0.07, 0.05); tone(587, 0.6, 'sine', 0.05, 0.1); }
+function sfxFizzle()    { tone(300, 0.25, 'sine', 0.08); tone(210, 0.35, 'sine', 0.07, 0.08); }
+function speak(ch) {
+  try {
+    if (!window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance(ch);
+    u.lang = 'zh-CN'; u.rate = 0.75;
+    const v = speechSynthesis.getVoices().find(v => /^zh/i.test(v.lang));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ============================= INPUT ============================= */
+let trail = null, activePointer = null;
+canvas.addEventListener('pointerdown', e => {
+  audio();
+  if (activePointer !== null) return;
+  activePointer = e.pointerId;
+  trail = [[e.clientX, e.clientY]];
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerId !== activePointer || !trail) return;
+  const last = trail[trail.length - 1];
+  if (Math.hypot(e.clientX - last[0], e.clientY - last[1]) > 2) trail.push([e.clientX, e.clientY]);
+});
+window.addEventListener('pointerup', e => {
+  if (e.pointerId !== activePointer) return;
+  activePointer = null;
+  if (trail && trail.length) { if (trail.length === 1) trail.push([e.clientX, e.clientY]); resolveSlash(trail); }
+  trail = null;
+});
+window.addEventListener('pointercancel', () => { activePointer = null; trail = null; });
+
+// Merged down-right verb (S1-D013): dian and na share one direction; the
+// target stroke's own type disambiguates. Absolute-length split superseded —
+// composite compression shrinks 捺 below any fixed threshold.
+function classifySlash(dx, dy, len) {
+  const deg = Math.atan2(dy, dx) * 180 / Math.PI;
+  const centers = [['heng', 0], ['dr', 45], ['shu', 90], ['pie', 135]];
+  let best = null, bd = 1e9;
+  for (const [n, c] of centers) { let d = Math.abs(deg - c); if (d > 180) d = 360 - d; if (d < bd) { bd = d; best = n; } }
+  return bd > 32 ? null : best;
+}
+function bucketMatches(bucket, strokeT) {
+  if (!bucket) return false;
+  if (bucket === 'dr') return strokeT === 'na' || strokeT === 'dian';
+  return bucket === strokeT;
+}
+function segPointDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+  let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+function orient(ax, ay, bx, by, cx, cy) { return Math.sign((bx-ax)*(cy-ay) - (by-ay)*(cx-ax)); }
+function segsIntersect(a, b, c, d) {
+  const o1 = orient(a[0],a[1],b[0],b[1],c[0],c[1]), o2 = orient(a[0],a[1],b[0],b[1],d[0],d[1]);
+  const o3 = orient(c[0],c[1],d[0],d[1],a[0],a[1]), o4 = orient(c[0],c[1],d[0],d[1],b[0],b[1]);
+  return o1 !== o2 && o3 !== o4;
+}
+function segSegDist(a, b, c, d) {
+  if (segsIntersect(a, b, c, d)) return 0;
+  return Math.min(
+    segPointDist(c[0],c[1],a[0],a[1],b[0],b[1]), segPointDist(d[0],d[1],a[0],a[1],b[0],b[1]),
+    segPointDist(a[0],a[1],c[0],c[1],d[0],d[1]), segPointDist(b[0],b[1],c[0],c[1],d[0],d[1]));
+}
+function trailStrokeDist(tr, st) {
+  const a = toScreen(st.a), b = toScreen(st.b);
+  let best = 1e9;
+  for (let i = 0; i < tr.length - 1; i++) best = Math.min(best, segSegDist(tr[i], tr[i+1], a, b));
+  return best;
+}
+
+function resolveSlash(tr) {
+  state.trails.push({ pts: tr, life: 1, gold: false });
+  if (state.mode === 'title') { advance(); return; }
+  if (state.mode !== 'play' || !state.glyph || state.glyph.done) return;
+
+  const g = state.glyph;
+  const dx = tr[tr.length-1][0] - tr[0][0], dy = tr[tr.length-1][1] - tr[0][1];
+  const len = Math.hypot(dx, dy);
+  if (len < 10) return;
+  const bucket = classifySlash(dx, dy, len);
+  // dense glyphs need a tighter tolerance to keep neighbors separable
+  const dense = g.strokes.length > 8;
+  const tol = Math.max(14, S * 0.075 * (dense ? 0.7 : 1));
+
+  // Alignment-priority targeting (S1-D008): a slash cuts the stroke it runs
+  // ALONG, not the stroke it crosses. Bucket-matching hits win; distance
+  // breaks ties.
+  const hits = [];
+  for (const st of g.strokes) {
+    if (st.cut) continue;
+    const d = trailStrokeDist(tr, st);
+    if (d < tol) hits.push({ st, d, match: bucketMatches(bucket, st.t) ? 1 : 0 });
+  }
+  if (!hits.length) { METRICS.whiffs++; return; }
+  hits.sort((a, b) => (b.match - a.match) || (a.d - b.d));
+  const target = hits[0].st;
+
+  g.lastAct = performance.now();
+
+  if (bucketMatches(bucket, target.t)) {
+    target.cut = true; target.cutT = 0;
+    METRICS.cuts++;
+    if (g.intact && target.idx === g.nextIdx) {
+      target.gold = true; g.nextIdx++; state.trails[state.trails.length-1].gold = true;
+      METRICS.goldCuts++;
+      g.flail = 0;
+      sfxGoldCut(g.nextIdx);
+      sparks(midOf(target), GOLD, 10);
+    } else {
+      if (g.intact && !g.brokeLogged) {
+        // classify the first break: same component as the canonical-next
+        // stroke = internal-order error; different component = component-
+        // order error (the grammar layer we're measuring)
+        const frontierComp = g.strokes[g.nextIdx] ? g.strokes[g.nextIdx].comp : -1;
+        if (target.comp === frontierComp) METRICS.orderBreaks.internal++;
+        else METRICS.orderBreaks.component++;
+        g.brokeLogged = true;
+      }
+      g.intact = false;
+      g.flail++;
+      sfxAshCut();
+      sparks(midOf(target), ASH, 7);
+    }
+    checkComponent(target.comp);
+    if (g.strokes.every(s => s.cut)) {
+      g.done = true;
+      setTimeout(() => beginResolve(g.intact), 380);
+    }
+  } else {
+    target.shiver = 1;
+    g.flail++;
+    METRICS.deflects++;
+    sfxDeflect();
+    sparks(nearestOn(target, tr), '#d8cfb6', 6, true);
+  }
+}
+function checkComponent(ci) {
+  const g = state.glyph;
+  if (ci < 0 || g.comps.length < 2) return;
+  const comp = g.comps[ci];
+  if (comp.done) return;
+  const strokes = g.strokes.slice(comp.range[0], comp.range[1] + 1);
+  if (!strokes.every(s => s.cut)) return;
+  comp.done = true;
+  comp.gold = strokes.every(s => s.gold);
+  comp.pulse = 1;
+  if (comp.gold) { METRICS.comps.gold++; sfxMiniLock(); }
+  else { METRICS.comps.ash++; sfxMiniAsh(); }
+}
+function midOf(st) { const a = toScreen(st.a), b = toScreen(st.b); return [(a[0]+b[0])/2, (a[1]+b[1])/2]; }
+function nearestOn(st, tr) {
+  const m = tr[Math.floor(tr.length/2)];
+  const a = toScreen(st.a), b = toScreen(st.b);
+  const dx = b[0]-a[0], dy = b[1]-a[1], L2 = dx*dx+dy*dy;
+  let t = L2 ? ((m[0]-a[0])*dx + (m[1]-a[1])*dy) / L2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return [a[0]+t*dx, a[1]+t*dy];
+}
+
+/* ============================= HINTS ============================= */
+// Breathing hint (S1-D012, retargeting John's sprite-nudge instinct):
+// triggered by flail (2 consecutive non-gold) or idle (6s without a cut).
+// Level 1: the component containing the next canonical uncut stroke
+// breathes. Level 2 (repeat trigger): comet along that exact stroke.
+// Never pre-emptive, never an external marker. Composites only.
+function nextUncutStroke() {
+  const g = state.glyph;
+  for (const st of g.strokes) if (!st.cut) return st;
+  return null;
+}
+function maybeHint(now) {
+  const g = state.glyph;
+  if (!g || g.done || state.mode !== 'play' || g.comps.length < 2) return;
+  if (g.breathe > 0 || g.comet > 0) return;
+  const idle = now - g.lastAct > HINT_IDLE_MS;
+  const flail = g.flail >= HINT_FLAIL;
+  if (!idle && !flail) return;
+  const st = nextUncutStroke();
+  if (!st) return;
+  g.lastAct = now; g.flail = 0;
+  if (g.hintLevel === 0) {
+    g.hintLevel = 1; g.breathe = 2600; g.breatheComp = st.comp;
+    METRICS.hints.breathe++;
+  } else {
+    g.hintLevel = 2; g.comet = 2200; g.cometStroke = st.idx;
+    METRICS.hints.comet++;
+  }
+}
+
+/* ============================= RESOLVE ============================= */
+function beginResolve(locked) {
+  const def = state.glyph.def;
+  METRICS.glyphs++;
+  state.mode = 'resolve';
+  if (locked) {
+    METRICS.locks++; METRICS.perChar[def.ch].locks++;
+    state.resolve = { kind: 'lock', t: 0, dur: 2500, def };
+    state.streak++;
+    state.locked[def.ch] = true;
+    state.banner = { pinyin: def.pinyin, gloss: def.gloss, t: 0 };
+    sfxLock();
+    setTimeout(() => speak(def.ch), 220);
+    setTimeout(() => spawnFx(def), 300);
+    if (!reduceMotion) state.shake = Math.max(state.shake, 5);
+  } else {
+    METRICS.fizzles++; METRICS.perChar[def.ch].fizzles++;
+    state.resolve = { kind: 'fizzle', t: 0, dur: 1450, def };
+    state.streak = 0;
+    sfxFizzle();
+    crumbleGlyph();
+  }
+  console.log('[M05]', JSON.stringify(METRICS));
+}
+function crumbleGlyph() {
+  for (const st of state.glyph.strokes) {
+    const a = toScreen(st.a), b = toScreen(st.b);
+    const n = Math.max(8, Math.floor(strokeLen(st) / 9));
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      state.particles.push({
+        x: a[0] + (b[0]-a[0]) * t, y: a[1] + (b[1]-a[1]) * t,
+        vx: (Math.random()-0.5) * 40, vy: -20 - Math.random() * 40,
+        grav: 220, life: 0.9 + Math.random() * 0.5,
+        size: 2.5 + Math.random() * 3,
+        color: Math.random() < 0.12 ? GOLD : ASH,
+      });
+    }
+  }
+  state.glyph.strokes.forEach(s => { s.hidden = true; });
+}
+function sparks(pos, color, n, tiny) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 60 + Math.random() * 140;
+    state.particles.push({
+      x: pos[0], y: pos[1], vx: Math.cos(a)*sp, vy: Math.sin(a)*sp - 30,
+      grav: 300, life: 0.3 + Math.random() * 0.35,
+      size: tiny ? 1.5 + Math.random()*1.5 : 2 + Math.random()*2.5, color,
+    });
+  }
+}
+
+/* ============================= EFFECTS ============================= */
+function spawnFx(def) {
+  state.effects.push({ type: def.fx, t: 0, dur: fxDur(def.fx), def, n: def.n || 1 });
+  if (def.fx === 'fire') {
+    const count = 40 + (def.n || 1) * 30;
+    for (let i = 0; i < count; i++) {
+      state.particles.push({
+        x: Math.random() * W, y: H + 10 + Math.random() * 40,
+        vx: (Math.random()-0.5) * 30, vy: -80 - Math.random() * (140 + (def.n||1) * 40),
+        grav: -40, life: 1.0 + Math.random() * 1.2,
+        size: 2 + Math.random() * 4,
+        color: Math.random() < 0.5 ? '#d96b2b' : (Math.random() < 0.5 ? '#e8a13a' : '#b2392a'),
+      });
+    }
+  }
+  if (def.fx === 'tree') {
+    const count = 24 + (def.n || 1) * 14;
+    for (let i = 0; i < count; i++) {
+      state.particles.push({
+        x: GX + S*0.5 + (Math.random()-0.5) * S*0.7, y: GY + S*0.25 + (Math.random()-0.5) * S*0.3,
+        vx: (Math.random()-0.5) * 60, vy: 10 + Math.random() * 50,
+        grav: 30, life: 1.2 + Math.random(),
+        size: 2.5 + Math.random() * 3, color: Math.random() < 0.6 ? '#5c7a3f' : '#7f9c53',
+      });
+    }
+  }
+  if (def.fx === 'shockwave' && !reduceMotion) state.shake = 9;
+  if (def.fx === 'fire' && (def.n||1) >= 3 && !reduceMotion) state.shake = 7;
+}
+function fxDur(fx) { return { beam: 900, cross: 900, figure: 1700, shockwave: 1000, tree: 1500, fire: 1700, calm: 1400 }[fx] || 1000; }
+
+function drawEffects(dt) {
+  for (const e of state.effects) {
+    e.t += dt;
+    const p = Math.min(1, e.t / e.dur);
+    ctx.save();
+    if (e.type === 'beam') {
+      const ys = e.def.strokes.map(s => toScreen(s.a)[1]);
+      for (const y of ys) beam(y, p);
+    } else if (e.type === 'cross') {
+      beam(toScreen(e.def.strokes[0].a)[1], p);
+      beamV(toScreen(e.def.strokes[1].a)[0], p);
+    } else if (e.type === 'shockwave') {
+      for (let i = 0; i < 3; i++) {
+        const q = Math.max(0, Math.min(1, p * 1.4 - i * 0.18));
+        if (q <= 0) continue;
+        ctx.globalAlpha = (1 - q) * 0.55;
+        ctx.strokeStyle = INK; ctx.lineWidth = 6 - i * 1.5;
+        ctx.beginPath();
+        ctx.arc(GX + S/2, GY + S/2, q * Math.max(W, H) * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (e.type === 'figure') {
+      const n = e.n || 1;
+      ctx.fillStyle = INK;
+      ctx.font = (S * 0.22) + 'px ' + CHAR_FONT;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      for (let i = 0; i < n; i++) {
+        const q = Math.max(0, Math.min(1, p * 1.2 - i * 0.09));
+        if (q <= 0) continue;
+        const x = -60 + q * (W + 120);
+        const bob = Math.sin(q * 40 + i * 2) * 6;
+        ctx.globalAlpha = 0.9 - i * 0.15;
+        ctx.fillText('人', x, H * 0.82 + bob);
+      }
+      if (Math.random() < 0.4) state.particles.push({
+        x: -50 + p * 1.2 * (W + 120), y: H * 0.83, vx: -30 - Math.random()*30, vy: -20 - Math.random()*30,
+        grav: 200, life: 0.4, size: 2, color: ASH });
+    } else if (e.type === 'tree') {
+      const n = e.n || 1;
+      const xs = n === 1 ? [0.5] : n === 2 ? [0.35, 0.65] : [0.5, 0.3, 0.7];
+      ctx.strokeStyle = '#4a3a26'; ctx.lineCap = 'round';
+      for (let i = 0; i < n; i++) {
+        const q = Math.max(0, Math.min(1, p * 1.3 - i * 0.12));
+        if (q <= 0) continue;
+        const cx = GX + S * xs[i], base = GY + S * 0.95;
+        const h = q * S * (0.8 - i * 0.08);
+        ctx.globalAlpha = 0.85;
+        ctx.lineWidth = S * 0.035;
+        ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx, base - h); ctx.stroke();
+        if (q > 0.4) {
+          const r = (q - 0.4) / 0.6;
+          ctx.lineWidth = S * 0.02;
+          ctx.beginPath(); ctx.moveTo(cx, base - h*0.55); ctx.lineTo(cx - r * S*0.2, base - h*0.55 - r*S*0.16); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx, base - h*0.7);  ctx.lineTo(cx + r * S*0.18, base - h*0.7 - r*S*0.14); ctx.stroke();
+        }
+      }
+    } else if (e.type === 'fire') {
+      const glow = Math.sin(p * Math.PI) * Math.min(1, (e.n || 1) * 0.45);
+      const grd = ctx.createRadialGradient(W/2, H, Math.min(W,H)*0.1, W/2, H, Math.max(W,H)*0.9);
+      grd.addColorStop(0, 'rgba(217,107,43,' + (0.30 * glow + 0.12) + ')');
+      grd.addColorStop(1, 'rgba(217,107,43,0)');
+      ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    } else if (e.type === 'calm') {
+      for (let i = 0; i < 3; i++) {
+        const q = Math.max(0, Math.min(1, p * 1.3 - i * 0.2));
+        if (q <= 0) continue;
+        ctx.globalAlpha = (1 - q) * 0.35;
+        ctx.strokeStyle = '#7d94b0'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(GX + S/2, GY + S/2, 40 + q * S * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  state.effects = state.effects.filter(e => e.t < e.dur);
+}
+function beam(y, p) {
+  const head = p * (W + 200) - 100;
+  const grd = ctx.createLinearGradient(head - 260, 0, head, 0);
+  grd.addColorStop(0, 'rgba(201,153,43,0)');
+  grd.addColorStop(1, 'rgba(201,153,43,0.85)');
+  ctx.globalAlpha = 1 - Math.max(0, p - 0.75) * 4;
+  ctx.fillStyle = grd;
+  ctx.fillRect(Math.max(0, head - 260), y - 5, Math.min(head, W) - Math.max(0, head - 260), 10);
+  ctx.globalAlpha = 1;
+}
+function beamV(x, p) {
+  const head = p * (H + 200) - 100;
+  const grd = ctx.createLinearGradient(0, head - 260, 0, head);
+  grd.addColorStop(0, 'rgba(201,153,43,0)');
+  grd.addColorStop(1, 'rgba(201,153,43,0.85)');
+  ctx.globalAlpha = 1 - Math.max(0, p - 0.75) * 4;
+  ctx.fillStyle = grd;
+  ctx.fillRect(x - 5, Math.max(0, head - 260), 10, Math.min(head, H) - Math.max(0, head - 260));
+  ctx.globalAlpha = 1;
+}
+
+/* ============================= DRAW ============================= */
+function strokePath(st) {
+  const a = toScreen(st.a), b = toScreen(st.b);
+  ctx.beginPath();
+  if (st.t === 'pie' || st.t === 'na') {
+    const mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+    const dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx, dy) || 1;
+    const sgn = st.t === 'pie' ? 1 : -1;
+    const k = L * 0.09 * sgn;
+    ctx.moveTo(a[0], a[1]);
+    ctx.quadraticCurveTo(mx + (dy/L)*k, my - (dx/L)*k, b[0], b[1]);
+  } else {
+    ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+  }
+}
+function compBBox(g, comp) {
+  let x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+  for (let i = comp.range[0]; i <= comp.range[1]; i++) {
+    const st = g.strokes[i];
+    for (const pt of [toScreen(st.a), toScreen(st.b)]) {
+      x1 = Math.min(x1, pt[0]); y1 = Math.min(y1, pt[1]);
+      x2 = Math.max(x2, pt[0]); y2 = Math.max(y2, pt[1]);
+    }
+  }
+  const pad = S * 0.045;
+  return [x1 - pad, y1 - pad, x2 - x1 + pad*2, y2 - y1 + pad*2];
+}
+function drawGlyph(dt, now) {
+  const g = state.glyph; if (!g) return;
+  g.appearT = Math.min(1, g.appearT + dt / 300);
+  const wf = g.strokes.length > 8 ? 0.62 : (g.strokes.length > 4 ? 0.8 : 1); // width factor for dense glyphs
+  ctx.save();
+  ctx.globalAlpha = g.appearT;
+  // component wash — segmentation via the character's own anatomy
+  if (g.comps.length > 1) {
+    for (const comp of g.comps) {
+      const [x, y, w, h] = compBBox(g, comp);
+      ctx.fillStyle = WASHES[comp.idx % WASHES.length];
+      roundRect(x, y, w, h, 10); ctx.fill();
+      if (comp.pulse > 0) {
+        ctx.globalAlpha = g.appearT * comp.pulse * 0.7;
+        ctx.strokeStyle = comp.gold ? GOLD : ASH;
+        ctx.lineWidth = 3 + (1 - comp.pulse) * 6;
+        roundRect(x - (1-comp.pulse)*12, y - (1-comp.pulse)*12, w + (1-comp.pulse)*24, h + (1-comp.pulse)*24, 12);
+        ctx.stroke();
+        ctx.globalAlpha = g.appearT;
+        comp.pulse = Math.max(0, comp.pulse - dt / 600);
+      }
+    }
+  }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const breathing = g.breathe > 0 ? (0.5 + 0.5 * Math.sin(now / 180)) : 0;
+  for (const st of g.strokes) {
+    if (st.hidden) continue;
+    let ox = 0, oy = 0;
+    if (st.shiver > 0) {
+      ox = (Math.random()-0.5) * st.shiver * 9;
+      oy = (Math.random()-0.5) * st.shiver * 9;
+      st.shiver = Math.max(0, st.shiver - dt / 260);
+    }
+    ctx.save(); ctx.translate(ox, oy);
+    if (!st.cut) {
+      const hinted = g.breathe > 0 && st.comp === g.breatheComp;
+      ctx.strokeStyle = hinted ? `rgba(70,62,48,${0.16 + 0.22 * breathing})` : GHOST;
+      ctx.lineWidth = S * 0.088 * wf;
+      strokePath(st); ctx.stroke();
+      ctx.strokeStyle = hinted ? `rgba(70,62,48,${0.10 + 0.14 * breathing})` : 'rgba(70,62,48,0.10)';
+      ctx.lineWidth = S * 0.05 * wf;
+      strokePath(st); ctx.stroke();
+    } else {
+      st.cutT = Math.min(1, st.cutT + dt / 190);
+      const L = strokeLen(st) * 1.05;
+      ctx.setLineDash([L, L]); ctx.lineDashOffset = L * (1 - st.cutT);
+      if (st.gold && st.cutT < 1) {
+        ctx.strokeStyle = GOLD; ctx.lineWidth = S * 0.11 * wf; ctx.globalAlpha = g.appearT * 0.5;
+        strokePath(st); ctx.stroke(); ctx.globalAlpha = g.appearT;
+      }
+      ctx.strokeStyle = st.gold ? INK : ASH; ctx.lineWidth = S * 0.078 * wf;
+      strokePath(st); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+  if (state.mode === 'resolve' && state.resolve && state.resolve.kind === 'lock') {
+    const p = Math.min(1, state.resolve.t / 500);
+    ctx.globalAlpha = (1 - p) * 0.5;
+    ctx.strokeStyle = GOLD; ctx.lineWidth = (S * 0.1 + p * S * 0.03) * wf;
+    for (const st of g.strokes) { strokePath(st); ctx.stroke(); }
+  }
+  ctx.restore();
+  if (g.breathe > 0) g.breathe -= dt;
+  if (g.comet > 0) { drawComet(g, dt); g.comet -= dt; }
+}
+function drawComet(g, dt) {
+  const st = g.strokes[g.cometStroke];
+  if (!st || st.cut) { g.comet = 0; return; }
+  const cyc = 1100;
+  const p = ((2200 - g.comet) % cyc) / cyc;
+  if (p > 0.8) return;
+  const q = p / 0.8;
+  const a = toScreen(st.a), b = toScreen(st.b);
+  const x = a[0] + (b[0]-a[0]) * q, y = a[1] + (b[1]-a[1]) * q;
+  ctx.save();
+  ctx.fillStyle = INK;
+  const dirx = (b[0]-a[0]), diry = (b[1]-a[1]), L = Math.hypot(dirx,diry) || 1;
+  for (let i = 0; i <= 4; i++) {
+    ctx.globalAlpha = 0.55 * Math.sin(q * Math.PI) * (1 - i/5.5);
+    ctx.beginPath(); ctx.arc(x - dirx/L*i*11, y - diry/L*i*11, 7 - i, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawTrails(dt) {
+  for (const t of state.trails) {
+    t.life -= dt / 420;
+    if (t.life <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, t.life) * 0.7;
+    ctx.strokeStyle = t.gold ? GOLD : INK;
+    ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(t.pts[0][0], t.pts[0][1]);
+    for (const p of t.pts) ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+    ctx.restore();
+  }
+  state.trails = state.trails.filter(t => t.life > 0);
+  if (trail && trail.length > 1) {
+    ctx.save();
+    ctx.globalAlpha = 0.75; ctx.strokeStyle = INK;
+    ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(trail[0][0], trail[0][1]);
+    for (const p of trail) ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawParticles(dt) {
+  for (const p of state.particles) {
+    p.life -= dt / 1000;
+    p.vy += p.grav * dt / 1000;
+    p.x += p.vx * dt / 1000; p.y += p.vy * dt / 1000;
+    if (p.life <= 0) continue;
+    ctx.globalAlpha = Math.min(1, p.life * 2);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+  state.particles = state.particles.filter(p => p.life > 0);
+}
+function drawHUD() {
+  if (state.streak >= 2) {
+    ctx.save();
+    ctx.fillStyle = CINNABAR;
+    ctx.font = '600 ' + Math.round(Math.min(W,H)*0.035) + 'px ' + CHAR_FONT;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('连 ' + state.streak, 18, 16);
+    ctx.restore();
+  }
+  const n = CHARS.length;
+  const cell = Math.min(40, (W - 32) / n - 6);
+  const total = n * (cell + 6) - 6;
+  let x = (W - total) / 2;
+  const y = H - cell - 12;
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const c of CHARS) {
+    if (state.locked[c.ch]) {
+      ctx.fillStyle = CINNABAR;
+      roundRect(x, y, cell, cell, 5); ctx.fill();
+      ctx.fillStyle = '#f3e9d6';
+      ctx.font = (cell * 0.62) + 'px ' + CHAR_FONT;
+      ctx.fillText(c.ch, x + cell/2, y + cell/2 + cell*0.04);
+    } else {
+      ctx.strokeStyle = 'rgba(70,62,48,0.25)'; ctx.lineWidth = 1.2;
+      roundRect(x, y, cell, cell, 5); ctx.stroke();
+      ctx.fillStyle = 'rgba(70,62,48,0.28)';
+      ctx.beginPath(); ctx.arc(x + cell/2, y + cell/2, 2, 0, Math.PI*2); ctx.fill();
+    }
+    x += cell + 6;
+  }
+  ctx.restore();
+  if (state.banner) {
+    state.banner.t += 16;
+    const bt = state.banner.t;
+    const a = bt < 300 ? bt/300 : (bt > 2100 ? Math.max(0, 1 - (bt-2100)/400) : 1);
+    if (a <= 0) { state.banner = null; }
+    else {
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = INK;
+      ctx.font = '600 ' + Math.round(Math.min(W,H)*0.05) + 'px ' + CHAR_FONT;
+      ctx.fillText(state.banner.pinyin, W/2, GY + S + Math.min(H*0.055, 40));
+      ctx.globalAlpha = a * 0.7;
+      ctx.font = Math.round(Math.min(W,H)*0.026) + 'px Georgia, serif';
+      ctx.fillText(state.banner.gloss, W/2, GY + S + Math.min(H*0.055, 40) + Math.min(W,H)*0.045);
+      ctx.restore();
+    }
+  }
+  ctx.save();
+  ctx.globalAlpha = 0.35; ctx.fillStyle = INK;
+  ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText(BUILD_ID, W - 6, H - 4);
+  ctx.restore();
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+function drawTitle() {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = INK;
+  ctx.font = Math.round(Math.min(W,H)*0.22) + 'px ' + CHAR_FONT;
+  ctx.textBaseline = 'middle';
+  ctx.fillText('墨刃', W/2, H*0.38);
+  ctx.font = '600 ' + Math.round(Math.min(W,H)*0.028) + 'px Georgia, serif';
+  ctx.globalAlpha = 0.8;
+  ctx.fillText('I N K B L A D E', W/2, H*0.38 + Math.min(W,H)*0.15);
+  ctx.globalAlpha = 0.65;
+  ctx.font = Math.round(Math.min(W,H)*0.022) + 'px Georgia, serif';
+  ctx.fillText('Slash the strokes. True order has power.', W/2, H*0.62);
+  ctx.globalAlpha = 0.45 + 0.25 * Math.sin(perfT/400);
+  ctx.fillText('— slash anywhere to begin —', W/2, H*0.70);
+  ctx.restore();
+}
+// Legacy first-glyph gesture hint: comet on 一 before the first-ever cut.
+function drawFirstGlyphHint(dt, now) {
+  const g = state.glyph;
+  if (!g || g.def.ch !== '一' || METRICS.cuts > 0 || state.mode !== 'play') return;
+  if (now - g.lastAct < 3500) return;
+  const cyc = 1600;
+  const p = (now % cyc) / cyc;
+  if (p > 0.75) return;
+  const q = p / 0.75;
+  const st = g.strokes[0];
+  const a = toScreen(st.a), b = toScreen(st.b);
+  const x = a[0] + (b[0]-a[0]) * q, y = a[1];
+  ctx.save();
+  ctx.globalAlpha = 0.5 * Math.sin(q * Math.PI);
+  ctx.fillStyle = INK;
+  ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
+  for (let i = 1; i <= 4; i++) {
+    ctx.globalAlpha = 0.5 * Math.sin(q * Math.PI) * (1 - i/5);
+    ctx.beginPath(); ctx.arc(x - i*11, y, 7 - i, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ============================= LOOP ============================= */
+let lastT = 0, perfT = 0;
+function frame(now) {
+  const dt = Math.min(50, now - lastT || 16);
+  lastT = now; perfT = now;
+
+  ctx.save();
+  if (state.shake > 0 && !reduceMotion) {
+    ctx.translate((Math.random()-0.5) * state.shake, (Math.random()-0.5) * state.shake);
+    state.shake = Math.max(0, state.shake - dt / 40);
+  }
+  ctx.drawImage(paperTex, 0, 0, W, H);
+
+  if (state.mode === 'title') {
+    drawTitle();
+  } else {
+    drawGlyph(dt, now);
+    drawFirstGlyphHint(dt, now);
+    if (state.mode === 'play') maybeHint(now);
+  }
+  drawEffects(dt);
+  drawParticles(dt);
+  drawTrails(dt);
+  if (state.mode !== 'title') drawHUD();
+  ctx.restore();
+
+  if (state.mode === 'resolve' && state.resolve) {
+    state.resolve.t += dt;
+    if (state.resolve.t >= state.resolve.dur) { state.resolve = null; advance(); }
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+if (window.speechSynthesis) speechSynthesis.getVoices();
+</script>
+</body>
+</html>

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<!-- BUILD_ID: S1-M0-b2-20260704 -->
+<!-- Inkblade M0 — the smallest honest prototype for the S1 combo-orthography track.
+     One question: is slash-sequencing a visible character by inferred stroke order,
+     and being paid in its meaning, fun for 10 minutes?
+     Governed by inkblade-charter-v1.md. Nothing here is real until logged there. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>墨刃 Inkblade — M0</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#e9dfc9; }
+  #c { display:block; width:100vw; height:100vh; touch-action:none; cursor:crosshair; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+'use strict';
+const BUILD_ID = 'S1-M0-b2-20260704';
+
+/* ============================= DATA ============================= *
+ * Stroke geometry in a 0–100 box, y down. Order of the strokes[]
+ * array IS the canonical stroke order. t = direction bucket:
+ * heng →   shu ↓   pie ↙   na ↘(long)   dian ↘(short)
+ * Roster: 2–5 stroke characters whose strokes all live in the
+ * five v1 buckets. Intro order = array order.
+ * ================================================================ */
+const CHARS = [
+  { ch:'一', pinyin:'yī',   gloss:'one',    fx:'beam',  beams:1,
+    strokes:[ {t:'heng', a:[10,52], b:[90,52]} ] },
+  { ch:'二', pinyin:'èr',   gloss:'two',    fx:'beam',  beams:2,
+    strokes:[ {t:'heng', a:[16,34], b:[84,34]},
+              {t:'heng', a:[10,68], b:[90,68]} ] },
+  { ch:'三', pinyin:'sān',  gloss:'three',  fx:'beam',  beams:3,
+    strokes:[ {t:'heng', a:[18,26], b:[82,26]},
+              {t:'heng', a:[22,50], b:[78,50]},
+              {t:'heng', a:[12,76], b:[88,76]} ] },
+  { ch:'十', pinyin:'shí',  gloss:'ten',    fx:'cross',
+    strokes:[ {t:'heng', a:[10,46], b:[90,46]},
+              {t:'shu',  a:[50,10], b:[50,90]} ] },
+  { ch:'人', pinyin:'rén',  gloss:'person', fx:'figure',
+    strokes:[ {t:'pie',  a:[53,14], b:[18,86]},
+              {t:'na',   a:[50,42], b:[86,86]} ] },
+  { ch:'大', pinyin:'dà',   gloss:'big',    fx:'shockwave',
+    strokes:[ {t:'heng', a:[14,42], b:[86,42]},
+              {t:'pie',  a:[50,12], b:[14,88]},
+              {t:'na',   a:[53,48], b:[88,88]} ] },
+  { ch:'木', pinyin:'mù',   gloss:'tree',   fx:'tree',
+    strokes:[ {t:'heng', a:[14,36], b:[86,36]},
+              {t:'shu',  a:[50,10], b:[50,90]},
+              {t:'pie',  a:[47,42], b:[16,80]},
+              {t:'na',   a:[53,42], b:[84,80]} ] },
+  { ch:'火', pinyin:'huǒ',  gloss:'fire',   fx:'fire',
+    strokes:[ {t:'dian', a:[26,24], b:[36,40]},
+              {t:'pie',  a:[74,20], b:[60,40]},
+              {t:'pie',  a:[53,12], b:[18,88]},
+              {t:'na',   a:[53,46], b:[87,88]} ] },
+];
+
+const INK      = '#1b1712';
+const ASH      = '#8f8a7c';
+const GHOST    = 'rgba(70,62,48,0.16)';
+const GOLD     = '#c9992b';
+const CINNABAR = '#b2392a';
+const PAPER    = '#ece3cf';
+const CHAR_FONT = '"Kaiti SC","KaiTi","STKaiti","AR PL UKai CN",serif';
+
+/* ============================= SETUP ============================= */
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1, S = 0;          // S = glyph box size in css px
+let GX = 0, GY = 0;                         // glyph box top-left
+let paperTex = null;
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  S = Math.min(W, H) * 0.60;
+  GX = (W - S) / 2;
+  GY = (H - S) / 2 - Math.min(H * 0.03, 24);
+  makePaper();
+}
+function makePaper() {
+  paperTex = document.createElement('canvas');
+  paperTex.width = W * DPR; paperTex.height = H * DPR;
+  const p = paperTex.getContext('2d');
+  p.setTransform(DPR, 0, 0, DPR, 0, 0);
+  p.fillStyle = PAPER; p.fillRect(0, 0, W, H);
+  // fibers
+  for (let i = 0; i < 1300; i++) {
+    const x = Math.random() * W, y = Math.random() * H;
+    const a = Math.random() * Math.PI, l = 2 + Math.random() * 9;
+    p.strokeStyle = Math.random() < 0.5 ? 'rgba(126,104,70,0.045)' : 'rgba(90,80,60,0.035)';
+    p.lineWidth = 0.8;
+    p.beginPath(); p.moveTo(x, y); p.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); p.stroke();
+  }
+  // vignette
+  const g = p.createRadialGradient(W/2, H/2, Math.min(W,H)*0.35, W/2, H/2, Math.max(W,H)*0.75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(88,68,40,0.13)');
+  p.fillStyle = g; p.fillRect(0, 0, W, H);
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ============================= STATE ============================= */
+const state = {
+  mode: 'title',                 // title | play | resolve
+  glyph: null,
+  introIdx: 0,
+  prevCh: null,
+  streak: 0,
+  locked: {},                    // ch -> true (the discovered combo book)
+  trails: [],                    // fading slash trails
+  particles: [],
+  effects: [],
+  shake: 0,
+  resolve: null,                 // {kind, t, dur, def}
+  idleT: 0,
+  hintT: 0,
+  banner: null,                  // {pinyin, gloss, t}
+};
+// Playtest instrumentation (read via console / CDP).
+const METRICS = window.__M0_METRICS = {
+  build: BUILD_ID, glyphs: 0, locks: 0, fizzles: 0,
+  cuts: 0, goldCuts: 0, deflects: 0, whiffs: 0, perChar: {},
+};
+
+function toScreen(pt) { return [GX + pt[0] / 100 * S, GY + pt[1] / 100 * S]; }
+function strokeLen(st) { const [ax,ay]=toScreen(st.a), [bx,by]=toScreen(st.b); return Math.hypot(bx-ax, by-ay); }
+
+function newGlyph(def) {
+  state.glyph = {
+    def,
+    strokes: def.strokes.map((s, i) => ({ ...s, idx: i, cut: false, gold: false, cutT: 0, shiver: 0 })),
+    nextIdx: 0, intact: true, done: false, appearT: 0,
+  };
+  METRICS.perChar[def.ch] = METRICS.perChar[def.ch] || { seen: 0, locks: 0, fizzles: 0 };
+  METRICS.perChar[def.ch].seen++;
+  state.idleT = 0;
+}
+function pickNext() {
+  if (state.introIdx < CHARS.length) return CHARS[state.introIdx++];
+  const pool = [];
+  for (const c of CHARS) {
+    if (c.ch === state.prevCh) continue;
+    const w = state.locked[c.ch] ? 1 : 3;
+    for (let i = 0; i < w; i++) pool.push(c);
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function advance() {
+  const def = pickNext();
+  state.prevCh = def.ch;
+  newGlyph(def);
+  state.mode = 'play';
+}
+
+/* ============================= AUDIO ============================= */
+let AC = null;
+function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } return AC; }
+function tone(freq, dur, type, vol, when) {
+  const ac = audio(); if (!ac) return;
+  const t0 = ac.currentTime + (when || 0);
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.12, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function sfxGoldCut(n)  { tone(440 * Math.pow(1.12246, n), 0.22, 'triangle', 0.14); tone(880 * Math.pow(1.12246, n), 0.10, 'sine', 0.05); }
+function sfxAshCut()    { tone(150, 0.16, 'sine', 0.14); }
+function sfxDeflect()   { tone(1900, 0.05, 'square', 0.05); tone(2600, 0.08, 'sine', 0.04); }
+function sfxLock()      { tone(196, 1.1, 'triangle', 0.16); tone(392, 0.9, 'sine', 0.07, 0.05); tone(587, 0.6, 'sine', 0.05, 0.1); }
+function sfxFizzle()    { tone(300, 0.25, 'sine', 0.08); tone(210, 0.35, 'sine', 0.07, 0.08); }
+function speak(ch) {
+  try {
+    if (!window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance(ch);
+    u.lang = 'zh-CN'; u.rate = 0.75;
+    const v = speechSynthesis.getVoices().find(v => /^zh/i.test(v.lang));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ============================= INPUT ============================= */
+let trail = null, activePointer = null;
+canvas.addEventListener('pointerdown', e => {
+  audio();
+  if (activePointer !== null) return;
+  activePointer = e.pointerId;
+  trail = [[e.clientX, e.clientY]];
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerId !== activePointer || !trail) return;
+  const last = trail[trail.length - 1];
+  if (Math.hypot(e.clientX - last[0], e.clientY - last[1]) > 2) trail.push([e.clientX, e.clientY]);
+});
+window.addEventListener('pointerup', e => {
+  if (e.pointerId !== activePointer) return;
+  activePointer = null;
+  if (trail && trail.length) { if (trail.length === 1) trail.push([e.clientX, e.clientY]); resolveSlash(trail); }
+  trail = null;
+});
+window.addEventListener('pointercancel', () => { activePointer = null; trail = null; });
+
+function classifySlash(dx, dy, len) {
+  const deg = Math.atan2(dy, dx) * 180 / Math.PI;
+  const centers = [['heng', 0], ['na', 45], ['shu', 90], ['pie', 135]];
+  let best = null, bd = 1e9;
+  for (const [n, c] of centers) { let d = Math.abs(deg - c); if (d > 180) d = 360 - d; if (d < bd) { bd = d; best = n; } }
+  if (bd > 32) return null;
+  if (best === 'na' && len < S * 0.34) return 'dian';
+  return best;
+}
+function segPointDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+  let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+function orient(ax, ay, bx, by, cx, cy) { return Math.sign((bx-ax)*(cy-ay) - (by-ay)*(cx-ax)); }
+function segsIntersect(a, b, c, d) {
+  const o1 = orient(a[0],a[1],b[0],b[1],c[0],c[1]), o2 = orient(a[0],a[1],b[0],b[1],d[0],d[1]);
+  const o3 = orient(c[0],c[1],d[0],d[1],a[0],a[1]), o4 = orient(c[0],c[1],d[0],d[1],b[0],b[1]);
+  return o1 !== o2 && o3 !== o4;
+}
+function segSegDist(a, b, c, d) {
+  if (segsIntersect(a, b, c, d)) return 0;
+  return Math.min(
+    segPointDist(c[0],c[1],a[0],a[1],b[0],b[1]), segPointDist(d[0],d[1],a[0],a[1],b[0],b[1]),
+    segPointDist(a[0],a[1],c[0],c[1],d[0],d[1]), segPointDist(b[0],b[1],c[0],c[1],d[0],d[1]));
+}
+function trailStrokeDist(tr, st) {
+  const a = toScreen(st.a), b = toScreen(st.b);
+  let best = 1e9;
+  for (let i = 0; i < tr.length - 1; i++) best = Math.min(best, segSegDist(tr[i], tr[i+1], a, b));
+  return best;
+}
+
+function resolveSlash(tr) {
+  state.trails.push({ pts: tr, life: 1, gold: false });
+  state.idleT = 0;
+  if (state.mode === 'title') { advance(); return; }
+  if (state.mode !== 'play' || !state.glyph || state.glyph.done) return;
+
+  const g = state.glyph;
+  const dx = tr[tr.length-1][0] - tr[0][0], dy = tr[tr.length-1][1] - tr[0][1];
+  const len = Math.hypot(dx, dy);
+  if (len < 10) return;
+  const bucket = classifySlash(dx, dy, len);
+  const tol = Math.max(18, S * 0.075);
+
+  // Alignment-priority targeting (S1-D008): a slash cuts the stroke it runs
+  // ALONG, not the stroke it crosses. A crossing stroke always intersects at
+  // distance 0, so pure min-distance targeting hands e.g. a horizontal slash
+  // across 十 to the vertical stroke. Prefer bucket-aligned hits; distance
+  // breaks ties. If no hit aligns, the nearest crossed stroke deflects.
+  const hits = [];
+  for (const st of g.strokes) {
+    if (st.cut) continue;
+    const d = trailStrokeDist(tr, st);
+    if (d < tol) hits.push({ st, d, match: !!bucket && st.t === bucket ? 1 : 0 });
+  }
+  if (!hits.length) { METRICS.whiffs++; return; }
+  hits.sort((a, b) => (b.match - a.match) || (a.d - b.d));
+  const target = hits[0].st;
+
+  if (bucket && bucket === target.t) {
+    target.cut = true; target.cutT = 0;
+    METRICS.cuts++;
+    if (g.intact && target.idx === g.nextIdx) {
+      target.gold = true; g.nextIdx++; state.trails[state.trails.length-1].gold = true;
+      METRICS.goldCuts++;
+      sfxGoldCut(g.nextIdx);
+      sparks(midOf(target), GOLD, 10);
+    } else {
+      g.intact = false;
+      sfxAshCut();
+      sparks(midOf(target), ASH, 7);
+    }
+    if (g.strokes.every(s => s.cut)) {
+      g.done = true;
+      setTimeout(() => beginResolve(g.intact), 380);
+    }
+  } else {
+    target.shiver = 1;
+    METRICS.deflects++;
+    sfxDeflect();
+    sparks(nearestOn(target, tr), '#d8cfb6', 6, true);
+  }
+}
+function midOf(st) { const a = toScreen(st.a), b = toScreen(st.b); return [(a[0]+b[0])/2, (a[1]+b[1])/2]; }
+function nearestOn(st, tr) {
+  const m = tr[Math.floor(tr.length/2)];
+  const a = toScreen(st.a), b = toScreen(st.b);
+  const dx = b[0]-a[0], dy = b[1]-a[1], L2 = dx*dx+dy*dy;
+  let t = L2 ? ((m[0]-a[0])*dx + (m[1]-a[1])*dy) / L2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return [a[0]+t*dx, a[1]+t*dy];
+}
+
+/* ============================= RESOLVE ============================= */
+function beginResolve(locked) {
+  const def = state.glyph.def;
+  METRICS.glyphs++;
+  state.mode = 'resolve';
+  if (locked) {
+    METRICS.locks++; METRICS.perChar[def.ch].locks++;
+    state.resolve = { kind: 'lock', t: 0, dur: 2500, def };
+    state.streak++;
+    state.locked[def.ch] = true;
+    state.banner = { pinyin: def.pinyin, gloss: def.gloss, t: 0 };
+    sfxLock();
+    setTimeout(() => speak(def.ch), 220);
+    setTimeout(() => spawnFx(def), 300);
+    if (!reduceMotion) state.shake = Math.max(state.shake, 5);
+  } else {
+    METRICS.fizzles++; METRICS.perChar[def.ch].fizzles++;
+    state.resolve = { kind: 'fizzle', t: 0, dur: 1450, def };
+    state.streak = 0;
+    sfxFizzle();
+    crumbleGlyph();
+  }
+  console.log('[M0]', JSON.stringify(METRICS));
+}
+function crumbleGlyph() {
+  for (const st of state.glyph.strokes) {
+    const a = toScreen(st.a), b = toScreen(st.b);
+    const n = Math.max(8, Math.floor(strokeLen(st) / 9));
+    for (let i = 0; i <= n; i++) {
+      const t = i / n;
+      state.particles.push({
+        x: a[0] + (b[0]-a[0]) * t, y: a[1] + (b[1]-a[1]) * t,
+        vx: (Math.random()-0.5) * 40, vy: -20 - Math.random() * 40,
+        grav: 220, life: 0.9 + Math.random() * 0.5,
+        size: 2.5 + Math.random() * 3,
+        color: Math.random() < 0.12 ? GOLD : ASH,
+      });
+    }
+  }
+  state.glyph.strokes.forEach(s => { s.hidden = true; });
+}
+function sparks(pos, color, n, tiny) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 60 + Math.random() * 140;
+    state.particles.push({
+      x: pos[0], y: pos[1], vx: Math.cos(a)*sp, vy: Math.sin(a)*sp - 30,
+      grav: 300, life: 0.3 + Math.random() * 0.35,
+      size: tiny ? 1.5 + Math.random()*1.5 : 2 + Math.random()*2.5, color,
+    });
+  }
+}
+
+/* ============================= EFFECTS ============================= */
+function spawnFx(def) {
+  state.effects.push({ type: def.fx, t: 0, dur: fxDur(def.fx), def });
+  if (def.fx === 'fire') {
+    for (let i = 0; i < 60; i++) {
+      state.particles.push({
+        x: Math.random() * W, y: H + 10 + Math.random() * 40,
+        vx: (Math.random()-0.5) * 30, vy: -80 - Math.random() * 160,
+        grav: -40, life: 1.0 + Math.random() * 1.2,
+        size: 2 + Math.random() * 4,
+        color: Math.random() < 0.5 ? '#d96b2b' : (Math.random() < 0.5 ? '#e8a13a' : '#b2392a'),
+      });
+    }
+  }
+  if (def.fx === 'tree') {
+    for (let i = 0; i < 36; i++) {
+      state.particles.push({
+        x: GX + S*0.5 + (Math.random()-0.5) * S*0.6, y: GY + S*0.25 + (Math.random()-0.5) * S*0.3,
+        vx: (Math.random()-0.5) * 60, vy: 10 + Math.random() * 50,
+        grav: 30, life: 1.2 + Math.random(),
+        size: 2.5 + Math.random() * 3, color: Math.random() < 0.6 ? '#5c7a3f' : '#7f9c53',
+      });
+    }
+  }
+  if (def.fx === 'shockwave' && !reduceMotion) state.shake = 9;
+}
+function fxDur(fx) { return { beam: 900, cross: 900, figure: 1700, shockwave: 1000, tree: 1500, fire: 1700 }[fx] || 1000; }
+
+function drawEffects(dt) {
+  for (const e of state.effects) {
+    e.t += dt;
+    const p = Math.min(1, e.t / e.dur);
+    ctx.save();
+    if (e.type === 'beam') {
+      const ys = e.def.strokes.map(s => toScreen(s.a)[1]);
+      for (const y of ys) beam(y, p, true);
+    } else if (e.type === 'cross') {
+      beam(toScreen(e.def.strokes[0].a)[1], p, true);
+      beamV(toScreen(e.def.strokes[1].a)[0], p);
+    } else if (e.type === 'shockwave') {
+      for (let i = 0; i < 3; i++) {
+        const q = Math.max(0, Math.min(1, p * 1.4 - i * 0.18));
+        if (q <= 0) continue;
+        ctx.globalAlpha = (1 - q) * 0.55;
+        ctx.strokeStyle = INK; ctx.lineWidth = 6 - i * 1.5;
+        ctx.beginPath();
+        ctx.arc(GX + S/2, GY + S/2, q * Math.max(W, H) * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (e.type === 'figure') {
+      const x = -60 + p * (W + 120);
+      const bob = Math.sin(p * 40) * 6;
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = INK;
+      ctx.font = (S * 0.22) + 'px ' + CHAR_FONT;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('人', x, H * 0.82 + bob);
+      if (Math.random() < 0.4) state.particles.push({
+        x: x - 10, y: H * 0.83, vx: -30 - Math.random()*30, vy: -20 - Math.random()*30,
+        grav: 200, life: 0.4, size: 2, color: ASH });
+    } else if (e.type === 'tree') {
+      const cx = GX + S/2, base = GY + S * 0.95;
+      const h = p * S * 0.8;
+      ctx.strokeStyle = '#4a3a26'; ctx.lineCap = 'round';
+      ctx.lineWidth = S * 0.035; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.moveTo(cx, base); ctx.lineTo(cx, base - h); ctx.stroke();
+      if (p > 0.4) {
+        const q = (p - 0.4) / 0.6;
+        ctx.lineWidth = S * 0.02;
+        ctx.beginPath(); ctx.moveTo(cx, base - h*0.55); ctx.lineTo(cx - q * S*0.22, base - h*0.55 - q*S*0.18); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, base - h*0.7);  ctx.lineTo(cx + q * S*0.2,  base - h*0.7  - q*S*0.16); ctx.stroke();
+      }
+    } else if (e.type === 'fire') {
+      const glow = Math.sin(p * Math.PI);
+      const grd = ctx.createRadialGradient(W/2, H, Math.min(W,H)*0.1, W/2, H, Math.max(W,H)*0.9);
+      grd.addColorStop(0, 'rgba(217,107,43,' + (0.30 * glow) + ')');
+      grd.addColorStop(1, 'rgba(217,107,43,0)');
+      ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+  state.effects = state.effects.filter(e => e.t < e.dur);
+}
+function beam(y, p, horiz) {
+  const head = p * (W + 200) - 100;
+  const grd = ctx.createLinearGradient(head - 260, 0, head, 0);
+  grd.addColorStop(0, 'rgba(201,153,43,0)');
+  grd.addColorStop(1, 'rgba(201,153,43,0.85)');
+  ctx.globalAlpha = 1 - Math.max(0, p - 0.75) * 4;
+  ctx.fillStyle = grd;
+  ctx.fillRect(Math.max(0, head - 260), y - 5, Math.min(head, W) - Math.max(0, head - 260), 10);
+  ctx.globalAlpha = 1;
+}
+function beamV(x, p) {
+  const head = p * (H + 200) - 100;
+  const grd = ctx.createLinearGradient(0, head - 260, 0, head);
+  grd.addColorStop(0, 'rgba(201,153,43,0)');
+  grd.addColorStop(1, 'rgba(201,153,43,0.85)');
+  ctx.globalAlpha = 1 - Math.max(0, p - 0.75) * 4;
+  ctx.fillStyle = grd;
+  ctx.fillRect(x - 5, Math.max(0, head - 260), 10, Math.min(head, H) - Math.max(0, head - 260));
+  ctx.globalAlpha = 1;
+}
+
+/* ============================= DRAW ============================= */
+function strokePath(st) {
+  const a = toScreen(st.a), b = toScreen(st.b);
+  ctx.beginPath();
+  if (st.t === 'pie' || st.t === 'na') {
+    const mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+    const dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx, dy) || 1;
+    const sgn = st.t === 'pie' ? 1 : -1;
+    const k = L * 0.09 * sgn;
+    ctx.moveTo(a[0], a[1]);
+    ctx.quadraticCurveTo(mx + (dy/L)*k, my - (dx/L)*k, b[0], b[1]);
+  } else {
+    ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+  }
+}
+function drawGlyph(dt) {
+  const g = state.glyph; if (!g) return;
+  g.appearT = Math.min(1, g.appearT + dt / 300);
+  ctx.save();
+  ctx.globalAlpha = g.appearT;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const st of g.strokes) {
+    if (st.hidden) continue;
+    let ox = 0, oy = 0;
+    if (st.shiver > 0) {
+      ox = (Math.random()-0.5) * st.shiver * 9;
+      oy = (Math.random()-0.5) * st.shiver * 9;
+      st.shiver = Math.max(0, st.shiver - dt / 260);
+    }
+    ctx.save(); ctx.translate(ox, oy);
+    if (!st.cut) {
+      ctx.strokeStyle = GHOST; ctx.lineWidth = S * 0.088;
+      strokePath(st); ctx.stroke();
+      ctx.strokeStyle = 'rgba(70,62,48,0.10)'; ctx.lineWidth = S * 0.05;
+      strokePath(st); ctx.stroke();
+    } else {
+      st.cutT = Math.min(1, st.cutT + dt / 190);
+      const L = strokeLen(st) * 1.05;
+      ctx.setLineDash([L, L]); ctx.lineDashOffset = L * (1 - st.cutT);
+      if (st.gold && st.cutT < 1) {
+        ctx.strokeStyle = GOLD; ctx.lineWidth = S * 0.11; ctx.globalAlpha = g.appearT * 0.5;
+        strokePath(st); ctx.stroke(); ctx.globalAlpha = g.appearT;
+      }
+      ctx.strokeStyle = st.gold ? INK : ASH; ctx.lineWidth = S * 0.078;
+      strokePath(st); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+  // lock pulse
+  if (state.mode === 'resolve' && state.resolve && state.resolve.kind === 'lock') {
+    const p = Math.min(1, state.resolve.t / 500);
+    ctx.globalAlpha = (1 - p) * 0.5;
+    ctx.strokeStyle = GOLD; ctx.lineWidth = S * 0.1 + p * S * 0.03;
+    for (const st of g.strokes) { strokePath(st); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+function drawTrails(dt) {
+  for (const t of state.trails) {
+    t.life -= dt / 420;
+    if (t.life <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, t.life) * 0.7;
+    ctx.strokeStyle = t.gold ? GOLD : INK;
+    ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(t.pts[0][0], t.pts[0][1]);
+    for (const p of t.pts) ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+    ctx.restore();
+  }
+  state.trails = state.trails.filter(t => t.life > 0);
+  if (trail && trail.length > 1) {
+    ctx.save();
+    ctx.globalAlpha = 0.75; ctx.strokeStyle = INK;
+    ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(trail[0][0], trail[0][1]);
+    for (const p of trail) ctx.lineTo(p[0], p[1]);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawParticles(dt) {
+  for (const p of state.particles) {
+    p.life -= dt / 1000;
+    p.vy += p.grav * dt / 1000;
+    p.x += p.vx * dt / 1000; p.y += p.vy * dt / 1000;
+    if (p.life <= 0) continue;
+    ctx.globalAlpha = Math.min(1, p.life * 2);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+  state.particles = state.particles.filter(p => p.life > 0);
+}
+function drawHUD() {
+  // streak
+  if (state.streak >= 2) {
+    ctx.save();
+    ctx.fillStyle = CINNABAR;
+    ctx.font = '600 ' + Math.round(Math.min(W,H)*0.035) + 'px ' + CHAR_FONT;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('连 ' + state.streak, 18, 16);
+    ctx.restore();
+  }
+  // combo book — the collection strip
+  const n = CHARS.length;
+  const cell = Math.min(44, (W - 40) / n - 8);
+  const total = n * (cell + 8) - 8;
+  let x = (W - total) / 2;
+  const y = H - cell - 14;
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const c of CHARS) {
+    if (state.locked[c.ch]) {
+      ctx.fillStyle = CINNABAR;
+      roundRect(x, y, cell, cell, 5); ctx.fill();
+      ctx.fillStyle = '#f3e9d6';
+      ctx.font = (cell * 0.62) + 'px ' + CHAR_FONT;
+      ctx.fillText(c.ch, x + cell/2, y + cell/2 + cell*0.04);
+    } else {
+      ctx.strokeStyle = 'rgba(70,62,48,0.25)'; ctx.lineWidth = 1.2;
+      roundRect(x, y, cell, cell, 5); ctx.stroke();
+      ctx.fillStyle = 'rgba(70,62,48,0.28)';
+      ctx.beginPath(); ctx.arc(x + cell/2, y + cell/2, 2.2, 0, Math.PI*2); ctx.fill();
+    }
+    x += cell + 8;
+  }
+  ctx.restore();
+  // pinyin banner
+  if (state.banner) {
+    state.banner.t += 16;
+    const bt = state.banner.t;
+    const a = bt < 300 ? bt/300 : (bt > 2100 ? Math.max(0, 1 - (bt-2100)/400) : 1);
+    if (a <= 0) { state.banner = null; }
+    else {
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = INK;
+      ctx.font = '600 ' + Math.round(Math.min(W,H)*0.05) + 'px ' + CHAR_FONT;
+      ctx.fillText(state.banner.pinyin, W/2, GY + S + Math.min(H*0.055, 40));
+      ctx.globalAlpha = a * 0.7;
+      ctx.font = Math.round(Math.min(W,H)*0.026) + 'px Georgia, serif';
+      ctx.fillText(state.banner.gloss, W/2, GY + S + Math.min(H*0.055, 40) + Math.min(W,H)*0.045);
+      ctx.restore();
+    }
+  }
+  // build fingerprint
+  ctx.save();
+  ctx.globalAlpha = 0.35; ctx.fillStyle = INK;
+  ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText(BUILD_ID, W - 6, H - 4);
+  ctx.restore();
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+function drawTitle() {
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = INK;
+  ctx.font = Math.round(Math.min(W,H)*0.22) + 'px ' + CHAR_FONT;
+  ctx.textBaseline = 'middle';
+  ctx.fillText('墨刃', W/2, H*0.38);
+  ctx.font = '600 ' + Math.round(Math.min(W,H)*0.028) + 'px Georgia, serif';
+  ctx.globalAlpha = 0.8;
+  ctx.fillText('I N K B L A D E', W/2, H*0.38 + Math.min(W,H)*0.15);
+  ctx.globalAlpha = 0.65;
+  ctx.font = Math.round(Math.min(W,H)*0.022) + 'px Georgia, serif';
+  ctx.fillText('Slash the strokes. True order has power.', W/2, H*0.62);
+  ctx.globalAlpha = 0.45 + 0.25 * Math.sin(perfT/400);
+  ctx.fillText('— slash anywhere to begin —', W/2, H*0.70);
+  ctx.restore();
+}
+function drawHint(dt) {
+  // First glyph (一) only, before the first cut: an ink comet ghosts along the stroke.
+  const g = state.glyph;
+  if (!g || g.def.ch !== '一' || METRICS.cuts > 0 || state.mode !== 'play') return;
+  state.idleT += dt;
+  if (state.idleT < 3500) return;
+  state.hintT = (state.hintT + dt) % 1600;
+  const p = state.hintT / 1600;
+  if (p > 0.75) return;
+  const q = p / 0.75;
+  const st = g.strokes[0];
+  const a = toScreen(st.a), b = toScreen(st.b);
+  const x = a[0] + (b[0]-a[0]) * q, y = a[1];
+  ctx.save();
+  ctx.globalAlpha = 0.5 * Math.sin(q * Math.PI);
+  ctx.fillStyle = INK;
+  ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
+  for (let i = 1; i <= 4; i++) {
+    ctx.globalAlpha = 0.5 * Math.sin(q * Math.PI) * (1 - i/5);
+    ctx.beginPath(); ctx.arc(x - i*11, y, 7 - i, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ============================= LOOP ============================= */
+let lastT = 0, perfT = 0;
+function frame(now) {
+  const dt = Math.min(50, now - lastT || 16);
+  lastT = now; perfT = now;
+
+  ctx.save();
+  if (state.shake > 0 && !reduceMotion) {
+    ctx.translate((Math.random()-0.5) * state.shake, (Math.random()-0.5) * state.shake);
+    state.shake = Math.max(0, state.shake - dt / 40);
+  }
+  ctx.drawImage(paperTex, 0, 0, W, H);
+
+  if (state.mode === 'title') {
+    drawTitle();
+  } else {
+    drawGlyph(dt);
+    drawHint(dt);
+  }
+  drawEffects(dt);
+  drawParticles(dt);
+  drawTrails(dt);
+  if (state.mode !== 'title') drawHUD();
+  ctx.restore();
+
+  if (state.mode === 'resolve' && state.resolve) {
+    state.resolve.t += dt;
+    if (state.resolve.t >= state.resolve.dur) { state.resolve = null; advance(); }
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+// warm the zh voice list (some browsers populate async)
+if (window.speechSynthesis) speechSynthesis.getVoices();
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+[
+ {
+  "ch": "二",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "三",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "大",
+  "stroke": 1,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "火",
+  "stroke": 2,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "焱",
+  "stroke": 6,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "焱",
+  "stroke": 10,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "口",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "月",
+  "stroke": 0,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "土",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "川",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 2",
+  "review": "soft"
+ },
+ {
+  "ch": "川",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ }
+]

@@ -1,0 +1,16 @@
+{
+  "name": "tests",
+  "version": "1.0.0",
+  "description": "Real dispatched pointer events via puppeteer (direct handler invocation is banned). Setup: `npm install puppeteer` (Node 18+), place suite next to the game HTML files. File paths inside scripts point at /home/claude/inkblade/ — adjust to your layout.",
+  "main": "smoke.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "puppeteer": "^25.3.0"
+  }
+}
