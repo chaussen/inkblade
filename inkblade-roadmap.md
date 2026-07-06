@@ -16,6 +16,11 @@ top-down for anything marked here; nothing below is real until logged there.
 4. Log a plan entry (next free S1-D0xx, newest-on-top) BEFORE writing code for a
    new milestone; log a ship entry after the battery is green. John confirms
    with short messages; his rulings get their own LOCKED entries.
+5. **Playtest checkpoints are mandatory (S1-D058, see `CLAUDE.md`)**: every
+   milestone / reasonable-size build ends with a stop-and-ask-John-to-play,
+   with exact URL + params, what's new vs his last snapshot, an action
+   script with timings, and the verdict needed. Parallel unblocked work OK;
+   never stack unplaytested player-facing changes.
 
 ## Current state (as of S1-D057, 2026-07-07)
 - **Full delegation live (S1-D049)**: John has handed off all rulings — Code
