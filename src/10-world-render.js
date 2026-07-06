@@ -19,7 +19,9 @@ function drawWorld(dt, now){
     return;
   }
   METRICS.perf.worldLayer = true;
-  wx.clearRect(0, 0, W, H);
+  const worldCtx = wx;
+  worldCtx.clearRect(0, 0, W, H);
+  ex.clearRect(0, 0, W, H);
   // painter's algorithm down the depth axis (S1-D041): sky first, then
   // ground far→near so near occludes far — y is depth
   const els = [...state.world.els].sort((a, b) =>
@@ -29,6 +31,8 @@ function drawWorld(dt, now){
     if (age < 0) continue; // planted between frames; rAF timestamp lags performance.now()
     const p = Math.max(0, Math.min(1, age / 700));
     const pe = 1 - Math.pow(1 - p, 3);
+    // live heat draws on the burn-through overlay (S1-D045); all else recedes
+    wx = isLiveHeat(el) ? ex : worldCtx;
     const k = depthK(el);
     wx.save();
     if (k !== 1){
@@ -49,11 +53,15 @@ function drawWorld(dt, now){
     }
     wx.restore();
   }
+  wx = worldCtx;
   drawMist();
   drawWorldParticles(dt);
   ctx.save();
   ctx.globalAlpha = attention.worldAlpha;
   ctx.drawImage(worldLayer, 0, 0, W, H);
+  // fire is light: live events hold ≥EVENT_MIN_ALPHA under the veil
+  ctx.globalAlpha = Math.max(attention.worldAlpha, EVENT_MIN_ALPHA);
+  ctx.drawImage(eventLayer, 0, 0, W, H);
   ctx.restore();
 }
 // Atmospheric perspective (S1-D041): a paper-tone mist band over the far
@@ -72,18 +80,22 @@ function drawWorldParticles(dt) {
     p.vy += p.grav * dt / 1000;
     p.x += p.vx * dt / 1000; p.y += p.vy * dt / 1000;
     if (p.life <= 0) continue;
-    wx.globalAlpha = Math.min(1, p.life * 2);
-    wx.fillStyle = p.color;
-    wx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+    const g = p.hot ? ex : wx; // sparks ride the burn-through overlay
+    g.globalAlpha = Math.min(1, p.life * 2);
+    g.fillStyle = p.color;
+    g.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
   }
-  wx.globalAlpha = 1;
+  wx.globalAlpha = 1; ex.globalAlpha = 1;
   state.worldParticles = state.worldParticles.filter(p => p.life > 0);
 }
 function drawTreeEl(el, now, p){
   const X = el.x * W, Y = el.y * H;
   const r = rng(el.seed);
   const h = S * 0.16 * el.s * p * (0.9 + r() * 0.3);
-  const sway = Math.sin(now / 1400 + el.seed % 10) * 0.03;
+  // heat haze (S1-D045): a tree near live fire shimmers — faster, deeper
+  // sway. Never damage; E1 touches nothing the player planted.
+  const swT = el.hot ? 480 : 1400, swA = el.hot ? 0.055 : 0.03;
+  const sway = Math.sin(now / swT + el.seed % 10) * swA;
   const lean = (r() - 0.5) * 0.24;
   wx.save(); wx.translate(X, Y); wx.rotate(sway * 0.6);
   wx.strokeStyle = '#4a3a26'; wx.lineCap = 'round'; wx.globalAlpha = 0.9;
@@ -96,7 +108,7 @@ function drawTreeEl(el, now, p){
   for (let i = 0; i < nb; i++){
     const fx = h * lean * 1.2 + (r() - 0.5) * h * 0.7, fy = -h * (0.75 + r() * 0.35), fr = h * (0.22 + r() * 0.16);
     wx.fillStyle = `rgba(${86 + Math.floor(r()*24)},${104 + Math.floor(r()*20)},${70 + Math.floor(r()*16)},0.55)`;
-    wx.beginPath(); wx.ellipse(fx, fy + Math.sin(now / 1400 + el.seed % 10 + i) * 2, fr * 1.2, fr * 0.8, 0, 0, Math.PI * 2); wx.fill();
+    wx.beginPath(); wx.ellipse(fx, fy + Math.sin(now / swT + el.seed % 10 + i) * (el.hot ? 3 : 2), fr * 1.2, fr * 0.8, 0, 0, Math.PI * 2); wx.fill();
   }
   wx.restore();
   if (Math.random() < 0.0015) addParticle(state.worldParticles, {
@@ -111,13 +123,18 @@ function drawCrowdEl(el, now, p){
 function drawWalkerEl(el, now, p, phase, gx){
   const B = el.beh;
   const resting = B && B.mode === 'rest';
-  const span = resting ? 0 : 0.03 + (el.seed % 7) * 0.01;
+  // hearth-calm (S1-D045): a walker warming by live fire stands nearly
+  // still — a gathering around the light, not a walk-by
+  const calm = !resting && el.hot && B && B.mode === 'wander';
+  const span = resting ? 0 : calm ? 0.005 : 0.03 + (el.seed % 7) * 0.01;
   const T = 7000 + (el.seed % 9) * 900;
   const ph = now / T * 2 * Math.PI + el.seed % 100 + phase;
   const wxp = clamp01(el.x + gx + Math.sin(ph) * span) * W;
   const dir = Math.cos(ph) >= 0 ? 1 : -1;
   const hop = B && B.hopT > 0 ? Math.sin((1 - B.hopT / 400) * Math.PI) * 7 * el.s : 0;
-  const bob = (resting ? Math.abs(Math.sin(now / 900 + el.seed)) * 1.2 : Math.abs(Math.sin(now / 240 + el.seed)) * 2.5) * el.s + hop;
+  const bob = (resting ? Math.abs(Math.sin(now / 900 + el.seed)) * 1.2
+             : calm    ? Math.abs(Math.sin(now / 700 + el.seed)) * 1.5
+             : Math.abs(Math.sin(now / 240 + el.seed)) * 2.5) * el.s + hop;
   const size = S * 0.062 * el.s * p;
   if (size < 2) return;
   wx.save(); wx.translate(wxp, el.y * H - bob); wx.scale(dir, 1);
@@ -149,13 +166,13 @@ function drawFireEl(el, now, p){
   wx.beginPath(); wx.moveTo(X - S*0.03*s, Y); wx.lineTo(X + S*0.03*s, Y - S*0.012*s); wx.stroke();
   wx.beginPath(); wx.moveTo(X - S*0.028*s, Y - S*0.012*s); wx.lineTo(X + S*0.03*s, Y); wx.stroke();
   const fl = (0.8 + 0.2 * Math.sin(now/95 + el.seed) + 0.1 * Math.sin(now/41 + el.seed*2)) * flareK;
-  const g = wx.createRadialGradient(X, Y - S*0.02*s, 2, X, Y - S*0.02*s, Math.max(4, S*0.09*s*fl));
-  g.addColorStop(0, 'rgba(232,161,58,0.5)'); g.addColorStop(1, 'rgba(232,161,58,0)');
-  wx.fillStyle = g; wx.fillRect(X - S*0.1*s, Y - S*0.14*s, S*0.2*s, S*0.2*s);
-  for (let i = 0; i < 2; i++){
-    const fh = S * (0.05 + 0.02*i) * s * fl * (1 + 0.15 * Math.sin(now/70 + el.seed + i*2));
-    const fw = S * 0.018 * s * (1.4 - i*0.4);
-    wx.fillStyle = i ? 'rgba(226,120,40,0.85)' : 'rgba(178,57,42,0.8)';
+  const g = wx.createRadialGradient(X, Y - S*0.02*s, 2, X, Y - S*0.02*s, Math.max(4, S*0.13*s*fl));
+  g.addColorStop(0, 'rgba(232,161,58,0.55)'); g.addColorStop(1, 'rgba(232,161,58,0)');
+  wx.fillStyle = g; wx.fillRect(X - S*0.14*s, Y - S*0.18*s, S*0.28*s, S*0.26*s);
+  for (let i = 0; i < 3; i++){
+    const fh = S * (0.05 + 0.022*i) * s * fl * (1 + 0.15 * Math.sin(now/70 + el.seed + i*2));
+    const fw = S * 0.018 * s * (1.5 - i*0.35);
+    wx.fillStyle = i === 2 ? 'rgba(238,178,72,0.75)' : i ? 'rgba(226,120,40,0.85)' : 'rgba(178,57,42,0.8)';
     wx.beginPath();
     wx.moveTo(X - fw, Y);
     wx.quadraticCurveTo(X - fw*0.6, Y - fh*0.55, X + Math.sin(now/110 + el.seed + i) * fw * 0.8, Y - fh);
@@ -163,10 +180,12 @@ function drawFireEl(el, now, p){
     wx.closePath(); wx.fill();
   }
   wx.restore();
-  if (Math.random() < 0.05 * s) addParticle(state.worldParticles, {
+  // sparks — a fountain of them while flaring (S1-D045 spectacle)
+  const sparkP = (L && L.flare > 0 ? 0.4 : 0.08) * s;
+  if (Math.random() < sparkP) addParticle(state.worldParticles, {
     x: X + (Math.random()-0.5) * 10 * s, y: Y - S*0.05*s,
-    vx: (Math.random()-0.5) * 10, vy: -25 - Math.random()*25,
-    grav: -15, life: 0.8 + Math.random()*0.6,
+    vx: (Math.random()-0.5) * (L && L.flare > 0 ? 26 : 10), vy: -25 - Math.random()*30,
+    grav: -15, life: 0.8 + Math.random()*0.6, hot: true,
     size: 1.5 + Math.random()*1.5, color: Math.random() < 0.5 ? '#e8a13a' : '#b2392a' }, MAX_WORLD_PARTICLES);
 }
 function drawPeakEl(el, now, p){
@@ -291,6 +310,12 @@ function drawWaterEl(el, now, p){
   const X = el.x * W, Y = el.y * H;
   const form = (el.p && el.p.form) || 'spring';
   const r = rng(el.seed);
+  // wet + heat aura = steam (S1-D045): pale wisps rise where fire meets water
+  if (el.hot && Math.random() < 0.08) addParticle(state.worldParticles, {
+    x: X + (Math.random()-0.5) * S * 0.06 * el.s, y: Y - 2,
+    vx: (Math.random()-0.5) * 5 + 2, vy: -10 - Math.random()*8,
+    grav: -7, life: 1.3 + Math.random()*0.8,
+    size: 2 + Math.random()*2, color: 'rgba(214,218,222,0.5)' }, MAX_WORLD_PARTICLES);
   wx.save();
   if (form === 'stream') {
     const w = S * (0.16 + r() * 0.06) * el.s * p;

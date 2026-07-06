@@ -5,6 +5,7 @@ let W = 0, H = 0, DPR = 1, S = 0;
 let GX = 0, GY = 0;
 let paperTex = null;
 let worldLayer = null, wx = null; // offscreen world layer (attention recession composites it, S1-D027)
+let eventLayer = null, ex = null; // live-heat overlay — composites at ≥EVENT_MIN_ALPHA (S1-D045)
 const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const QUERY = new URLSearchParams(location.search);
@@ -25,6 +26,10 @@ function resize() {
   worldLayer.width = W * DPR; worldLayer.height = H * DPR;
   wx = worldLayer.getContext('2d');
   wx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  eventLayer = document.createElement('canvas');
+  eventLayer.width = W * DPR; eventLayer.height = H * DPR;
+  ex = eventLayer.getContext('2d');
+  ex.setTransform(DPR, 0, 0, DPR, 0, 0);
 }
 function makePaper() {
   paperTex = document.createElement('canvas');

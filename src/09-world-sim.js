@@ -78,15 +78,25 @@ function plantSeal(def, isNew){
  * ------------------------------------------------------ */
 function flareIn(){ const [a, b] = ECOLOGY.fire.flareEveryMs; return a + worldRand() * (b - a); }
 const elDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+// A live heat event — the render's burn-through predicate and the sim's heat
+// source are one definition (S1-D045).
+function isLiveHeat(el){
+  return !!(ECOLOGY && el.life && kindHasTag(el.k, 'heat') && ECOLOGY.fire.heatPhases.includes(el.life.phase));
+}
 function heatSources(){
-  return state.world.els.filter(e => kindHasTag(e.k, 'heat') && e.life && ECOLOGY.fire.heatPhases.includes(e.life.phase));
+  return state.world.els.filter(isLiveHeat);
 }
 function updateWorld(dt, now){
   if (!ECOLOGY || !state.world.els.length) return;
   let removed = false;
+  const fires = heatSources();
+  const aura = ECOLOGY.heatAuraR || 0;
   for (const el of state.world.els){
     if (el.life) updateFireLife(el, dt);
-    if (kindHasTag(el.k, 'living')) updateAgent(el, dt);
+    if (kindHasTag(el.k, 'living')) updateAgent(el, dt, fires);
+    // transient heat-aura cue (never persisted): renderers answer it —
+    // trees shimmer, water steams, walkers stand hearth-calm
+    el.hot = aura > 0 && !kindHasTag(el.k, 'heat') && fires.some(f => elDist(el, f) < aura);
   }
   const before = state.world.els.length;
   state.world.els = state.world.els.filter(el => !(el.life && el.life.phase === 'gone'));
@@ -112,13 +122,12 @@ function updateFireLife(el, dt){
     if (L.t >= ECOLOGY.ashDecayMs) L.phase = 'gone';
   }
 }
-function updateAgent(el, dt){
+function updateAgent(el, dt, fires){
   const E = ECOLOGY;
   if (!el.beh) el.beh = { home: el.x, mode: 'wander', hopT: 0, warmed: false, restCd: 0, restT: 0 };
   const B = el.beh;
   if (B.hopT > 0) B.hopT -= dt;
   if (B.restCd > 0) B.restCd -= dt;
-  const fires = heatSources();
   let near = null, nd = 1e9;
   for (const f of fires){ const d = elDist(el, f); if (d < nd){ nd = d; near = f; } }
   const dangerNow = near ? E.dangerR * (near.life.flare > 0 ? E.fire.flareBoost : 1) : 0;

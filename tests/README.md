@@ -32,6 +32,7 @@ dispatched pointer events.
 | smoke10-classes.js | Element classes + seal fallback (C3): world:null plants a seal bearing the char; tier-2 water family with per-char persisted skins; sky uniqueness (sun) |
 | smoke11-ecology.js | Ecology E1 (S1-D020) over HTTP with a fast-clock fixture pack + seeded v2 payloads + ?seed=: E2 hard gate off; real 火 lock → full fire lifecycle to healed; startle/flee/return; tree beside fire survives its whole lifetime; warming drift+loiter; sheltered rest; mid-burn fuel checkpoint round-trip; cross-session ash decay; e1.destructions === 0 everywhere (E1 invariant) |
 | smoke12-depth.js | Depth staging (S1-D041): depthK projection contract (far<1<near, sky/horizon exempt); near-paints-more-ink pixel evidence read off the live canvas; 300 elements co-exist at the 60fps budget (C4 measurement); E1 danger distance spans the depth axis; __M0_METRICS sunset guarded in smoke6 |
+| smoke13-fire.js | Fire burns through (S1-D045): pack clock contract (full cycle fits a sitting, heatAuraR + wet tag present); pixel evidence that live fire stays visible during settled writing recession while the tree recedes to nothing, bloom restores both; hearth scene — hot cue on tree/water/warming walker, steam, sparks, warmings, zero destructions |
 
 Full gate for a new build: rebuild (`node tools/build.mjs`) after bumping the
-BUILD_ID file, then run smoke5–12; smoke1–4 re-run against the frozen builds.
+BUILD_ID file, then run smoke5–13; smoke1–4 re-run against the frozen builds.

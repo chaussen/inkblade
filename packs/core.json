@@ -2,7 +2,7 @@
  "version": 2,
  "meta": {
   "id": "core",
-  "generated": "2026-07-05",
+  "generated": "2026-07-06",
   "source": "makemeahanzi (Arphic APL — OPEN-12: prototyping only)",
   "intro": [
    "一",
@@ -95,11 +95,13 @@
   },
   "water": {
    "cls": "structure",
-   "tags": []
+   "tags": [
+    "wet"
+   ]
   }
  },
  "ecology": {
-  "comfortR": 0.16,
+  "comfortR": 0.22,
   "dangerR": 0.055,
   "warmDist": 0.09,
   "fleeDist": 0.16,
@@ -110,12 +112,12 @@
   "restMs": 2600,
   "restCooldownMs": 9000,
   "fire": {
-   "fuelMs": 360000,
-   "emberMs": 45000,
-   "smokeMs": 30000,
+   "fuelMs": 90000,
+   "emberMs": 20000,
+   "smokeMs": 15000,
    "flareEveryMs": [
-    15000,
-    40000
+    7000,
+    18000
    ],
    "flareMs": 1200,
    "flareBoost": 1.6,
@@ -124,7 +126,8 @@
     "embers"
    ]
   },
-  "ashDecayMs": 480000
+  "ashDecayMs": 180000,
+  "heatAuraR": 0.1
  },
  "chars": [
   {

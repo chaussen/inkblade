@@ -81,6 +81,11 @@ const DEPTH_SCALE_FAR  = 0.55;
 const DEPTH_SCALE_NEAR = 1.25;
 const DEPTH_EXEMPT = { horizon: 1, sun: 1, moon: 1 }; // sky + the fixed reference line
 const MIST_TOP = 0.55, MIST_BOTTOM = 0.72, MIST_ALPHA = 0.26;
+// Fire is light, and light reads through paper [LEAN — S1-D045]: live heat
+// events (and their sparks) composite at no less than this alpha, so a burn
+// stays visible under the writing veil. Figure-ground for structures/agents
+// (S1-D019) is unchanged — only light burns through.
+const EVENT_MIN_ALPHA = 0.85;
 function depthK(el){
   if (DEPTH_EXEMPT[el.k]) return 1;
   const q = Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
