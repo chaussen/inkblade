@@ -87,17 +87,44 @@ function loadEmbeddedPack() {
   const v = adoptPack(JSON.parse(el.textContent));
   if (!v.ok) throw new Error('embedded pack rejected: ' + v.errors.join('; '));
 }
-async function loadPackParam(url) {
-  try {
-    const res = await fetch(url);
-    const p = await res.json();
-    const v = adoptPack(p);
-    if (!v.ok) console.warn('[S1] ?pack= rejected (' + v.errors.join('; ') + '); using embedded pack');
-    return v.ok;
-  } catch (e) {
-    console.warn('[S1] ?pack= load failed (' + e.message + '); using embedded pack');
-    return false;
+// Chapter packs (S1-D047): ?pack= takes a comma-list of URLs. Each chapter
+// validates independently — a bad one is skipped with a warning, never
+// poisoning the rest. Merge is first-wins: meta from the first pack, kinds/
+// chars deduped in order, intro concatenated, first non-null ecology.
+async function loadPackParam(param) {
+  const urls = param.split(',').map(s => s.trim()).filter(Boolean);
+  const packs = [];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      const p = await res.json();
+      const v = validatePack(p);
+      if (!v.ok) { console.warn('[S1] ?pack= chapter rejected (' + url + ': ' + v.errors.join('; ') + ')'); continue; }
+      packs.push(p);
+    } catch (e) {
+      console.warn('[S1] ?pack= chapter failed (' + url + ': ' + e.message + ')');
+    }
   }
+  if (!packs.length) { console.warn('[S1] ?pack= yielded no usable pack; using embedded'); return false; }
+  const v = adoptPack(packs.length === 1 ? packs[0] : mergePacks(packs));
+  if (!v.ok) { console.warn('[S1] ?pack= merge rejected (' + v.errors.join('; ') + '); using embedded pack'); return false; }
+  return true;
+}
+function mergePacks(packs) {
+  const kinds = {}, chars = [], intro = [];
+  const cSeen = new Set(), iSeen = new Set();
+  for (const p of packs) {
+    for (const k in (p.kinds || {})) if (!(k in kinds)) kinds[k] = p.kinds[k];
+    for (const c of p.chars) if (!cSeen.has(c.ch)) { cSeen.add(c.ch); chars.push(c); }
+    for (const ch of ((p.meta && p.meta.intro) || [])) if (!iSeen.has(ch)) { iSeen.add(ch); intro.push(ch); }
+  }
+  return {
+    version: 2,
+    meta: { ...packs[0].meta, id: packs.map(p => (p.meta && p.meta.id) || '?').join('+'), intro },
+    kinds,
+    ecology: packs.map(p => p.ecology).find(e => e) || null,
+    chars,
+  };
 }
 function classOfKind(k) { const kd = KINDS[k]; return kd ? kd.cls : null; }
 function kindHasTag(k, tag) { const kd = KINDS[k]; return !!(kd && kd.tags && kd.tags.includes(tag)); }

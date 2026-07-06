@@ -95,6 +95,22 @@
       "tags": [
         "wet"
       ]
+    },
+    "figure": {
+      "cls": "agent",
+      "tags": [
+        "living"
+      ]
+    },
+    "flora": {
+      "cls": "structure",
+      "tags": [
+        "flammable"
+      ]
+    },
+    "terrain": {
+      "cls": "structure",
+      "tags": []
     }
   },
   "chars": {
@@ -593,5 +609,142 @@
     },
     "ashDecayMs": 180000,
     "heatAuraR": 0.1
+  },
+  "radicalClasses": {
+    "氵": {
+      "class": "water",
+      "forms": [
+        "spring",
+        "stream"
+      ]
+    },
+    "水": {
+      "class": "water",
+      "forms": [
+        "spring",
+        "stream"
+      ]
+    },
+    "冫": {
+      "class": "water",
+      "forms": [
+        "spring"
+      ]
+    },
+    "雨": {
+      "class": "water",
+      "forms": [
+        "spring"
+      ]
+    },
+    "木": {
+      "class": "flora",
+      "forms": [
+        "bush",
+        "sprout"
+      ]
+    },
+    "艹": {
+      "class": "flora",
+      "forms": [
+        "grass",
+        "reed",
+        "sprout"
+      ]
+    },
+    "禾": {
+      "class": "flora",
+      "forms": [
+        "reed",
+        "grass"
+      ]
+    },
+    "米": {
+      "class": "flora",
+      "forms": [
+        "grass"
+      ]
+    },
+    "竹": {
+      "class": "flora",
+      "forms": [
+        "reed"
+      ]
+    },
+    "亻": {
+      "class": "figure",
+      "forms": [
+        "stand",
+        "stroll",
+        "stoop"
+      ]
+    },
+    "人": {
+      "class": "figure",
+      "forms": [
+        "stand",
+        "stroll"
+      ]
+    },
+    "女": {
+      "class": "figure",
+      "forms": [
+        "stand",
+        "stoop"
+      ]
+    },
+    "子": {
+      "class": "figure",
+      "forms": [
+        "stoop",
+        "stand"
+      ]
+    },
+    "儿": {
+      "class": "figure",
+      "forms": [
+        "stroll"
+      ]
+    },
+    "山": {
+      "class": "terrain",
+      "forms": [
+        "crag",
+        "boulder"
+      ]
+    },
+    "土": {
+      "class": "terrain",
+      "forms": [
+        "rock",
+        "boulder"
+      ]
+    },
+    "石": {
+      "class": "terrain",
+      "forms": [
+        "boulder",
+        "rock"
+      ]
+    },
+    "厂": {
+      "class": "terrain",
+      "forms": [
+        "crag"
+      ]
+    },
+    "广": {
+      "class": "terrain",
+      "forms": [
+        "crag"
+      ]
+    },
+    "阝": {
+      "class": "terrain",
+      "forms": [
+        "rock",
+        "crag"
+      ]
+    }
   }
 }

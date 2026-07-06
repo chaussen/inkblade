@@ -98,6 +98,8 @@ function bandFor(k){
     case 'terrace': return [0.62, 0.74];
     case 'horizon': return [0.76, 0.76];
     case 'tree': case 'fire': case 'resttree': return [0.60, 0.88];
+    case 'flora':   return [0.60, 0.88];
+    case 'terrain': return [0.58, 0.82];
     case 'path':    return [0.66, 0.88];
     case 'seal':    return [0.62, 0.86];
     case 'sun': case 'moon': return [0.09, 0.16];

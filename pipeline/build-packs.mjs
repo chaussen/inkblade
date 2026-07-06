@@ -2,7 +2,7 @@
 // time, NEVER at runtime. Derives versioned character packs from the MMAH
 // stroke DB (pipeline/data/, Arphic-derived — OPEN-12: prototyping only).
 //
-//   node pipeline/build-packs.mjs            → packs/core.json + pipeline/queue.json
+//   node pipeline/build-packs.mjs            → packs/core.json + packs/basic.json + pipeline/queue.json
 //
 // Stages (handoff C2): ingest → geometry → verb derivation → component
 // derivation → validation (ambiguity queue) → emit. Anti-grading invariants
@@ -15,6 +15,10 @@ import readline from 'node:readline';
 const root = new URL('..', import.meta.url);
 const overrides = JSON.parse(readFileSync(new URL('overrides.json', import.meta.url), 'utf8'));
 const roster = Object.keys(overrides.chars);
+// The basic tier (S1-D047): frequency-ordered roster; the first BASIC_TARGET
+// chars that survive derivation ship as packs/basic.json.
+const rosterBasic = [...readFileSync(new URL('roster-basic.txt', import.meta.url), 'utf8').trim()];
+const BASIC_TARGET = 500;
 const queue = [];
 
 /* ---------------- geometry ---------------- */
@@ -134,13 +138,22 @@ function deriveVerbs(ch, i, pts) {
       const t = Math.abs(turn(angleOf(prev.a, prev.b), angleOf(seg.a, seg.b)));
       if (!bk || (seg.L < HOOK_MAX_UNITS && t > CORNER_TURN_DEG)) { toks.push('hook'); continue; }
     }
-    if (!bk) { queue.push({ ch, stroke: i, issue: 'segment in no bucket', detail: angleOf(seg.a, seg.b).toFixed(1) + '°' }); return null; }
+    if (!bk) {
+      // a short leftward/upward mid-segment is a pen transition, not a
+      // writing direction — absorb it (S1-D047); long ones stay hard
+      if (seg.L < HOOK_MAX_UNITS) { queue.push({ ch, stroke: i, issue: 'no-bucket sliver absorbed', detail: angleOf(seg.a, seg.b).toFixed(1) + '°', review: 'soft' }); continue; }
+      queue.push({ ch, stroke: i, issue: 'segment in no bucket', detail: angleOf(seg.a, seg.b).toFixed(1) + '°' }); return null;
+    }
     if (toks[toks.length - 1] !== bk) toks.push(bk); // repeated bucket = gentle curve, not a compound
   }
   const nseg = toks.filter(t => t !== 'hook').length;
   if (!nseg) { queue.push({ ch, stroke: i, issue: 'no segments derived' }); return null; }
-  if (nseg > 3) { queue.push({ ch, stroke: i, issue: 'more than 3 segments', detail: toks.join('>') }); return null; }
-  return toks.join('>');
+  if (nseg > 3) {
+    // the sanctioned escape (S1-D021): complex strokes match first+last
+    queue.push({ ch, stroke: i, issue: 'complex stroke (>3 segments)', detail: toks.join('>'), review: 'soft' });
+    return { verbs: toks.join('>'), complex: true };
+  }
+  return { verbs: toks.join('>') };
 }
 
 /* ---------------- component derivation ---------------- */
@@ -211,51 +224,81 @@ const rl = readline.createInterface({ input: createReadStream(new URL('data/grap
 rl.on('line', l => {
   if (!l) return;
   const ch = JSON.parse(l).character;
-  if (roster.includes(ch)) gfx[ch] = JSON.parse(l);
+  if (roster.includes(ch) || rosterBasic.includes(ch)) gfx[ch] = JSON.parse(l);
 });
-rl.on('close', () => {
-  const chars = [];
-  for (const ch of roster) {
-    const ov = overrides.chars[ch];
-    const g = gfx[ch], d = dict[ch];
-    if (!g) { queue.push({ ch, issue: 'no glyph data' }); continue; }
-    const strokes = [];
-    let bad = false;
-    g.medians.forEach((m, i) => {
-      const pts = processMedian(ch, i, m);
-      let verbs = deriveVerbs(ch, i, pts);
-      if (ov.expectVerbs && verbs !== ov.expectVerbs[i]) {
-        queue.push({ ch, stroke: i, issue: 'derived verb differs from canon', detail: (verbs || 'null') + ' vs ' + ov.expectVerbs[i], review: verbs ? 'soft' : 'hard' });
-        verbs = ov.expectVerbs[i]; // canon (real orthography) pins the verb; geometry stays real
-      }
-      if (!verbs) bad = true;
-      strokes.push({ verbs, pts });
-    });
-    if (bad) continue;
-    const comps = ov.comps ? ov.comps.map(r => ({ range: r })) : deriveComps(ch, d, strokes.length);
-    const pinyin = (d && d.pinyin && d.pinyin[0]) || ov.pinyin || '';
-    if (ov.pinyin && pinyin !== ov.pinyin) queue.push({ ch, issue: 'pinyin differs', detail: pinyin + ' vs ' + ov.pinyin, review: 'soft' });
-    chars.push({
-      ch, pinyin: ov.pinyin || pinyin, gloss: ov.gloss || ((d && d.definition) || '').split(/[;,]/)[0],
-      fx: ov.fx, strokes, comps, world: ov.world ?? null,
-    });
-  }
-  const pack = {
+// Radical → tier-2 class family (S1-D047): world presence at scale without
+// per-char curation. Form picked by codepoint — siblings, not clones.
+// Chars with no mapped radical fall to world:null → the seal (C3).
+function autoWorld(ch, d) {
+  const rc = overrides.radicalClasses && d && overrides.radicalClasses[d.radical];
+  if (!rc) return null;
+  const form = rc.forms[ch.codePointAt(0) % rc.forms.length];
+  return { tier: 2, class: rc.class, params: { form } };
+}
+function buildChar(ch) {
+  const ov = overrides.chars[ch] || {};
+  const g = gfx[ch], d = dict[ch];
+  if (!g) { queue.push({ ch, issue: 'no glyph data' }); return null; }
+  const strokes = [];
+  let bad = false;
+  g.medians.forEach((m, i) => {
+    const pts = processMedian(ch, i, m);
+    const dv = deriveVerbs(ch, i, pts);
+    let verbs = dv && dv.verbs;
+    if (ov.expectVerbs && verbs !== ov.expectVerbs[i]) {
+      queue.push({ ch, stroke: i, issue: 'derived verb differs from canon', detail: (verbs || 'null') + ' vs ' + ov.expectVerbs[i], review: verbs ? 'soft' : 'hard' });
+      verbs = ov.expectVerbs[i]; // canon (real orthography) pins the verb; geometry stays real
+    }
+    if (!verbs) bad = true;
+    strokes.push(dv && dv.complex ? { verbs, pts, complex: true } : { verbs, pts });
+  });
+  if (bad) return null;
+  const comps = ov.comps ? ov.comps.map(r => ({ range: r })) : deriveComps(ch, d, strokes.length);
+  const pinyin = (d && d.pinyin && d.pinyin[0]) || ov.pinyin || '';
+  if (ov.pinyin && pinyin !== ov.pinyin) queue.push({ ch, issue: 'pinyin differs', detail: pinyin + ' vs ' + ov.pinyin, review: 'soft' });
+  return {
+    ch, pinyin: ov.pinyin || pinyin, gloss: ov.gloss || ((d && d.definition) || '').split(/[;,]/)[0],
+    fx: ov.fx, strokes, comps,
+    world: ov.world !== undefined ? ov.world : autoWorld(ch, d),
+  };
+}
+function emitPack(file, id, intro, chars) {
+  writeFileSync(new URL(file, root), JSON.stringify({
     version: 2,
     meta: {
-      id: overrides.meta.id, generated: new Date().toISOString().slice(0, 10),
-      source: 'makemeahanzi (Arphic APL — OPEN-12: prototyping only)',
-      intro: overrides.meta.intro,
+      id, generated: new Date().toISOString().slice(0, 10),
+      source: 'makemeahanzi (Arphic APL 1999 — S1-D035)',
+      intro,
     },
     kinds: overrides.kinds,
     ecology: overrides.ecology || null,
     chars,
-  };
-  writeFileSync(new URL('packs/core.json', root), JSON.stringify(pack, null, 1));
+  })); // minified — packs are machine artifacts; queue.json stays readable
+}
+rl.on('close', () => {
+  // core: the curated starter — hard queue entries here fail the build
+  const chars = [];
+  for (const ch of roster) { const c = buildChar(ch); if (c) chars.push(c); }
+  const coreHard = queue.filter(q => q.review !== 'soft').length;
+  emitPack('packs/core.json', overrides.meta.id, overrides.meta.intro, chars);
+
+  // basic: first BASIC_TARGET survivors of the frequency roster, intro =
+  // emission order (frequency-ordered progression). Hard entries here drop
+  // the char and the roster flows past them.
+  const basic = [];
+  const dropped = [];
+  for (const ch of rosterBasic) {
+    if (basic.length >= BASIC_TARGET) break;
+    const c = buildChar(ch);
+    if (c) basic.push(c); else dropped.push(ch);
+  }
+  emitPack('packs/basic.json', 'basic', basic.map(c => c.ch), basic);
+
   writeFileSync(new URL('queue.json', import.meta.url), JSON.stringify(queue, null, 1));
   const hard = queue.filter(q => q.review !== 'soft');
   console.log('packs/core.json:', chars.length, 'chars emitted.');
-  console.log('queue:', queue.length, 'entries (' + hard.length + ' hard).');
-  for (const q of queue) console.log(' ', q.review === 'soft' ? '(soft)' : '(HARD)', q.ch, q.issue, q.detail || '', q.stroke ?? '');
-  if (hard.length) process.exitCode = 1;
+  console.log('packs/basic.json:', basic.length, 'chars emitted (' + dropped.length + ' dropped: ' + dropped.join('') + ')');
+  console.log('queue:', queue.length, 'entries (' + hard.length + ' hard, ' + coreHard + ' in core).');
+  for (const q of hard) console.log('  (HARD)', q.ch, q.issue, q.detail || '', q.stroke ?? '');
+  if (coreHard) process.exitCode = 1;
 });

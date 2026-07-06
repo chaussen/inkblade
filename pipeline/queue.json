@@ -69,5 +69,362 @@
   "issue": "sub-2-stroke chunk merged",
   "detail": "chunk 0",
   "review": "soft"
+ },
+ {
+  "ch": "不",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "了",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "我",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "个",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "上",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "大",
+  "stroke": 1,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "下",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "之",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "成",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "么",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "看",
+  "stroke": 0,
+  "issue": "segment in no bucket",
+  "detail": "169.2°"
+ },
+ {
+  "ch": "天",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "其",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "主",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "前",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "开",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "无",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "工",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "三",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "正",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "业",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "两",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "手",
+  "stroke": 0,
+  "issue": "segment in no bucket",
+  "detail": "167.2°"
+ },
+ {
+  "ch": "二",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "己",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "月",
+  "stroke": 0,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "门",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 2",
+  "review": "soft"
+ },
+ {
+  "ch": "门",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "先",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "儿",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "立",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 2",
+  "review": "soft"
+ },
+ {
+  "ch": "几",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "口",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "系",
+  "stroke": 0,
+  "issue": "segment in no bucket",
+  "detail": "168.3°"
+ },
+ {
+  "ch": "更",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "少",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "反",
+  "stroke": 0,
+  "issue": "segment in no bucket",
+  "detail": "169.5°"
+ },
+ {
+  "ch": "再",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "直",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 2",
+  "review": "soft"
+ },
+ {
+  "ch": "德",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 2",
+  "review": "soft"
+ },
+ {
+  "ch": "至",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "且",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "王",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "万",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "共",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "笑",
+  "stroke": 6,
+  "issue": "segment in no bucket",
+  "detail": "173.2°"
+ },
+ {
+  "ch": "干",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "往",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "具",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "爱",
+  "stroke": 0,
+  "issue": "segment in no bucket",
+  "detail": "168.6°"
+ },
+ {
+  "ch": "百",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "亚",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "火",
+  "stroke": 2,
+  "issue": "derived verb differs from canon",
+  "detail": "shu vs pie",
+  "review": "soft"
+ },
+ {
+  "ch": "断",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "委",
+  "stroke": 0,
+  "issue": "segment in no bucket",
+  "detail": "170.0°"
+ },
+ {
+  "ch": "乎",
+  "stroke": 0,
+  "issue": "segment in no bucket",
+  "detail": "167.5°"
+ },
+ {
+  "ch": "广",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
+ },
+ {
+  "ch": "引",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
+ },
+ {
+  "ch": "首",
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 1",
+  "review": "soft"
  }
 ]

@@ -12,6 +12,7 @@ const ELEMENT_DRAW = {
   resttree: drawRestTreeEl, peak: drawPeakEl, ridge: drawRidgeEl,
   terrace: drawTerraceEl, horizon: drawHorizonEl, path: drawPathEl, seal: drawSealEl,
   sun: drawSunEl, moon: drawMoonEl, field: drawFieldEl, water: drawWaterEl,
+  flora: drawFloraEl, terrain: drawTerrainEl, figure: drawFigureEl,
 };
 function drawWorld(dt, now){
   if (!state.world.els.length && !state.worldParticles.length) {
@@ -342,6 +343,112 @@ function drawWaterEl(el, now, p){
     wx.globalAlpha = (1 - q) * 0.5;
     wx.beginPath(); wx.ellipse(X, Y, rw * (0.3 + q * 0.9), rw * 0.38 * (0.3 + q * 0.9), 0, 0, Math.PI * 2); wx.stroke();
   }
+  wx.restore();
+}
+/* -------- basic-tier class families (S1-D047): flora / terrain / figure --
+ * Pure brush geometry — no characters live in the engine. Per-char `form`
+ * param + seed variance make siblings, not clones. Flora shares the tree's
+ * heat-shimmer answer to el.hot; figures are living agents (beh applies). */
+function drawFloraEl(el, now, p){
+  const X = el.x * W, Y = el.y * H;
+  const r = rng(el.seed);
+  const form = (el.p && el.p.form) || 'grass';
+  const h = S * 0.055 * el.s * p * (0.85 + r() * 0.3);
+  if (h < 2) return;
+  const swT = el.hot ? 480 : 1600;
+  const sway = Math.sin(now / swT + el.seed % 10) * (el.hot ? 4 : 1.6);
+  wx.save(); wx.translate(X, Y);
+  wx.strokeStyle = 'rgba(96,116,72,0.75)'; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1, S * 0.005 * el.s);
+  if (form === 'grass'){
+    const n = 4 + Math.floor(r() * 3);
+    for (let i = 0; i < n; i++){
+      const a = (i / (n - 1) - 0.5) * 1.2 + (r() - 0.5) * 0.2;
+      const bh = h * (0.6 + r() * 0.5);
+      wx.beginPath(); wx.moveTo(0, 0);
+      wx.quadraticCurveTo(a * bh * 0.5, -bh * 0.6, a * bh + sway, -bh); wx.stroke();
+    }
+  } else if (form === 'reed'){
+    const n = 2 + Math.floor(r() * 2);
+    for (let i = 0; i < n; i++){
+      const ox = (i - (n - 1) / 2) * h * 0.22, bh = h * (1.3 + r() * 0.5);
+      wx.beginPath(); wx.moveTo(ox, 0);
+      wx.quadraticCurveTo(ox + sway * 0.4, -bh * 0.55, ox + sway, -bh); wx.stroke();
+      wx.fillStyle = 'rgba(122,112,78,0.7)';
+      wx.beginPath(); wx.ellipse(ox + sway, -bh, h * 0.06, h * 0.16, 0, 0, Math.PI * 2); wx.fill();
+    }
+  } else if (form === 'bush'){
+    wx.beginPath(); wx.moveTo(0, 0); wx.lineTo(sway * 0.3, -h * 0.35); wx.stroke();
+    for (let i = 0; i < 3; i++){
+      const fx2 = (r() - 0.5) * h, fy = -h * (0.4 + r() * 0.4), fr = h * (0.3 + r() * 0.2);
+      wx.fillStyle = `rgba(${92 + Math.floor(r()*20)},${110 + Math.floor(r()*18)},${74 + Math.floor(r()*14)},0.5)`;
+      wx.beginPath(); wx.ellipse(fx2 + sway * 0.4, fy, fr * 1.15, fr * 0.75, 0, 0, Math.PI * 2); wx.fill();
+    }
+  } else { // sprout
+    wx.beginPath(); wx.moveTo(0, 0); wx.quadraticCurveTo(sway * 0.3, -h * 0.5, sway * 0.6, -h * 0.8); wx.stroke();
+    wx.fillStyle = 'rgba(104,128,74,0.65)';
+    wx.beginPath(); wx.ellipse(-h * 0.18 + sway * 0.4, -h * 0.55, h * 0.22, h * 0.10, -0.5, 0, Math.PI * 2); wx.fill();
+    wx.beginPath(); wx.ellipse(h * 0.22 + sway * 0.5, -h * 0.7, h * 0.22, h * 0.10, 0.5, 0, Math.PI * 2); wx.fill();
+  }
+  wx.restore();
+}
+function drawTerrainEl(el, now, p){
+  const X = el.x * W, Y = el.y * H;
+  const r = rng(el.seed);
+  const form = (el.p && el.p.form) || 'rock';
+  const w = S * (form === 'boulder' ? 0.055 : form === 'crag' ? 0.045 : 0.038) * el.s * p * (0.85 + r() * 0.3);
+  if (w < 2) return;
+  wx.save(); wx.translate(X, Y);
+  wx.strokeStyle = 'rgba(88,84,74,0.55)'; wx.fillStyle = 'rgba(112,106,94,0.28)';
+  wx.lineWidth = Math.max(1, S * 0.004 * el.s); wx.lineJoin = 'round';
+  wx.beginPath();
+  if (form === 'crag'){
+    wx.moveTo(-w, 0); wx.lineTo(-w * 0.25, -w * (1.5 + r() * 0.5));
+    wx.lineTo(w * 0.2, -w * (0.9 + r() * 0.3)); wx.lineTo(w, 0);
+  } else {
+    const hh = w * (form === 'boulder' ? 0.85 : 0.55);
+    wx.moveTo(-w, 0); wx.quadraticCurveTo(-w * 0.7, -hh, -w * 0.1, -hh * (1 + r() * 0.15));
+    wx.quadraticCurveTo(w * 0.6, -hh * 0.9, w, 0);
+  }
+  wx.closePath(); wx.fill(); wx.stroke();
+  if (form === 'boulder'){ // one facet line gives it weight
+    wx.beginPath(); wx.moveTo(-w * 0.3, -w * 0.7); wx.lineTo(w * 0.1, -w * 0.2); wx.stroke();
+  }
+  wx.restore();
+}
+function drawFigureEl(el, now, p){
+  const B = el.beh;
+  const resting = B && B.mode === 'rest';
+  const calm = !resting && el.hot && B && B.mode === 'wander';
+  const form = (el.p && el.p.form) || 'stand';
+  const span = resting ? 0 : calm ? 0.005 : form === 'stroll' ? 0.03 + (el.seed % 5) * 0.01 : 0.012;
+  const T = 8000 + (el.seed % 7) * 1100;
+  const ph = now / T * 2 * Math.PI + el.seed % 100;
+  const fx2 = clamp01(el.x + Math.sin(ph) * span) * W;
+  const dir = Math.cos(ph) >= 0 ? 1 : -1;
+  const hop = B && B.hopT > 0 ? Math.sin((1 - B.hopT / 400) * Math.PI) * 7 * el.s : 0;
+  const bob = (resting || calm ? Math.abs(Math.sin(now / 800 + el.seed)) * 1.3
+                               : Math.abs(Math.sin(now / 260 + el.seed)) * 2.2) * el.s + hop;
+  const h = S * 0.052 * el.s * p;
+  if (h < 2) return;
+  const stoop = form === 'stoop' || resting;
+  wx.save(); wx.translate(fx2, el.y * H - bob); wx.scale(dir, 1);
+  wx.strokeStyle = '#241f18'; wx.fillStyle = '#241f18';
+  wx.globalAlpha = 0.9; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1.2, h * 0.13);
+  // body: one brush stroke, bent when stooping
+  wx.beginPath(); wx.moveTo(0, 0);
+  if (stoop) wx.quadraticCurveTo(h * 0.28, -h * 0.55, h * 0.05, -h * 0.78);
+  else wx.lineTo(0, -h * 0.8);
+  wx.stroke();
+  // legs
+  wx.lineWidth = Math.max(1, h * 0.10);
+  const step = form === 'stroll' ? h * 0.3 : h * 0.16;
+  wx.beginPath(); wx.moveTo(0, -h * 0.28); wx.lineTo(-step * 0.6, 0); wx.stroke();
+  wx.beginPath(); wx.moveTo(0, -h * 0.28); wx.lineTo(step, 0); wx.stroke();
+  // head
+  const hx = stoop ? h * 0.12 : 0;
+  wx.beginPath(); wx.arc(hx, -h * (stoop ? 0.86 : 0.95), h * 0.14, 0, Math.PI * 2); wx.fill();
   wx.restore();
 }
 // Seal / stele (C3): a small stone slab bearing a cinnabar seal impression.

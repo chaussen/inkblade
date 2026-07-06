@@ -23,15 +23,10 @@ top-down for anything marked here; nothing below is real until logged there.
 | M1c | S1-M1c-b2-20260706 | Ecology E1: fire lifecycle, R1–R3 agents, E2 hard gate | S1-D038 |
 | M1d | S1-M1d-b1-20260706 | Depth staging (y-as-depth), cap 300 @60fps, alias sunset | S1-D042 |
 | M1e | S1-M1e-b2-20260706 | Fire burns through the veil (EVENT_MIN_ALPHA overlay), 2-min observable cycle, spark flares, hearth interactions (shimmer/steam/hearth-calm via heatAuraR hot cue) | S1-D046 |
+| M1f | S1-M1f-b1-20260706 | Basic tier: packs/basic.json 500 chars (317KB, frequency-ordered), chapter-pack ?pack= merge loader, radical→class auto-assignment, flora/terrain/figure renderers, derivation hardened (complex flag, sliver absorption). OPEN-15 logged: flat-撇 gap drops 看手系反笑爱委乎 — needs a move-set ruling | S1-D048 |
 
 ## Planned
-### M1f — the basic tier (scale to ~500 chars) [path logged S1-D043] — NEXT
-- Chapter-pack loader: `?pack=` accepts multiple packs / a manifest; merge = validate + concat chars, first-pack wins meta; embedded starter stays.
-- Pipeline: radical→class auto-assignment (氵→water, 木/艹→flora, 亻→figure, 山→terrain, …); frequency-ordered intro; queue triage in batches.
-- Tier-2 renderer library growth as radical families demand (figure/flora/terrain first).
-- Gate: 500 chars load + random-sample locks green + queue fully triaged; pack ≈280KB.
-
-### M2a — E2 ignition (OPEN-14 axis: Code designs now, per S1-D040)
+### M2a — E2 ignition (OPEN-14 axis: Code designs now, per S1-D040) — NEXT
 - Recommended axis: **placement choice** — the player chooses *where* the world-mark lands (e.g. slash direction/position at lock nudges the planting spot), making "fire next to the dry grove" a chosen act before ignition ever unlocks. Want-driven repertoire deferred to M2b.
 - Then E2: heat + flammable adjacency → ignition, behind the existing `E2_ENABLED` gate flipped only when the choice axis ships. Player-planted matter must remain protected by an explicit consent rule to preserve the E1 no-destruction covenant (design note: burnt tree = transformed, never deleted — regrows).
 - Regrowth pairs with it: ash → sprout → sapling (the scroll's answer to fire; additive lifecycle).
@@ -40,6 +35,8 @@ top-down for anything marked here; nothing below is real until logged there.
 - World state generates wants ("the grove is dark — write something that burns"); repertoire choice replaces some ghost glyphs. Needs want-authoring model that never becomes a quest log. Solves OPEN-3 diegetically.
 
 ### Backlog (unscheduled)
+- OPEN-15 move-set ruling: flat-撇 (平撇, ~170°) — widen pie as real-form grace (S1-D032 amendment at derive AND match), a 6th bucket, or keep dropping 看手系反笑爱委乎. Restores 8 top-frequency chars.
+- Radical map growth: 口讠扌辶纟宀 etc. unmapped (378/500 are seals today) — each new family renderer + radicalClasses row converts dozens of seals into scenery.
 - Audio pass (palette beyond crackle/startle; John ruled lower priority).
 - Real-device mobile perf measurement (headless 300@60fps logged S1-D042; pre-render only if a device breaches).
 - Day/night from sun/moon presence; weather as events.
