@@ -7,7 +7,7 @@
  * proportion, segment length ratios, or neatness). `pts` is the
  * render/hit geometry contract.
  * =========================================================== */
-let PACK = null, CHARS = [], INTRO = [], KINDS = {};
+let PACK = null, CHARS = [], INTRO = [], KINDS = {}, ECOLOGY = null;
 
 const VERB_TOKENS = ['heng', 'dr', 'shu', 'pie', 'ti', 'hook'];
 
@@ -77,6 +77,7 @@ function adoptPack(p) {
   if (v.quarantined.length) console.warn('[S1] pack chars quarantined:', v.quarantined.join(' | '));
   PACK = p;
   KINDS = p.kinds;
+  ECOLOGY = p.ecology || null; // E1 reaction tuning — data, never engine
   INTRO = (p.meta && p.meta.intro) || [];
   CHARS = p.chars.filter(c => !validateChar(c)).map(adaptChar);
   return v;
@@ -99,3 +100,4 @@ async function loadPackParam(url) {
   }
 }
 function classOfKind(k) { const kd = KINDS[k]; return kd ? kd.cls : null; }
+function kindHasTag(k, tag) { const kd = KINDS[k]; return !!(kd && kd.tags && kd.tags.includes(tag)); }

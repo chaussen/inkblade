@@ -248,6 +248,7 @@ rl.on('close', () => {
       intro: overrides.meta.intro,
     },
     kinds: overrides.kinds,
+    ecology: overrides.ecology || null,
     chars,
   };
   writeFileSync(new URL('packs/core.json', root), JSON.stringify(pack, null, 1));

@@ -21,6 +21,7 @@ function sfxFizzle()    { tone(300, 0.25, 'sine', 0.08); tone(210, 0.35, 'sine',
 // world is receded must not be silent-missable. No caller exists until
 // ecology E1 lands (M1c) — E1 events route through here.
 function sfxWorldCue(kind) {
+  if (!AC) return; // world events never initiate audio; a user gesture must have
   if (kind === 'crackle') tone(120 + Math.random() * 60, 0.12, 'sine', 0.04);
   else if (kind === 'startle') tone(520, 0.09, 'triangle', 0.05);
 }

@@ -18,6 +18,7 @@ function frame(now) {
     state.shake = Math.max(0, state.shake - dt / 40);
   }
   ctx.drawImage(paperTex, 0, 0, W, H);
+  updateWorld(dt, now);
   drawWorld(dt, now);
 
   if (state.mode === 'title') {

@@ -30,6 +30,7 @@ dispatched pointer events.
 | smoke8-migration.js | Save v2 migration (S1-D026): implicit-v1 + unknown kind loads losslessly, seal self-heal, one-time backup, v2 round-trip |
 | smoke9-folds.js | Polyline verb model (C1): 口日月田国土山水川 lock via real fold/hook gestures; straight shu cuts 竖钩 (hooks optional); wrong-turn deflects; jitter never splits a straight slash |
 | smoke10-classes.js | Element classes + seal fallback (C3): world:null plants a seal bearing the char; tier-2 water family with per-char persisted skins; sky uniqueness (sun) |
+| smoke11-ecology.js | Ecology E1 (S1-D020) over HTTP with a fast-clock fixture pack + seeded v2 payloads + ?seed=: E2 hard gate off; real 火 lock → full fire lifecycle to healed; startle/flee/return; tree beside fire survives its whole lifetime; warming drift+loiter; sheltered rest; mid-burn fuel checkpoint round-trip; cross-session ash decay; e1.destructions === 0 everywhere (E1 invariant) |
 
 Full gate for a new build: rebuild (`node tools/build.mjs`) after bumping the
-BUILD_ID file, then run smoke5–10; smoke1–4 re-run against the frozen builds.
+BUILD_ID file, then run smoke5–11; smoke1–4 re-run against the frozen builds.

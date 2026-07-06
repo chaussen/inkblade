@@ -87,12 +87,15 @@ function drawCrowdEl(el, now, p){
   for (let i = 0; i < 3; i++) drawWalkerEl({ ...el, s: el.s * (0.88 + ((el.seed >> i) % 3) * 0.09), seed: el.seed + i * 7 }, now, p, i * 2.1, (i - 1) * 0.032);
 }
 function drawWalkerEl(el, now, p, phase, gx){
-  const span = 0.03 + (el.seed % 7) * 0.01;
+  const B = el.beh;
+  const resting = B && B.mode === 'rest';
+  const span = resting ? 0 : 0.03 + (el.seed % 7) * 0.01;
   const T = 7000 + (el.seed % 9) * 900;
   const ph = now / T * 2 * Math.PI + el.seed % 100 + phase;
   const wxp = clamp01(el.x + gx + Math.sin(ph) * span) * W;
   const dir = Math.cos(ph) >= 0 ? 1 : -1;
-  const bob = Math.abs(Math.sin(now / 240 + el.seed)) * 2.5 * el.s;
+  const hop = B && B.hopT > 0 ? Math.sin((1 - B.hopT / 400) * Math.PI) * 7 * el.s : 0;
+  const bob = (resting ? Math.abs(Math.sin(now / 900 + el.seed)) * 1.2 : Math.abs(Math.sin(now / 240 + el.seed)) * 2.5) * el.s + hop;
   const size = S * 0.062 * el.s * p;
   if (size < 2) return;
   wx.save(); wx.translate(wxp, el.y * H - bob); wx.scale(dir, 1);
@@ -115,11 +118,15 @@ function drawRestTreeEl(el, now, p){
 function drawFireEl(el, now, p){
   const X = el.x * W, Y = el.y * H, s = el.s * p;
   if (s < 0.05) return;
+  // R4 mortal lifecycle: embers → smoke → fading ash mark
+  const L = el.life;
+  if (L && L.phase !== 'burning'){ drawFireAftermath(el, now, s, X, Y); return; }
+  const flareK = L && L.flare > 0 ? 1.35 : 1;
   wx.save();
   wx.strokeStyle = '#4a3a26'; wx.lineWidth = Math.max(1.5, S * 0.010 * s); wx.lineCap = 'round'; wx.globalAlpha = 0.85;
   wx.beginPath(); wx.moveTo(X - S*0.03*s, Y); wx.lineTo(X + S*0.03*s, Y - S*0.012*s); wx.stroke();
   wx.beginPath(); wx.moveTo(X - S*0.028*s, Y - S*0.012*s); wx.lineTo(X + S*0.03*s, Y); wx.stroke();
-  const fl = 0.8 + 0.2 * Math.sin(now/95 + el.seed) + 0.1 * Math.sin(now/41 + el.seed*2);
+  const fl = (0.8 + 0.2 * Math.sin(now/95 + el.seed) + 0.1 * Math.sin(now/41 + el.seed*2)) * flareK;
   const g = wx.createRadialGradient(X, Y - S*0.02*s, 2, X, Y - S*0.02*s, Math.max(4, S*0.09*s*fl));
   g.addColorStop(0, 'rgba(232,161,58,0.5)'); g.addColorStop(1, 'rgba(232,161,58,0)');
   wx.fillStyle = g; wx.fillRect(X - S*0.1*s, Y - S*0.14*s, S*0.2*s, S*0.2*s);
@@ -179,6 +186,38 @@ function drawPathEl(el, now, p){
   wx.save(); wx.strokeStyle = 'rgba(70,62,48,0.25)'; wx.lineWidth = 3; wx.lineCap = 'round';
   wx.beginPath(); wx.moveTo(X - w, Y + w*0.35); wx.lineTo(X + w, Y - w*0.35); wx.stroke();
   wx.beginPath(); wx.moveTo(X - w*0.8, Y - w*0.4); wx.lineTo(X + w*0.8, Y + w*0.4); wx.stroke();
+  wx.restore();
+}
+function drawFireAftermath(el, now, s, X, Y){
+  const L = el.life, F = ECOLOGY ? ECOLOGY.fire : null;
+  wx.save();
+  if (L.phase !== 'ash'){
+    // charred logs remain through embers and smoke
+    wx.strokeStyle = 'rgba(40,34,28,0.8)'; wx.lineWidth = Math.max(1.5, S * 0.010 * s); wx.lineCap = 'round';
+    wx.beginPath(); wx.moveTo(X - S*0.03*s, Y); wx.lineTo(X + S*0.03*s, Y - S*0.012*s); wx.stroke();
+    wx.beginPath(); wx.moveTo(X - S*0.028*s, Y - S*0.012*s); wx.lineTo(X + S*0.03*s, Y); wx.stroke();
+  }
+  if (L.phase === 'embers' && F){
+    const q = 1 - L.t / F.emberMs;
+    const pulse = 0.6 + 0.4 * Math.sin(now / 260 + el.seed);
+    const g = wx.createRadialGradient(X, Y, 1, X, Y, Math.max(3, S * 0.05 * s));
+    g.addColorStop(0, 'rgba(214,90,40,' + (0.45 * q * pulse) + ')');
+    g.addColorStop(1, 'rgba(214,90,40,0)');
+    wx.fillStyle = g; wx.fillRect(X - S*0.06*s, Y - S*0.06*s, S*0.12*s, S*0.12*s);
+  } else if (L.phase === 'smoke' && F){
+    if (Math.random() < 0.10) addParticle(state.worldParticles, {
+      x: X + (Math.random()-0.5) * 8 * s, y: Y - S*0.02*s,
+      vx: (Math.random()-0.5) * 6 + 3, vy: -14 - Math.random()*10,
+      grav: -6, life: 1.6 + Math.random()*0.9,
+      size: 2 + Math.random()*2, color: 'rgba(120,116,108,0.5)' }, MAX_WORLD_PARTICLES);
+  } else if (L.phase === 'ash' && ECOLOGY){
+    const q = Math.max(0, 1 - L.t / ECOLOGY.ashDecayMs); // fades as the scroll heals
+    wx.globalAlpha = 0.5 * q;
+    wx.fillStyle = 'rgba(52,48,44,1)';
+    wx.beginPath(); wx.ellipse(X, Y, S*0.035*s, S*0.012*s, 0, 0, Math.PI*2); wx.fill();
+    wx.globalAlpha = 0.3 * q;
+    wx.beginPath(); wx.ellipse(X - S*0.015*s, Y - S*0.004*s, S*0.014*s, S*0.006*s, 0, 0, Math.PI*2); wx.fill();
+  }
   wx.restore();
 }
 // The sky axis (S1-D017: "the world gains a sky when the move-set does" —

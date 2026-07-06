@@ -5,6 +5,7 @@
  * (S1-D028) so smoke1–4 pass unmodified.
  * ====================================================================== */
 window.BUILD_ID = BUILD_ID; // fingerprint discipline: header + on-canvas + window
+window.__S1_FLAGS = { e2: E2_ENABLED }; // test-readable gate state
 const state = {
   mode: 'title',
   glyph: null,

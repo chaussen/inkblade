@@ -37,6 +37,14 @@ function initWorld() {
       state.world.els = d.els || [];
     }
   } catch (e) { console.warn('[S1] world load failed, starting fresh:', e.message); }
+  // ash decays across sessions by wall clock — the scroll remembers, then
+  // heals (S1-D020). Lifecycle completion is not destruction; e1.destructions
+  // stays untouched here by design.
+  state.world.els = state.world.els.filter(el => {
+    if (!el.life || el.life.phase !== 'ash' || !el.life.wall) return true;
+    el.life.t += Math.max(0, Date.now() - el.life.wall);
+    return !(ECOLOGY && el.life.t >= ECOLOGY.ashDecayMs);
+  });
   for (const el of state.world.els) el.born = 0;
   METRICS.world.elements = state.world.els.length;
 }
@@ -44,7 +52,10 @@ function saveWorld() {
   try {
     localStorage.setItem(WORLD_KEY, JSON.stringify({
       version: SAVE_VERSION,
-      els: state.world.els.map(({ k, x, y, s, seed, cls, ch, p }) => ({ k, x, y, s, seed, cls, ch, p })),
+      els: state.world.els.map(({ k, x, y, s, seed, cls, ch, p, life }) => ({
+        k, x, y, s, seed, cls, ch, p,
+        life: life ? { phase: life.phase, fuel: life.fuel, t: life.t, wall: Date.now() } : undefined,
+      })),
     }));
   } catch (e) {}
 }

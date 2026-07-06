@@ -34,6 +34,14 @@ const TRAIL_ARC_STEP = 0.035;    // ×S — uniform resample step
 const TRAIL_MIN_SEG = 0.07;      // ×S — slivers below this merge away
 const TRAIL_MAX_SEGS = 3;        // charter cap: ≤3 segments per stroke verb
 
+// Ecology E2 HARD GATE [S1-D020/OPEN-14]: heat-ignites-flammable ships only
+// after a choice axis exists (placement or want-driven repertoire — a Chat
+// design deliverable). No enablement path exists at M1c: the ignition logic
+// itself lands with that design; this flag is the gate point and its being
+// off is a regression test. E1 invariant: nothing the player has planted is
+// ever destroyed or degraded.
+const E2_ENABLED = false;
+
 // Render budget [LEAN — C4]
 const MAX_PARTICLES = 600;        // glyph/fx particle pool cap
 const MAX_WORLD_PARTICLES = 300;  // world-layer (leaves/embers) pool cap

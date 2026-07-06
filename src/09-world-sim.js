@@ -24,6 +24,10 @@ function placeEl(k, s, isNew){
     seed: Math.floor(worldRand()*1e9), cls: classOfKind(k),
     born: performance.now(), fresh: !!isNew,
   };
+  // event-class matter is mortal (S1-D020 R4): larger fires carry more fuel
+  if (ECOLOGY && kindHasTag(k, 'mortal')) {
+    el.life = { phase: 'burning', fuel: ECOLOGY.fire.fuelMs * s, t: 0, flare: 0, nextFlare: flareIn() };
+  }
   if (UNIQUE[k]) state.world.els = state.world.els.filter(e => e.k !== k);
   state.world.els.push(el);
   while (state.world.els.length > WORLD_CAP) {
@@ -53,4 +57,102 @@ function spawnWorldFor(def, isNew){
 function plantSeal(def, isNew){
   const el = placeEl('seal', 1, isNew);
   el.ch = def.ch; // the seal bears the character's form (C3)
+}
+
+/* ---------------- ecology E1 (S1-D020) ---------------- *
+ * Reactive only. All thresholds and clocks come from pack data
+ * (ECOLOGY); the engine knows tags, not tuning. Invariant: nothing
+ * the player has planted is ever destroyed or degraded in E1 —
+ * the only removals here are the fire lifecycle completing (event-
+ * class mortality, R4) which is design, not destruction, and is
+ * counted in e1.burnouts, never e1.destructions. E2 (heat ignites
+ * flammable) is HARD-GATED: E2_ENABLED is false, no ignition code
+ * ships until the OPEN-14 choice-axis design exists.
+ * ------------------------------------------------------ */
+function flareIn(){ const [a, b] = ECOLOGY.fire.flareEveryMs; return a + worldRand() * (b - a); }
+const elDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+function heatSources(){
+  return state.world.els.filter(e => kindHasTag(e.k, 'heat') && e.life && ECOLOGY.fire.heatPhases.includes(e.life.phase));
+}
+function updateWorld(dt, now){
+  if (!ECOLOGY || !state.world.els.length) return;
+  let removed = false;
+  for (const el of state.world.els){
+    if (el.life) updateFireLife(el, dt);
+    if (kindHasTag(el.k, 'living')) updateAgent(el, dt);
+  }
+  const before = state.world.els.length;
+  state.world.els = state.world.els.filter(el => !(el.life && el.life.phase === 'gone'));
+  if (state.world.els.length !== before) { removed = true; METRICS.world.elements = state.world.els.length; }
+  if (removed) saveWorld(); // the scroll healed — persist it
+}
+function updateFireLife(el, dt){
+  const L = el.life, F = ECOLOGY.fire;
+  if (L.nextFlare === undefined){ L.flare = 0; L.nextFlare = flareIn(); } // restored mid-burn from a save
+  L.t += dt;
+  if (L.phase === 'burning'){
+    L.fuel -= dt;
+    if (L.flare > 0) L.flare -= dt;
+    // the flare doubles as the mid-burn save checkpoint (Q12: remaining
+    // fuel survives a reload without per-frame localStorage churn)
+    else { L.nextFlare -= dt; if (L.nextFlare <= 0){ L.flare = F.flareMs; L.nextFlare = flareIn(); sfxWorldCue('crackle'); saveWorld(); } }
+    if (L.fuel <= 0){ L.phase = 'embers'; L.t = 0; L.flare = 0; METRICS.e1.burnouts++; saveWorld(); }
+  } else if (L.phase === 'embers'){
+    if (L.t >= F.emberMs){ L.phase = 'smoke'; L.t = 0; saveWorld(); }
+  } else if (L.phase === 'smoke'){
+    if (L.t >= F.smokeMs){ L.phase = 'ash'; L.t = 0; saveWorld(); }
+  } else if (L.phase === 'ash'){
+    if (L.t >= ECOLOGY.ashDecayMs) L.phase = 'gone';
+  }
+}
+function updateAgent(el, dt){
+  const E = ECOLOGY;
+  if (!el.beh) el.beh = { home: el.x, mode: 'wander', hopT: 0, warmed: false, restCd: 0, restT: 0 };
+  const B = el.beh;
+  if (B.hopT > 0) B.hopT -= dt;
+  if (B.restCd > 0) B.restCd -= dt;
+  const fires = heatSources();
+  let near = null, nd = 1e9;
+  for (const f of fires){ const d = elDist(el, f); if (d < nd){ nd = d; near = f; } }
+  const dangerNow = near ? E.dangerR * (near.life.flare > 0 ? E.fire.flareBoost : 1) : 0;
+
+  // R2: startle + flee re-center away; return after the fire dies
+  if (near && nd < dangerNow && B.mode !== 'flee' && B.mode !== 'avoid'){
+    B.mode = 'flee'; B.hopT = 400; B.restT = 0;
+    const dir = Math.sign(el.x - near.x) || (worldRand() < 0.5 ? -1 : 1);
+    B.target = clamp01(near.x + dir * E.fleeDist);
+    METRICS.e1.startles++;
+    sfxWorldCue('startle');
+  }
+  const speed = E.walkSpeed * (B.mode === 'flee' ? E.fleeSpeedMult : 1) * dt / 1000;
+  if (B.mode === 'flee'){
+    el.x = stepX(el.x, B.target, speed);
+    if (el.x === B.target) B.mode = 'avoid';
+  } else if (B.mode === 'avoid'){
+    if (!near) B.mode = 'return'; // fire died — come back
+  } else if (B.mode === 'return'){
+    el.x = stepX(el.x, B.home, speed);
+    if (el.x === B.home){ B.mode = 'wander'; B.warmed = false; }
+  } else if (B.mode === 'rest'){
+    B.restT -= dt;
+    if (B.restT <= 0){ B.mode = 'wander'; B.restCd = E.restCooldownMs; }
+  } else { // wander
+    // R1: comfort-radius warming — drift toward the fire, loiter at warmDist
+    if (near && nd < E.comfortR && nd > E.warmDist){
+      const dir = Math.sign(near.x - el.x) || 1;
+      el.x = stepX(el.x, clamp01(near.x - dir * E.warmDist), speed);
+      if (!B.warmed){ B.warmed = true; METRICS.e1.warmings++; }
+    } else if (!near) B.warmed = false;
+    // R3: an occasional rest beat under shelter
+    if (B.restCd <= 0){
+      const sheltered = state.world.els.some(e => e !== el && kindHasTag(e.k, 'shelter') && elDist(el, e) < E.shelterR);
+      if (sheltered && worldRand() < E.restChancePerSec * dt / 1000){
+        B.mode = 'rest'; B.restT = E.restMs; METRICS.e1.rests++;
+      }
+    }
+  }
+}
+function stepX(x, target, maxStep){
+  const d = target - x;
+  return Math.abs(d) <= maxStep ? target : x + Math.sign(d) * maxStep;
 }

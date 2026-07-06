@@ -98,6 +98,34 @@
    "tags": []
   }
  },
+ "ecology": {
+  "comfortR": 0.16,
+  "dangerR": 0.055,
+  "warmDist": 0.09,
+  "fleeDist": 0.16,
+  "shelterR": 0.055,
+  "walkSpeed": 0.025,
+  "fleeSpeedMult": 3,
+  "restChancePerSec": 0.02,
+  "restMs": 2600,
+  "restCooldownMs": 9000,
+  "fire": {
+   "fuelMs": 360000,
+   "emberMs": 45000,
+   "smokeMs": 30000,
+   "flareEveryMs": [
+    15000,
+    40000
+   ],
+   "flareMs": 1200,
+   "flareBoost": 1.6,
+   "heatPhases": [
+    "burning",
+    "embers"
+   ]
+  },
+  "ashDecayMs": 480000
+ },
  "chars": [
   {
    "ch": "一",
