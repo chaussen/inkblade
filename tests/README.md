@@ -35,6 +35,7 @@ dispatched pointer events.
 | smoke13-fire.js | Fire burns through (S1-D045): pack clock contract (full cycle fits a sitting, heatAuraR + wet tag present); pixel evidence that live fire stays visible during settled writing recession while the tree recedes to nothing, bloom restores both; hearth scene — hot cue on tree/water/warming walker, steam, sparks, warmings, zero destructions |
 | smoke14-scale.js | Basic tier (S1-D047): 500 chars load zero-quarantine with frequency intro + size budget; chapter merge dedupes first-wins (curated 火 survives) and skips bad chapters; six seeded random chars lock end-to-end with real gestures; flora/terrain/figure/seal families plant from locks |
 | smoke15-flatpie.js | Flat-撇 grace (S1-D049/S1-D050, amends S1-D032): all 8 restored chars (看手系反笑爱委乎) carry a graced flat-撇 in pack data and lock end-to-end with real gestures, zero deflects; explicit 170° slash gold-cuts a pie target but still deflects on a heng target (grace is pie-only, buckets stay directional); classifySlash keeps the nearest-center contract |
+| smoke16-placement.js | Placement choice (S1-D052, OPEN-14): pull weights are pack data in core+basic (fire decisive, default subtle); 火 locked with a natural exit vs a flicked-through aimed exit plants its fire near each respective anchor under the same seed (input-driven, deterministic); UNIQUE kinds (一's horizon) ignore the anchor entirely |
 
 Full gate for a new build: rebuild (`node tools/build.mjs`) after bumping the
-BUILD_ID file, then run smoke5–15; smoke1–4 re-run against the frozen builds.
+BUILD_ID file, then run smoke5–16; smoke1–4 re-run against the frozen builds.

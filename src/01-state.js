@@ -20,6 +20,7 @@ const state = {
   shake: 0,
   resolve: null,
   banner: null,
+  lockExit: null,       // final-stroke exit point of the last lock (S1-D052) — transient placement anchor
   world: { els: [] },
 };
 const METRICS = window.__S1_METRICS = {

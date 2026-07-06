@@ -17,11 +17,14 @@ top-down for anything marked here; nothing below is real until logged there.
    new milestone; log a ship entry after the battery is green. John confirms
    with short messages; his rulings get their own LOCKED entries.
 
-## Current state (as of S1-D051, 2026-07-06)
+## Current state (as of S1-D053, 2026-07-06)
 - **Full delegation live (S1-D049)**: John has handed off all rulings — Code
   decides (including LOCKED amendments), logs rationale, ships, and reports.
-- Artifact: `inkblade-m1f.html` (BUILD_ID `S1-M1f-b2-20260706`); tests target it
+- Artifact: `inkblade-m2a.html` (BUILD_ID `S1-M2a-b1-20260706`); tests target it
   via `tests/helpers.js` TARGET_FILE default (`INKBLADE_TARGET` env overrides).
+- Placement choice live (S1-D052/D053): final-stroke exit point pulls placeEl
+  scoring; weights in `ecology.placement.pull` (fire 0.85, default 0.3, seal
+  0.5); UNIQUE exempt; E2 still gated — b2 is ignition + regrowth.
 - Move-set: pie carries a second real-form center at 180° (flat-撇 grace,
   S1-D049a/D050/D051) at derive AND match; hooks keep strict pre-grace
   bucketing so they never harden into required pie tokens.
@@ -50,9 +53,10 @@ top-down for anything marked here; nothing below is real until logged there.
 | M1e | S1-M1e-b2-20260706 | Fire burns through the veil (EVENT_MIN_ALPHA overlay), 2-min observable cycle, spark flares, hearth interactions (shimmer/steam/hearth-calm via heatAuraR hot cue) | S1-D046 |
 | M1f | S1-M1f-b1-20260706 | Basic tier: packs/basic.json 500 chars (317KB, frequency-ordered), chapter-pack ?pack= merge loader, radical→class auto-assignment, flora/terrain/figure renderers, derivation hardened (complex flag, sliver absorption). OPEN-15 logged: flat-撇 gap drops 看手系反笑爱委乎 — needs a move-set ruling | S1-D048 |
 | M1f-b2 | S1-M1f-b2-20260706 | The 撇 grace (resolves OPEN-15): pie's second real-form center at 180° at derive+match, 看手系反笑爱委乎 restored (tail 8 shift to next tier), hooks kept strict, smoke15 added, smoke12 T3 made host-aware | S1-D049–D051 |
+| M2a-b1 | S1-M2a-b1-20260706 | Placement choice (resolves OPEN-14): lockExit anchor pulls placeEl scoring, weights in pack data (fire decisive/default subtle/UNIQUE exempt), flick-through aiming, smoke16 added; E2 still gated | S1-D052–D053 |
 
 ## Planned
-### M2a — E2 ignition + placement choice — NEXT (design brief; log the plan as the next free S1-D0xx before code)
+### M2a — E2 ignition + placement choice — IN FLIGHT (b1 placement SHIPPED S1-D053; b2+ = ignition/regrowth, then the flip)
 Resolves OPEN-14. Why E2 was gated (S1-D020): ignition without a *choice* is
 just weather — the player must be able to mean it. So the milestone has two
 halves, choice first:
