@@ -63,8 +63,10 @@ const attn = p => p.evaluate(() => ({ ...window.__S1_ATTN }));
   if (e.ch !== '一' || e.locked !== true || typeof e.timeToFirstCutMs !== 'number' ||
       !e.worldDensity || typeof e.worldDensity.total !== 'number' || typeof e.whiffs !== 'number')
     throw new Error('T6 FAIL: glyphLog entry malformed');
-  const alias = await p.evaluate(() => window.__M0_METRICS === window.__S1_METRICS);
-  if (!alias) throw new Error('T6 FAIL: __M0_METRICS must alias __S1_METRICS');
+  // S1-D028 alias sunset (M1d): the one-version __M0_METRICS shim is gone;
+  // __S1_METRICS is the only metrics surface on live builds.
+  const alias = await p.evaluate(() => window.__M0_METRICS === undefined && !!window.__S1_METRICS);
+  if (!alias) throw new Error('T6 FAIL: __M0_METRICS must be sunset (S1-D028), __S1_METRICS canonical');
 
   if (errors.length) { console.log('ERRORS:', errors); throw new Error('console/page errors present'); }
   console.log('ALL VEIL TESTS PASS — zero console errors — build ' + build);

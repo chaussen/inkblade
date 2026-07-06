@@ -31,6 +31,7 @@ dispatched pointer events.
 | smoke9-folds.js | Polyline verb model (C1): 口日月田国土山水川 lock via real fold/hook gestures; straight shu cuts 竖钩 (hooks optional); wrong-turn deflects; jitter never splits a straight slash |
 | smoke10-classes.js | Element classes + seal fallback (C3): world:null plants a seal bearing the char; tier-2 water family with per-char persisted skins; sky uniqueness (sun) |
 | smoke11-ecology.js | Ecology E1 (S1-D020) over HTTP with a fast-clock fixture pack + seeded v2 payloads + ?seed=: E2 hard gate off; real 火 lock → full fire lifecycle to healed; startle/flee/return; tree beside fire survives its whole lifetime; warming drift+loiter; sheltered rest; mid-burn fuel checkpoint round-trip; cross-session ash decay; e1.destructions === 0 everywhere (E1 invariant) |
+| smoke12-depth.js | Depth staging (S1-D041): depthK projection contract (far<1<near, sky/horizon exempt); near-paints-more-ink pixel evidence read off the live canvas; 300 elements co-exist at the 60fps budget (C4 measurement); E1 danger distance spans the depth axis; __M0_METRICS sunset guarded in smoke6 |
 
 Full gate for a new build: rebuild (`node tools/build.mjs`) after bumping the
-BUILD_ID file, then run smoke5–11; smoke1–4 re-run against the frozen builds.
+BUILD_ID file, then run smoke5–12; smoke1–4 re-run against the frozen builds.

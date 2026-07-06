@@ -12,15 +12,18 @@ const worldRand = SEED_PARAM !== null ? rng(parseInt(SEED_PARAM, 10) || 1) : Mat
 
 function placeEl(k, s, isNew){
   const [y1, y2] = bandFor(k);
-  let bx = 0.5, bd = -1;
-  for (let i = 0; i < 8; i++){
+  // candidates scored by 2D distance to same-kind neighbors — the depth
+  // field (S1-D041) fills in both axes, not a strip
+  let bx = 0.5, by = (y1 + y2) / 2, bd = -1;
+  for (let i = 0; i < 10; i++){
     const cx = 0.08 + worldRand() * 0.84;
+    const cy = y1 + worldRand() * (y2 - y1);
     let d = 1e9;
-    for (const e of state.world.els) if (e.k === k) d = Math.min(d, Math.abs(e.x - cx));
-    if (d > bd) { bd = d; bx = cx; }
+    for (const e of state.world.els) if (e.k === k) d = Math.min(d, Math.hypot(e.x - cx, e.y - cy));
+    if (d > bd) { bd = d; bx = cx; by = cy; }
   }
   const el = {
-    k, x: bx, y: y1 + worldRand() * (y2 - y1), s,
+    k, x: bx, y: by, s,
     seed: Math.floor(worldRand()*1e9), cls: classOfKind(k),
     born: performance.now(), fresh: !!isNew,
   };
@@ -50,6 +53,10 @@ function spawnWorldFor(def, isNew){
   for (const dx of (P.offsets || [])) {
     const m = placeEl(kindKey, (P.memberScale || 0.9) * v(), isNew);
     m.x = clamp01(base.x + dx);
+    // a group shares its base's depth (±jitter) — 林 is one grove, not
+    // trees scattered across the field
+    const [gy1, gy2] = bandFor(kindKey);
+    m.y = Math.max(gy1, Math.min(gy2, base.y + (worldRand() - 0.5) * 0.03));
     if (wp.tier === 2) m.p = P;
   }
   saveWorld();

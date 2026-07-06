@@ -20,12 +20,22 @@ function drawWorld(dt, now){
   }
   METRICS.perf.worldLayer = true;
   wx.clearRect(0, 0, W, H);
-  const els = [...state.world.els].sort((a, b) => ((ZI[a.k] || 6) - (ZI[b.k] || 6)) || (a.y - b.y));
+  // painter's algorithm down the depth axis (S1-D041): sky first, then
+  // ground far→near so near occludes far — y is depth
+  const els = [...state.world.els].sort((a, b) =>
+    (ZI[a.k] === 0 ? -1 : a.y) - (ZI[b.k] === 0 ? -1 : b.y));
   for (const el of els){
     const age = el.born ? now - el.born : 1e9;
     if (age < 0) continue; // planted between frames; rAF timestamp lags performance.now()
     const p = Math.max(0, Math.min(1, age / 700));
     const pe = 1 - Math.pow(1 - p, 3);
+    const k = depthK(el);
+    wx.save();
+    if (k !== 1){
+      // scale the whole element (line weights included) about its ground anchor
+      const ax = el.x * W, ay = el.y * H;
+      wx.translate(ax, ay); wx.scale(k, k); wx.translate(-ax, -ay);
+    }
     const draw = ELEMENT_DRAW[el.k];
     if (draw) draw(el, now, pe);
     else { el.sealFallback = true; drawSealEl(el, now, pe); } // unknown kind self-heals to a seal
@@ -37,12 +47,24 @@ function drawWorld(dt, now){
       wx.beginPath(); wx.arc(el.x * W, el.y * H - S * 0.03, 10 + q * S * 0.12, 0, Math.PI * 2); wx.stroke();
       wx.restore();
     }
+    wx.restore();
   }
+  drawMist();
   drawWorldParticles(dt);
   ctx.save();
   ctx.globalAlpha = attention.worldAlpha;
   ctx.drawImage(worldLayer, 0, 0, W, H);
   ctx.restore();
+}
+// Atmospheric perspective (S1-D041): a paper-tone mist band over the far
+// zone — distance reads as ink dissolving into the paper, the shan-shui way.
+function drawMist(){
+  const y0 = MIST_TOP * H, y1 = MIST_BOTTOM * H;
+  const g = wx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, 'rgba(236,227,207,' + MIST_ALPHA + ')');
+  g.addColorStop(1, 'rgba(236,227,207,0)');
+  wx.fillStyle = g;
+  wx.fillRect(0, y0, W, y1 - y0);
 }
 function drawWorldParticles(dt) {
   for (const p of state.worldParticles) {

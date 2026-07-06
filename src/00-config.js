@@ -62,25 +62,42 @@ const WASHES = ['rgba(96,116,152,0.10)', 'rgba(118,134,84,0.10)', 'rgba(164,116,
 const WORLD_KEY = 'inkblade_world_v1';
 const WORLD_BACKUP_KEY = 'inkblade_world_v1_backup';
 const SAVE_VERSION = 2;
-const WORLD_CAP = 80;
+const WORLD_CAP = 300; // C4 soft budget: 60fps at 300 elements (M1d, measured by smoke12)
 
 // World presentation layout (bands/z-order/uniqueness are shan-shui
 // composition tuning; matter classes and char→element mappings are
 // pack data, S1-D020/D024)
 const UNIQUE = { horizon: 1, sun: 1, moon: 1 };
 const ZI = { sun:0, moon:0, peak:1, ridge:2, terrace:3, field:3, horizon:4, tree:5, fire:5, resttree:5, path:6, seal:6, water:6, walker:7, crowd:7 };
+
+// Depth staging [LEAN — S1-D041]: the scroll's y-axis IS its depth axis
+// (shan-shui convention: higher on the paper = farther away), so depth is a
+// pure render projection — saves carry no new field. Ground elements scale
+// from DEPTH_SCALE_FAR at GROUND_FAR to DEPTH_SCALE_NEAR at GROUND_NEAR and
+// paint far→near; a mist band gives the far zone atmospheric perspective.
+const GROUND_FAR  = 0.56;   // farthest ground y
+const GROUND_NEAR = 0.96;   // nearest ground y
+const DEPTH_SCALE_FAR  = 0.55;
+const DEPTH_SCALE_NEAR = 1.25;
+const DEPTH_EXEMPT = { horizon: 1, sun: 1, moon: 1 }; // sky + the fixed reference line
+const MIST_TOP = 0.55, MIST_BOTTOM = 0.72, MIST_ALPHA = 0.26;
+function depthK(el){
+  if (DEPTH_EXEMPT[el.k]) return 1;
+  const q = Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
+  return DEPTH_SCALE_FAR + q * (DEPTH_SCALE_NEAR - DEPTH_SCALE_FAR);
+}
 function bandFor(k){
   switch(k){
-    case 'peak':    return [0.58, 0.64];
-    case 'ridge':   return [0.62, 0.68];
-    case 'terrace': return [0.66, 0.71];
+    case 'peak':    return [0.58, 0.66];
+    case 'ridge':   return [0.60, 0.70];
+    case 'terrace': return [0.62, 0.74];
     case 'horizon': return [0.76, 0.76];
-    case 'tree': case 'fire': case 'resttree': return [0.68, 0.78];
-    case 'path':    return [0.80, 0.86];
-    case 'seal':    return [0.72, 0.80];
+    case 'tree': case 'fire': case 'resttree': return [0.60, 0.88];
+    case 'path':    return [0.66, 0.88];
+    case 'seal':    return [0.62, 0.86];
     case 'sun': case 'moon': return [0.09, 0.16];
-    case 'field':   return [0.66, 0.72];
-    case 'water':   return [0.74, 0.82];
-    default:        return [0.80, 0.88]; // walker, crowd, unknown kinds
+    case 'field':   return [0.62, 0.76];
+    case 'water':   return [0.64, 0.88];
+    default:        return [0.62, 0.90]; // walker, crowd, unknown kinds
   }
 }

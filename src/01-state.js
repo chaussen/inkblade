@@ -1,8 +1,8 @@
 /* ========================= 01 STATE + METRICS ========================= *
  * `state` stays a top-level global — the regression suites read it via
  * page.evaluate (smoke4 world assertions). __S1_METRICS is canonical from
- * M1a; __M0_METRICS aliases the same object for exactly one version
- * (S1-D028) so smoke1–4 pass unmodified.
+ * M1a; the one-version __M0_METRICS alias (S1-D028) sunset at M1d —
+ * smoke1–4 read it only on their frozen builds.
  * ====================================================================== */
 window.BUILD_ID = BUILD_ID; // fingerprint discipline: header + on-canvas + window
 window.__S1_FLAGS = { e2: E2_ENABLED }; // test-readable gate state
@@ -22,7 +22,7 @@ const state = {
   banner: null,
   world: { els: [] },
 };
-const METRICS = window.__S1_METRICS = window.__M0_METRICS = {
+const METRICS = window.__S1_METRICS = {
   build: BUILD_ID, glyphs: 0, locks: 0, fizzles: 0,
   cuts: 0, goldCuts: 0, deflects: 0, whiffs: 0,
   comps: { gold: 0, ash: 0 },
