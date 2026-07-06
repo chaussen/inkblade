@@ -17,9 +17,14 @@ top-down for anything marked here; nothing below is real until logged there.
    new milestone; log a ship entry after the battery is green. John confirms
    with short messages; his rulings get their own LOCKED entries.
 
-## Current state (as of S1-D048, 2026-07-06)
-- Artifact: `inkblade-m1f.html` (BUILD_ID `S1-M1f-b1-20260706`); tests target it
+## Current state (as of S1-D051, 2026-07-06)
+- **Full delegation live (S1-D049)**: John has handed off all rulings — Code
+  decides (including LOCKED amendments), logs rationale, ships, and reports.
+- Artifact: `inkblade-m1f.html` (BUILD_ID `S1-M1f-b2-20260706`); tests target it
   via `tests/helpers.js` TARGET_FILE default (`INKBLADE_TARGET` env overrides).
+- Move-set: pie carries a second real-form center at 180° (flat-撇 grace,
+  S1-D049a/D050/D051) at derive AND match; hooks keep strict pre-grace
+  bucketing so they never harden into required pie tokens.
 - Packs: `packs/core.json` (23 curated, embedded in the build by
   `tools/build.mjs`), `packs/basic.json` (500, fetched chapter). Chapter loading:
   `?pack=/packs/core.json,/packs/basic.json` (comma-list, first-wins merge).
@@ -44,6 +49,7 @@ top-down for anything marked here; nothing below is real until logged there.
 | M1d | S1-M1d-b1-20260706 | Depth staging (y-as-depth), cap 300 @60fps, alias sunset | S1-D042 |
 | M1e | S1-M1e-b2-20260706 | Fire burns through the veil (EVENT_MIN_ALPHA overlay), 2-min observable cycle, spark flares, hearth interactions (shimmer/steam/hearth-calm via heatAuraR hot cue) | S1-D046 |
 | M1f | S1-M1f-b1-20260706 | Basic tier: packs/basic.json 500 chars (317KB, frequency-ordered), chapter-pack ?pack= merge loader, radical→class auto-assignment, flora/terrain/figure renderers, derivation hardened (complex flag, sliver absorption). OPEN-15 logged: flat-撇 gap drops 看手系反笑爱委乎 — needs a move-set ruling | S1-D048 |
+| M1f-b2 | S1-M1f-b2-20260706 | The 撇 grace (resolves OPEN-15): pie's second real-form center at 180° at derive+match, 看手系反笑爱委乎 restored (tail 8 shift to next tier), hooks kept strict, smoke15 added, smoke12 T3 made host-aware | S1-D049–D051 |
 
 ## Planned
 ### M2a — E2 ignition + placement choice — NEXT (design brief; log the plan as the next free S1-D0xx before code)
@@ -77,10 +83,11 @@ The consent covenant that keeps the E1 promise honest:
 - `E2_ENABLED` flips default-ON only after playtest confirms the choice axis
   reads; ship order within M2a: placement (b1) → ignition + regrowth (b2+) →
   flip + full battery. The flag and `__S1_FLAGS.e2` stay as the kill switch.
-Open sub-questions to settle in the plan entry: ignition radius/dwell numbers
-(pack data), whether embers can ignite or only flames, and whether a burning
-tree sheds heat (chain fires) at v1 — recommend NO chaining at v1 (one hop),
-chain behind a second data knob later.
+Sub-questions RULED by S1-D049: **embers ignite too** (John's call — keep the
+smolder-catch legible: per-stage ignition params in pack data, ember dwell
+longer and/or radius smaller than flame) and **NO chaining at v1** (one hop
+from player-planted heat; chain behind a data knob later). Still open for the
+plan entry: the actual radius/dwell numbers (pack data).
 
 ### M2b — demand world (OPEN-9)
 - World state generates wants ("the grove is dark — write something that burns"); repertoire choice replaces some ghost glyphs. Needs want-authoring model that never becomes a quest log. Solves OPEN-3 diegetically.
@@ -100,5 +107,5 @@ chain behind a second data knob later.
 | OPEN-6 | PvP model (literacy asymmetry as arsenal + matchmaking problem) | parked M2+ |
 | OPEN-8 | Component wash: always-on vs fading with mastery (mastery-fade adds a progression system — Fun Gate check required) | unscheduled; ask John before adding any progression |
 | OPEN-9 | Demand world — want-authoring model that never becomes a quest log | M2b headline |
-| OPEN-14 | E2 choice axis: placement choice vs want-driven repertoire | M2a resolves (placement recommended; see brief above) |
-| OPEN-15 | Flat-撇 (~170°) outside all buckets — 看手系反笑爱委乎 dropped from basic tier. Widen pie as real-form grace (amends LOCKED S1-D032 at derive AND match), add a 6th bucket, or keep dropping. Restores 8 top-frequency chars; recommend the pie grace, but it amends a LOCKED rule so put the proposal to John | move-set ruling before or with M2a |
+| OPEN-14 | ~~E2 choice axis~~ RESOLVED S1-D049: placement choice (M2a); repertoire stays M2b | — |
+| OPEN-15 | ~~Flat-撇 gap~~ RESOLVED S1-D049, shipped S1-D051 (M1f-b2): pie real-form grace at 180° | — |

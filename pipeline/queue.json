@@ -132,12 +132,6 @@
   "review": "soft"
  },
  {
-  "ch": "看",
-  "stroke": 0,
-  "issue": "segment in no bucket",
-  "detail": "169.2°"
- },
- {
   "ch": "天",
   "issue": "sub-2-stroke chunk merged",
   "detail": "chunk 0",
@@ -204,12 +198,6 @@
   "review": "soft"
  },
  {
-  "ch": "手",
-  "stroke": 0,
-  "issue": "segment in no bucket",
-  "detail": "167.2°"
- },
- {
   "ch": "二",
   "issue": "sub-2-stroke chunk merged",
   "detail": "chunk 1",
@@ -272,9 +260,9 @@
  },
  {
   "ch": "系",
-  "stroke": 0,
-  "issue": "segment in no bucket",
-  "detail": "168.3°"
+  "issue": "sub-2-stroke chunk merged",
+  "detail": "chunk 0",
+  "review": "soft"
  },
  {
   "ch": "更",
@@ -287,12 +275,6 @@
   "issue": "sub-2-stroke chunk merged",
   "detail": "chunk 1",
   "review": "soft"
- },
- {
-  "ch": "反",
-  "stroke": 0,
-  "issue": "segment in no bucket",
-  "detail": "169.5°"
  },
  {
   "ch": "再",
@@ -343,12 +325,6 @@
   "review": "soft"
  },
  {
-  "ch": "笑",
-  "stroke": 6,
-  "issue": "segment in no bucket",
-  "detail": "173.2°"
- },
- {
   "ch": "干",
   "issue": "sub-2-stroke chunk merged",
   "detail": "chunk 0",
@@ -365,12 +341,6 @@
   "issue": "sub-2-stroke chunk merged",
   "detail": "chunk 1",
   "review": "soft"
- },
- {
-  "ch": "爱",
-  "stroke": 0,
-  "issue": "segment in no bucket",
-  "detail": "168.6°"
  },
  {
   "ch": "百",
@@ -396,18 +366,6 @@
   "issue": "sub-2-stroke chunk merged",
   "detail": "chunk 1",
   "review": "soft"
- },
- {
-  "ch": "委",
-  "stroke": 0,
-  "issue": "segment in no bucket",
-  "detail": "170.0°"
- },
- {
-  "ch": "乎",
-  "stroke": 0,
-  "issue": "segment in no bucket",
-  "detail": "167.5°"
  },
  {
   "ch": "广",

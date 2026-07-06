@@ -59,13 +59,21 @@ function processMedian(ch, i, median) {
 
 /* ---------------- verb derivation ---------------- */
 // Direction buckets (screen space, y down). ti (up-right) joins at M1b play;
-// deriving it now costs nothing. ±32° per charter §5.1.
-const CENTERS = [['heng', 0], ['dr', 45], ['shu', 90], ['pie', 135], ['ti', -45]];
-function bucketOf(deg) {
+// deriving it now costs nothing. ±32° per charter §5.1. pie carries a second
+// real-form center at 180° — the flat-撇 grace (S1-D049/S1-D050, amends
+// S1-D032): 平撇 opens 看手系反笑爱委乎 at ~167–173°, a real written form.
+const CENTERS = [['heng', 0], ['dr', 45], ['shu', 90], ['pie', 135], ['pie', 180], ['ti', -45]];
+// Strict centers (pre-grace) still decide terminal-flick hookness: a hook's
+// up-left tick (~180±) must stay a hook — optional at play (S1-D034) — and
+// never harden into a required pie token via the grace center.
+const CENTERS_STRICT = CENTERS.filter(([, c]) => c !== 180);
+function bucketIn(deg, centers) {
   let best = null, bd = 1e9;
-  for (const [n, c] of CENTERS) { let d = Math.abs(deg - c); if (d > 180) d = 360 - d; if (d < bd) { bd = d; best = n; } }
+  for (const [n, c] of centers) { let d = Math.abs(deg - c); if (d > 180) d = 360 - d; if (d < bd) { bd = d; best = n; } }
   return bd > 32 ? null : best;
 }
+const bucketOf = deg => bucketIn(deg, CENTERS);
+const bucketOfStrict = deg => bucketIn(deg, CENTERS_STRICT);
 const angleOf = (a, b) => Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
 const turn = (a, b) => { let d = b - a; while (d > 180) d -= 360; while (d < -180) d += 360; return d; };
 
@@ -136,7 +144,7 @@ function deriveVerbs(ch, i, pts) {
       // also reads as a hook when short and turning hard
       const prev = segs[s - 1];
       const t = Math.abs(turn(angleOf(prev.a, prev.b), angleOf(seg.a, seg.b)));
-      if (!bk || (seg.L < HOOK_MAX_UNITS && t > CORNER_TURN_DEG)) { toks.push('hook'); continue; }
+      if (!bucketOfStrict(angleOf(seg.a, seg.b)) || (seg.L < HOOK_MAX_UNITS && t > CORNER_TURN_DEG)) { toks.push('hook'); continue; }
     }
     if (!bk) {
       // a short leftward/upward mid-segment is a pen transition, not a

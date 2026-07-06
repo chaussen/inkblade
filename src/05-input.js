@@ -43,9 +43,16 @@ function classifySlash(dx, dy, len) {
 // medians put steep 撇 near the shu/pie boundary; nearest-center matching
 // would deflect an honest along-stroke slash). Direction classes only:
 // nothing here reads curvature, proportion, or neatness (charter §7 Q1).
+// Flat-撇 grace (S1-D049/S1-D050, amends S1-D032): 平撇 is drawn near-
+// horizontal right-to-left (~170°), so pie carries a second real-form
+// center at 180° with the same tolerance. Target matching only —
+// classifySlash keeps the original nearest-center contract.
+const PIE_FLAT_CENTER = 180;
 function slashMatches(deg, strokeT) {
   const c = BUCKET_CENTERS[strokeT];
-  return c !== undefined && angDist(deg, c) <= BUCKET_TOL;
+  if (c === undefined) return false;
+  if (angDist(deg, c) <= BUCKET_TOL) return true;
+  return strokeT === 'pie' && angDist(deg, PIE_FLAT_CENTER) <= BUCKET_TOL;
 }
 
 /* ---- polyline verb model (C1, S1-D021) ---- */
