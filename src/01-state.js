@@ -34,6 +34,9 @@ const METRICS = window.__S1_METRICS = {
   // stable — destructions existing and asserting 0 IS the E1-invariant
   // regression hook (S1-D028).
   e1: { startles: 0, warmings: 0, rests: 0, burnouts: 0, destructions: 0 },
+  // E2 counters (S1-D054): ignition transforms, never destroys — regrowths
+  // returning to equal ignitions over time IS the covenant, measured.
+  e2: { ignitions: 0, regrowths: 0 },
   perf: { avgFrameMs: 0, worstFrameMs: 0 },
   glyphLog: [],
   perChar: {},

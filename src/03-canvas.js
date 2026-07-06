@@ -12,6 +12,10 @@ const QUERY = new URLSearchParams(location.search);
 const FORCED = QUERY.get('char');
 const PACK_URL = QUERY.get('pack');
 const SEED_PARAM = QUERY.get('seed');
+// E2 gate resolution (S1-D054): build default from config, URL override —
+// ?e2=1 is the pre-flip playtest switch, ?e2=0 the post-flip kill switch.
+const E2_ON = QUERY.get('e2') !== null ? QUERY.get('e2') === '1' : E2_ENABLED;
+window.__S1_FLAGS.e2 = E2_ON;
 
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);

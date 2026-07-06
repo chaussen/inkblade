@@ -42,8 +42,22 @@ function drawWorld(dt, now){
       wx.translate(ax, ay); wx.scale(k, k); wx.translate(-ax, -ay);
     }
     const draw = ELEMENT_DRAW[el.k];
-    if (draw) draw(el, now, pe);
-    else { el.sealFallback = true; drawSealEl(el, now, pe); } // unknown kind self-heals to a seal
+    // E2 burn walk (S1-D054): a kindled element's regrowth phases REPLACE its
+    // form (ash mound → sprout → sapling of the SAME seed growing back);
+    // while it burns, its matter stays on the world layer and its fire is
+    // drawn as light on the burn-through overlay.
+    const bp = el.burn && el.burn.phase;
+    if (bp === 'ash') drawBurnAsh(el, now, pe);
+    else if (bp === 'sprout') drawBurnSprout(el, now, pe);
+    else if (bp === 'sapling'){
+      const q = ECOLOGY && ECOLOGY.regrow ? Math.min(1, el.burn.t / ECOLOGY.regrow.saplingMs) : 1;
+      const young = { ...el, s: el.s * (0.35 + 0.65 * q) };
+      if (draw) draw(young, now, pe); else { el.sealFallback = true; drawSealEl(el, now, pe); }
+    } else {
+      if (draw) draw(el, now, pe);
+      else { el.sealFallback = true; drawSealEl(el, now, pe); } // unknown kind self-heals to a seal
+      if (bp) drawBurnFx(el, now, pe);
+    }
     if (el.fresh && age < 900){
       const q = age / 900;
       wx.save();
@@ -260,6 +274,88 @@ function drawFireAftermath(el, now, s, X, Y){
     wx.globalAlpha = 0.3 * q;
     wx.beginPath(); wx.ellipse(X - S*0.015*s, Y - S*0.004*s, S*0.014*s, S*0.006*s, 0, 0, Math.PI*2); wx.fill();
   }
+  wx.restore();
+}
+/* -------- E2 burn/regrowth visuals (S1-D054) -------- *
+ * Burning matter is drawn by its own renderer; these add the fire ON it
+ * (light → the `ex` overlay, S1-D045) and replace it through the regrowth
+ * walk. Pure geometry, clocks read from pack data. */
+function drawBurnFx(el, now, p){
+  const B = el.burn, F = ECOLOGY ? ECOLOGY.fire : null;
+  const X = el.x * W, Y = el.y * H, s = el.s * p;
+  const g0 = wx; wx = ex; // fire is light: it burns through the veil
+  wx.save();
+  if (B.phase === 'burning'){
+    const flareK = B.flare > 0 ? 1.35 : 1;
+    const fl = (0.8 + 0.2 * Math.sin(now/95 + el.seed) + 0.1 * Math.sin(now/43 + el.seed*2)) * flareK;
+    const glow = wx.createRadialGradient(X, Y - S*0.06*s, 2, X, Y - S*0.06*s, Math.max(4, S*0.15*s*fl));
+    glow.addColorStop(0, 'rgba(232,161,58,0.5)'); glow.addColorStop(1, 'rgba(232,161,58,0)');
+    wx.fillStyle = glow; wx.fillRect(X - S*0.16*s, Y - S*0.22*s, S*0.32*s, S*0.30*s);
+    for (let i = 0; i < 3; i++){
+      const ox = (i - 1) * S * 0.022 * s;
+      const fh = S * (0.06 + 0.02 * i) * s * fl * (1 + 0.18 * Math.sin(now/75 + el.seed + i*2));
+      const fw = S * 0.014 * s * (1.4 - i*0.3);
+      wx.fillStyle = i === 2 ? 'rgba(238,178,72,0.7)' : i ? 'rgba(226,120,40,0.8)' : 'rgba(178,57,42,0.75)';
+      wx.beginPath();
+      wx.moveTo(X + ox - fw, Y);
+      wx.quadraticCurveTo(X + ox - fw*0.5, Y - fh*0.5, X + ox + Math.sin(now/105 + el.seed + i) * fw, Y - fh);
+      wx.quadraticCurveTo(X + ox + fw*0.5, Y - fh*0.5, X + ox + fw, Y);
+      wx.closePath(); wx.fill();
+    }
+    const sparkP = (B.flare > 0 ? 0.35 : 0.07) * s;
+    if (Math.random() < sparkP) addParticle(state.worldParticles, {
+      x: X + (Math.random()-0.5) * 14 * s, y: Y - S*0.07*s,
+      vx: (Math.random()-0.5) * (B.flare > 0 ? 24 : 10), vy: -22 - Math.random()*26,
+      grav: -14, life: 0.7 + Math.random()*0.6, hot: true,
+      size: 1.5 + Math.random()*1.5, color: Math.random() < 0.5 ? '#e8a13a' : '#b2392a' }, MAX_WORLD_PARTICLES);
+  } else if (B.phase === 'embers' && F){
+    const q = 1 - B.t / F.emberMs;
+    const pulse = 0.6 + 0.4 * Math.sin(now / 240 + el.seed);
+    const g = wx.createRadialGradient(X, Y, 1, X, Y, Math.max(3, S * 0.05 * s));
+    g.addColorStop(0, 'rgba(214,90,40,' + (0.4 * q * pulse) + ')');
+    g.addColorStop(1, 'rgba(214,90,40,0)');
+    wx.fillStyle = g; wx.fillRect(X - S*0.06*s, Y - S*0.06*s, S*0.12*s, S*0.12*s);
+  } else if (B.phase === 'smoke'){
+    if (Math.random() < 0.10) addParticle(state.worldParticles, {
+      x: X + (Math.random()-0.5) * 8 * s, y: Y - S*0.05*s,
+      vx: (Math.random()-0.5) * 6 + 3, vy: -14 - Math.random()*10,
+      grav: -6, life: 1.6 + Math.random()*0.9,
+      size: 2 + Math.random()*2, color: 'rgba(120,116,108,0.5)' }, MAX_WORLD_PARTICLES);
+  }
+  wx.restore();
+  wx = g0;
+}
+function drawBurnAsh(el, now, p){
+  const B = el.burn, R = ECOLOGY ? ECOLOGY.regrow : null;
+  const X = el.x * W, Y = el.y * H, s = el.s * p;
+  const q = R ? Math.max(0.35, 1 - B.t / R.ashMs) : 1; // fades toward the sprout
+  wx.save();
+  wx.globalAlpha = 0.5 * q;
+  wx.fillStyle = 'rgba(52,48,44,1)';
+  wx.beginPath(); wx.ellipse(X, Y, S*0.045*s, S*0.014*s, 0, 0, Math.PI*2); wx.fill();
+  wx.globalAlpha = 0.3 * q;
+  wx.beginPath(); wx.ellipse(X - S*0.018*s, Y - S*0.005*s, S*0.018*s, S*0.007*s, 0, 0, Math.PI*2); wx.fill();
+  // a charred stub keeps the mark's place — nothing is erased, it waits
+  wx.globalAlpha = 0.55 * q;
+  wx.strokeStyle = 'rgba(40,34,28,1)'; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1.2, S * 0.008 * s);
+  wx.beginPath(); wx.moveTo(X, Y); wx.lineTo(X + S*0.008*s, Y - S*0.03*s); wx.stroke();
+  wx.restore();
+}
+function drawBurnSprout(el, now, p){
+  const B = el.burn, R = ECOLOGY ? ECOLOGY.regrow : null;
+  const X = el.x * W, Y = el.y * H;
+  const q = R ? Math.min(1, B.t / R.sproutMs) : 1;
+  const h = S * 0.035 * el.s * p * (0.4 + 0.6 * q);
+  if (h < 1.5) return;
+  const sway = Math.sin(now / 1600 + el.seed % 10) * 1.2;
+  wx.save(); wx.translate(X, Y);
+  wx.strokeStyle = 'rgba(104,128,74,0.8)'; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1, S * 0.004 * el.s);
+  wx.beginPath(); wx.moveTo(0, 0); wx.quadraticCurveTo(sway * 0.3, -h * 0.5, sway * 0.6, -h * 0.8); wx.stroke();
+  wx.fillStyle = 'rgba(104,128,74,0.6)';
+  wx.beginPath(); wx.ellipse(-h * 0.2 + sway * 0.4, -h * 0.55, h * 0.24, h * 0.11, -0.5, 0, Math.PI * 2); wx.fill();
+  wx.beginPath(); wx.ellipse(h * 0.24 + sway * 0.5, -h * 0.72, h * 0.24, h * 0.11, 0.5, 0, Math.PI * 2); wx.fill();
   wx.restore();
 }
 // The sky axis (S1-D017: "the world gains a sky when the move-set does" —

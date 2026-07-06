@@ -54,6 +54,7 @@ top-down for anything marked here; nothing below is real until logged there.
 | M1f | S1-M1f-b1-20260706 | Basic tier: packs/basic.json 500 chars (317KB, frequency-ordered), chapter-pack ?pack= merge loader, radical→class auto-assignment, flora/terrain/figure renderers, derivation hardened (complex flag, sliver absorption). OPEN-15 logged: flat-撇 gap drops 看手系反笑爱委乎 — needs a move-set ruling | S1-D048 |
 | M1f-b2 | S1-M1f-b2-20260706 | The 撇 grace (resolves OPEN-15): pie's second real-form center at 180° at derive+match, 看手系反笑爱委乎 restored (tail 8 shift to next tier), hooks kept strict, smoke15 added, smoke12 T3 made host-aware | S1-D049–D051 |
 | M2a-b1 | S1-M2a-b1-20260706 | Placement choice (resolves OPEN-14): lockExit anchor pulls placeEl scoring, weights in pack data (fire decisive/default subtle/UNIQUE exempt), flick-through aiming, smoke16 added; E2 still gated | S1-D052–D053 |
+| M2a-b2 | S1-M2a-b2-20260707 | E2 ignition + regrowth behind the gate (?e2=1): per-stage kindle (embers slower/closer), burn walk to ash→sprout→sapling→itself (same seed), one hop, sun never ignites, save v2 +burn, smoke17 added | S1-D054–D055 |
 
 ## Planned
 ### M2a — E2 ignition + placement choice — IN FLIGHT (b1 placement SHIPPED S1-D053; b2+ = ignition/regrowth, then the flip)

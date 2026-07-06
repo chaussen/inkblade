@@ -52,9 +52,12 @@ function saveWorld() {
   try {
     localStorage.setItem(WORLD_KEY, JSON.stringify({
       version: SAVE_VERSION,
-      els: state.world.els.map(({ k, x, y, s, seed, cls, ch, p, life }) => ({
+      els: state.world.els.map(({ k, x, y, s, seed, cls, ch, p, life, burn }) => ({
         k, x, y, s, seed, cls, ch, p,
         life: life ? { phase: life.phase, fuel: life.fuel, t: life.t, wall: Date.now() } : undefined,
+        // E2 burn walk (S1-D054): additive v2 field, Q12 holds — old builds
+        // ignore it; like fire's mid-burn checkpoint, it freezes while away
+        burn: burn ? { phase: burn.phase, fuel: burn.fuel, t: burn.t } : undefined,
       })),
     }));
   } catch (e) {}

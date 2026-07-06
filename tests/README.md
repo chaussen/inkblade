@@ -36,6 +36,7 @@ dispatched pointer events.
 | smoke14-scale.js | Basic tier (S1-D047): 500 chars load zero-quarantine with frequency intro + size budget; chapter merge dedupes first-wins (curated 火 survives) and skips bad chapters; six seeded random chars lock end-to-end with real gestures; flora/terrain/figure/seal families plant from locks |
 | smoke15-flatpie.js | Flat-撇 grace (S1-D049/S1-D050, amends S1-D032): all 8 restored chars (看手系反笑爱委乎) carry a graced flat-撇 in pack data and lock end-to-end with real gestures, zero deflects; explicit 170° slash gold-cuts a pie target but still deflects on a heng target (grace is pie-only, buckets stay directional); classifySlash keeps the nearest-center contract |
 | smoke16-placement.js | Placement choice (S1-D052, OPEN-14): pull weights are pack data in core+basic (fire decisive, default subtle); 火 locked with a natural exit vs a flicked-through aimed exit plants its fire near each respective anchor under the same seed (input-driven, deterministic); UNIQUE kinds (一's horizon) ignore the anchor entirely |
+| smoke17-ignition.js | Ecology E2 (S1-D049c/d, S1-D054) with fast-clock ignition fixture: gate defaults off (no kindle without ?e2=1); flame ignition transforms (kind+seed kept, element count stable); full burn walk to regrowth — the same seed returns; embers kindle slower and closer (per-stage radius negative included); the sun never ignites; no chaining through burning matter (one hop); mid-burn reload resumes and completes; e1.destructions === 0 in every scenario |
 
 Full gate for a new build: rebuild (`node tools/build.mjs`) after bumping the
-BUILD_ID file, then run smoke5–16; smoke1–4 re-run against the frozen builds.
+BUILD_ID file, then run smoke5–17; smoke1–4 re-run against the frozen builds.

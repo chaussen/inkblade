@@ -104,11 +104,13 @@ function updateWorld(dt, now){
   const aura = ECOLOGY.heatAuraR || 0;
   for (const el of state.world.els){
     if (el.life) updateFireLife(el, dt);
+    if (el.burn) updateBurnLife(el, dt);
     if (kindHasTag(el.k, 'living')) updateAgent(el, dt, fires);
     // transient heat-aura cue (never persisted): renderers answer it —
     // trees shimmer, water steams, walkers stand hearth-calm
     el.hot = aura > 0 && !kindHasTag(el.k, 'heat') && fires.some(f => elDist(el, f) < aura);
   }
+  if (E2_ON) updateIgnition(dt, fires);
   const before = state.world.els.length;
   state.world.els = state.world.els.filter(el => !(el.life && el.life.phase === 'gone'));
   if (state.world.els.length !== before) { removed = true; METRICS.world.elements = state.world.els.length; }
@@ -131,6 +133,60 @@ function updateFireLife(el, dt){
     if (L.t >= F.smokeMs){ L.phase = 'ash'; L.t = 0; saveWorld(); }
   } else if (L.phase === 'ash'){
     if (L.t >= ECOLOGY.ashDecayMs) L.phase = 'gone';
+  }
+}
+/* ---------------- ecology E2 (S1-D049/S1-D054, gated by E2_ON) ---------------- *
+ * Ignition transforms, never destroys: a kindled element keeps its kind and
+ * seed and walks burn → ash → sprout → sapling → ITSELF. Only live heat
+ * ignites (heatSources() — fire kinds; burning matter never joins it, so
+ * chains stop at one hop per S1-D049c; the sun has no life and never
+ * ignites). All radii and clocks are pack data — no ignition block in the
+ * pack, no ignition in the world.
+ * ------------------------------------------------------------------------------ */
+function updateIgnition(dt, fires){
+  const IG = ECOLOGY && ECOLOGY.ignition;
+  if (!IG || !ECOLOGY.regrow || !fires.length) return;
+  for (const el of state.world.els){
+    if (el.burn || el.life || !kindHasTag(el.k, 'flammable')) continue;
+    // dwell accumulates as a rate so mixed flame/ember exposure adds honestly;
+    // embers kindle slower and closer (S1-D049d — the smolder-catch stays legible)
+    let rate = 0;
+    for (const f of fires){
+      const P = IG[f.life.phase === 'burning' ? 'flame' : 'ember'];
+      if (P && elDist(el, f) < P.r) rate = Math.max(rate, 1 / P.dwellMs);
+    }
+    if (rate){
+      el.kindleT = (el.kindleT || 0) + dt * rate;
+      if (el.kindleT >= 1){
+        delete el.kindleT;
+        el.burn = { phase: 'burning', fuel: ECOLOGY.fire.fuelMs * el.s, t: 0, flare: 0, nextFlare: flareIn() };
+        METRICS.e2.ignitions++;
+        sfxWorldCue('crackle');
+        saveWorld();
+      }
+    } else if (el.kindleT) el.kindleT = Math.max(0, el.kindleT - dt / (IG.coolMs || 1));
+  }
+}
+function updateBurnLife(el, dt){
+  const B = el.burn, F = ECOLOGY.fire, R = ECOLOGY.regrow;
+  if (B.nextFlare === undefined){ B.flare = 0; B.nextFlare = flareIn(); } // restored mid-burn from a save
+  B.t += dt;
+  if (B.phase === 'burning'){
+    B.fuel -= dt;
+    if (B.flare > 0) B.flare -= dt;
+    else { B.nextFlare -= dt; if (B.nextFlare <= 0){ B.flare = F.flareMs; B.nextFlare = flareIn(); sfxWorldCue('crackle'); saveWorld(); } }
+    if (B.fuel <= 0){ B.phase = 'embers'; B.t = 0; B.flare = 0; saveWorld(); }
+  } else if (B.phase === 'embers'){
+    if (B.t >= F.emberMs){ B.phase = 'smoke'; B.t = 0; saveWorld(); }
+  } else if (B.phase === 'smoke'){
+    if (B.t >= F.smokeMs){ B.phase = 'ash'; B.t = 0; saveWorld(); }
+  } else if (B.phase === 'ash'){
+    if (B.t >= R.ashMs){ B.phase = 'sprout'; B.t = 0; saveWorld(); }
+  } else if (B.phase === 'sprout'){
+    if (B.t >= R.sproutMs){ B.phase = 'sapling'; B.t = 0; saveWorld(); }
+  } else if (B.phase === 'sapling'){
+    // the same seed grows back: regrowth completes the covenant
+    if (B.t >= R.saplingMs){ delete el.burn; METRICS.e2.regrowths++; saveWorld(); }
   }
 }
 function updateAgent(el, dt, fires){
