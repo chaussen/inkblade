@@ -83,11 +83,18 @@ async function pollUntil(p, fn, ms, every = 250) {
   const errors = [];
   const finals = []; // e1 metrics at the end of every scenario, for T7
 
-  // T1: E2 hard gate reads off (the gate itself is a regression surface)
+  // T1: the E2 gate is a regression surface in both directions. Flipped
+  // default-ON at M2a-b3 (S1-D056, the smoke6 alias-sunset pattern), with
+  // ?e2=0 the kill switch. This pack carries NO ignition data, so every E1
+  // scenario below is byte-identical either way — data-gating is the fence.
   let p = await boot(browser, `${BASE}?pack=${PACK}&reset=1&seed=1`, errors, { begin: false, ignoreNetErrors: true });
   const flags = await p.evaluate(() => window.__S1_FLAGS);
-  console.log('T1 flags:', JSON.stringify(flags));
-  if (flags.e2 !== false) throw new Error('T1 FAIL: E2 must be hard-gated off');
+  await p.close();
+  p = await boot(browser, `${BASE}?pack=${PACK}&reset=1&seed=1&e2=0`, errors, { begin: false, ignoreNetErrors: true });
+  const flagsKill = await p.evaluate(() => window.__S1_FLAGS);
+  console.log('T1 flags:', JSON.stringify(flags), 'kill switch:', JSON.stringify(flagsKill));
+  if (flags.e2 !== true) throw new Error('T1 FAIL: E2 must default ON after the S1-D056 flip');
+  if (flagsKill.e2 !== false) throw new Error('T1 FAIL: ?e2=0 kill switch must force the gate off');
   await p.close();
 
   // T2: a REAL 火 lock plants a burning fire that lives its whole life —

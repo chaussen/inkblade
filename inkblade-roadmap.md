@@ -17,14 +17,18 @@ top-down for anything marked here; nothing below is real until logged there.
    new milestone; log a ship entry after the battery is green. John confirms
    with short messages; his rulings get their own LOCKED entries.
 
-## Current state (as of S1-D053, 2026-07-06)
+## Current state (as of S1-D057, 2026-07-07)
 - **Full delegation live (S1-D049)**: John has handed off all rulings — Code
   decides (including LOCKED amendments), logs rationale, ships, and reports.
-- Artifact: `inkblade-m2a.html` (BUILD_ID `S1-M2a-b1-20260706`); tests target it
+- Artifact: `inkblade-m2a.html` (BUILD_ID `S1-M2a-b3-20260707`); tests target it
   via `tests/helpers.js` TARGET_FILE default (`INKBLADE_TARGET` env overrides).
-- Placement choice live (S1-D052/D053): final-stroke exit point pulls placeEl
-  scoring; weights in `ecology.placement.pull` (fire 0.85, default 0.3, seal
-  0.5); UNIQUE exempt; E2 still gated — b2 is ignition + regrowth.
+- **M2a is complete and E2 is LIVE** (S1-D057): placement choice (final-stroke
+  exit pulls placeEl; `ecology.placement.pull` fire 0.85 / default 0.3 / seal
+  0.5; UNIQUE exempt) + ignition/regrowth (per-stage `ecology.ignition`
+  flame/ember, `regrow` clocks; one hop; sun never ignites; kind+seed survive
+  the burn — transformed ≠ destroyed). `?e2=0` is the kill switch.
+- New sim seams: `E2_ON` (03-canvas), `updateIgnition`/`updateBurnLife`
+  (09-world-sim), burn visuals (10-world-render), save v2 additive `burn`.
 - Move-set: pie carries a second real-form center at 180° (flat-撇 grace,
   S1-D049a/D050/D051) at derive AND match; hooks keep strict pre-grace
   bucketing so they never harden into required pie tokens.
@@ -55,9 +59,17 @@ top-down for anything marked here; nothing below is real until logged there.
 | M1f-b2 | S1-M1f-b2-20260706 | The 撇 grace (resolves OPEN-15): pie's second real-form center at 180° at derive+match, 看手系反笑爱委乎 restored (tail 8 shift to next tier), hooks kept strict, smoke15 added, smoke12 T3 made host-aware | S1-D049–D051 |
 | M2a-b1 | S1-M2a-b1-20260706 | Placement choice (resolves OPEN-14): lockExit anchor pulls placeEl scoring, weights in pack data (fire decisive/default subtle/UNIQUE exempt), flick-through aiming, smoke16 added; E2 still gated | S1-D052–D053 |
 | M2a-b2 | S1-M2a-b2-20260707 | E2 ignition + regrowth behind the gate (?e2=1): per-stage kindle (embers slower/closer), burn walk to ash→sprout→sapling→itself (same seed), one hop, sun never ignites, save v2 +burn, smoke17 added | S1-D054–D055 |
+| M2a-b3 | S1-M2a-b3-20260707 | **The flip: E2 default-ON, M2a complete.** ?e2=0 kill switch; gate assertions inverted (smoke11/17 T1); smoke17 T7 = the promise with real gestures (write 火, flick at a tree, it kindles and regrows) | S1-D056–D057 |
 
 ## Planned
-### M2a — E2 ignition + placement choice — IN FLIGHT (b1 placement SHIPPED S1-D053; b2+ = ignition/regrowth, then the flip)
+### M2b — demand world (OPEN-9) — NEXT (design brief needed; log the plan as the next free S1-D0xx before code)
+World state generates wants ("the grove is dark — write something that burns");
+repertoire choice replaces some ghost glyphs. Needs a want-authoring model that
+never becomes a quest log. Solves OPEN-3 diegetically. With E2 live, wants can
+now be *answerable*: a want for light is answered by written fire that actually
+kindles; regrowth means answering never permanently costs the world anything.
+
+### M2a — E2 ignition + placement choice — COMPLETE (S1-D057, all three builds shipped)
 Resolves OPEN-14. Why E2 was gated (S1-D020): ignition without a *choice* is
 just weather — the player must be able to mean it. So the milestone has two
 halves, choice first:

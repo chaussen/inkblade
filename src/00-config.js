@@ -34,13 +34,13 @@ const TRAIL_ARC_STEP = 0.035;    // ×S — uniform resample step
 const TRAIL_MIN_SEG = 0.07;      // ×S — slivers below this merge away
 const TRAIL_MAX_SEGS = 3;        // charter cap: ≤3 segments per stroke verb
 
-// Ecology E2 HARD GATE [S1-D020/OPEN-14]: heat-ignites-flammable ships only
-// after a choice axis exists (placement or want-driven repertoire — a Chat
-// design deliverable). No enablement path exists at M1c: the ignition logic
-// itself lands with that design; this flag is the gate point and its being
-// off is a regression test. E1 invariant: nothing the player has planted is
-// ever destroyed or degraded.
-const E2_ENABLED = false;
+// Ecology E2 [S1-D020 → flipped ON by S1-D056]: the gate demanded a choice
+// axis before heat could ignite flammable matter — placement choice (S1-D052)
+// is that axis, and the playtest evidence discharged the condition. `?e2=0`
+// is the kill switch (S1-D054 runtime resolution in 03-canvas). The covenant
+// stands: ignition transforms, never destroys — kind+seed survive the burn
+// and regrowth returns the same element; e1.destructions stays 0.
+const E2_ENABLED = true;
 
 // Render budget [LEAN — C4]
 const MAX_PARTICLES = 600;        // glyph/fx particle pool cap

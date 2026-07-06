@@ -9,7 +9,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { TARGET_FILE, launch, M, sleep } = require('./helpers');
+const { TARGET_FILE, launch, slash, slashStrokes, glyph, M, sleep, W, H } = require('./helpers');
 
 const ROOT = '/home/zni/projects/inkblade';
 const PORT = 8087;
@@ -26,8 +26,9 @@ const ECO = {
   fire: { fuelMs: 2500, emberMs: 2500, smokeMs: 1200, flareEveryMs: [500, 900],
           flareMs: 300, flareBoost: 1.6, heatPhases: ['burning', 'embers'] },
   ashDecayMs: 3000,
-  ignition: { flame: { r: 0.08, dwellMs: 800 }, ember: { r: 0.05, dwellMs: 1500 }, coolMs: 2000 },
+  ignition: { flame: { r: 0.10, dwellMs: 800 }, ember: { r: 0.05, dwellMs: 1500 }, coolMs: 2000 },
   regrow: { ashMs: 1500, sproutMs: 1200, saplingMs: 1200 },
+  placement: { pull: { default: 0.3, fire: 0.85, seal: 0.5 } },
 };
 
 function makeFixtures() {
@@ -94,19 +95,33 @@ const invariant = async (p, label) => {
   const browser = await launch();
   const errors = [];
 
-  // T1: the gate holds — no ?e2 param means default OFF: a tree parked inside
-  // flame radius for many dwells never kindles; flags read false
+  // T1: the gate is a regression surface in both directions — flipped
+  // default-ON at M2a-b3 (S1-D056): a bare boot kindles; the ?e2=0 kill
+  // switch keeps the same world inert through many dwells
   let p = await page(browser, errors);
   await seedWorld(p, [fire(0.56, 0.75, 2500), tree(0.60, 0.75)]);
   await p.goto(`${BASE}?pack=${PACK}&seed=17`);
+  const defLit = await pollUntil(p, async () => {
+    const t = (await els(p)).find(e => e.k === 'tree');
+    return t && t.burn ? t : null;
+  }, 4000);
+  const flags = await p.evaluate(() => window.__S1_FLAGS);
+  console.log('T1 default-on:', JSON.stringify({ e2: flags.e2, tree: defLit }));
+  if (flags.e2 !== true) throw new Error('T1 FAIL: E2 must default ON after the S1-D056 flip');
+  if (!defLit) throw new Error('T1 FAIL: default boot must kindle the adjacent tree');
+  await invariant(p, 'T1');
+  await p.close();
+  p = await page(browser, errors);
+  await seedWorld(p, [fire(0.56, 0.75, 2500), tree(0.60, 0.75)]);
+  await p.goto(`${BASE}?pack=${PACK}&seed=17&e2=0`);
   await sleep(2600);
   let w = await els(p);
-  const flags = await p.evaluate(() => window.__S1_FLAGS);
-  console.log('T1 gate off:', JSON.stringify({ e2: flags.e2, tree: w.find(e => e.k === 'tree') }));
-  if (flags.e2 !== false) throw new Error('T1 FAIL: E2 must default off in b2');
-  if (w.find(e => e.k === 'tree').burn) throw new Error('T1 FAIL: gated build must not ignite');
+  const flagsKill = await p.evaluate(() => window.__S1_FLAGS);
+  console.log('T1 kill switch:', JSON.stringify({ e2: flagsKill.e2, tree: w.find(e => e.k === 'tree') }));
+  if (flagsKill.e2 !== false) throw new Error('T1 FAIL: ?e2=0 must force the gate off');
+  if (w.find(e => e.k === 'tree').burn) throw new Error('T1 FAIL: killed gate must not ignite');
   let m = await invariant(p, 'T1');
-  if (m.e2.ignitions !== 0) throw new Error('T1 FAIL: e2.ignitions must be 0 behind the gate');
+  if (m.e2.ignitions !== 0) throw new Error('T1 FAIL: e2.ignitions must be 0 with the gate killed');
   await p.close();
 
   // T2: ?e2=1 — flame ignition transforms: the tree gains a burn sub-state,
@@ -176,7 +191,7 @@ const invariant = async (p, label) => {
   p = await page(browser, errors);
   // A burns from the fire; B sits within flame-r OF A but outside the fire's
   // own radii — if B ever kindles, heat chained through burning matter
-  await seedWorld(p, [fire(0.50, 0.75, 2500), tree(0.55, 0.75, 9), tree(0.60, 0.75, 11)]);
+  await seedWorld(p, [fire(0.50, 0.75, 2500), tree(0.55, 0.75, 9), tree(0.63, 0.75, 11)]);
   await p.goto(`${BASE}?pack=${PACK}&seed=21&e2=1`);
   const aLit = await pollUntil(p, async () => {
     const ww = await els(p);
@@ -217,6 +232,51 @@ const invariant = async (p, label) => {
   }, 16000);
   if (!healed || healed.seed !== 9) throw new Error('T6 FAIL: reloaded burn must still complete to the same tree');
   await invariant(p, 'T6');
+  await p.close();
+
+  // T7: the M2a promise end-to-end with REAL gestures — a tree stands in the
+  // world; the player writes 火 and flicks the final stroke through toward
+  // it. Placement plants the fire beside the tree (S1-D052), the fire
+  // kindles it (E2, default-ON), and the tree regrows into itself. No seeded
+  // fire, no forced coordinates: writing was the aiming and the arson.
+  p = await page(browser, errors);
+  // the flick ends at EXIT; placeEl maps exit y into fire's band [0.60,0.88],
+  // so the tree stands at the anchor that exit produces — aiming is honest
+  const EXIT = { x: 0.75, y: 0.78 };
+  const TREE = { x: EXIT.x, y: 0.60 + EXIT.y * 0.28 };
+  await seedWorld(p, [tree(TREE.x, TREE.y, 9)]);
+  await p.goto(`${BASE}?pack=${PACK}&char=${encodeURIComponent('火')}&seed=24`);
+  await sleep(400);
+  await slash(p, 150, 520, 260, 520); // title → play
+  await sleep(250);
+  await slashStrokes(p, [0, 1, 2]);
+  const g = await glyph(p);
+  const pts = g.strokes[3].pts;
+  await p.mouse.move(pts[0][0], pts[0][1]);
+  await p.mouse.down();
+  for (let j = 1; j < pts.length; j++) await p.mouse.move(pts[j][0], pts[j][1], { steps: 4 });
+  await p.mouse.move(EXIT.x * W, EXIT.y * H, { steps: 10 }); // the flick-through: aim at the tree
+  await p.mouse.up();
+  const planted = await pollUntil(p, async () => {
+    const f = (await els(p)).find(e => e.k === 'fire');
+    return f ? f : null;
+  }, 4000);
+  if (!planted) throw new Error('T7 FAIL: 火 lock never planted its fire');
+  const kindled = await pollUntil(p, async () => {
+    const t = (await els(p)).find(e => e.k === 'tree');
+    return t && t.burn ? t : null;
+  }, 9000);
+  console.log('T7 written arson: fire at', JSON.stringify(planted), '→ tree', JSON.stringify(kindled));
+  if (!kindled) throw new Error('T7 FAIL: the aimed fire must kindle the tree it was written beside');
+  const returned = await pollUntil(p, async () => {
+    const t = (await els(p)).find(e => e.k === 'tree');
+    return t && !t.burn ? t : null;
+  }, 16000);
+  if (!returned || returned.seed !== 9) throw new Error('T7 FAIL: the tree must regrow into itself');
+  m = await invariant(p, 'T7');
+  if (m.e2.ignitions < 1 || m.e2.regrowths < 1) throw new Error('T7 FAIL: e2 metrics must record the cycle');
+  if (m.locks !== 1) throw new Error('T7 FAIL: the 火 lock itself must be clean (locks=' + m.locks + ')');
+  console.log('T7 the promise holds: written, aimed, kindled, regrown — destructions 0');
   await p.close();
 
   if (errors.length) { console.log('ERRORS:', errors); throw new Error('console/page errors present'); }
