@@ -213,7 +213,7 @@ Run on every addition; any wrong answer → stop, escalate to router with a log 
 | OPEN-10 | ~~Ecology import ruling~~ **RESOLVED by S1-D020** — two-phase adoption (E1 now, E2 hard-gated); router to add one-line kinship cross-reference in the R4 charter | — |
 | OPEN-11 | ~~Hook matching~~ **CLOSED by S1-D034** — optional: a straight shu slash cuts a 竖钩; the hook is polish, never required, never punished | — |
 | OPEN-12 | ~~Stroke-DB licensing~~ **RESOLVED by S1-D035** — no independent PRC-standard DB exists; MMAH's 1999 APL is free copyleft (commercial use permitted); packs ship as APL-licensed data artifacts, license vendored | — |
-| OPEN-13 | Depth-1 component chunking confirm (墨 = 黑+土, not recursive) — refined in practice by M1a: chunk = leaves of the char's own decomposition tree, non-spatial IDCs collapse, sub-2-stroke chunks merge (reproduces v1 comps exactly) | router |
+| OPEN-13 | ~~Depth-1 component chunking~~ **CONFIRMED by S1-D037** — chunk = leaves of the char's own decomposition tree, non-spatial IDCs collapse, sub-2-stroke chunks merge | — |
 | OPEN-14 | E2 gate: which choice axis first — placement choice or want-driven repertoire? | M2 design, Code (per S1-D040) |
 | OPEN-15 | Flat-撇 (平撇) gap: 8 of the top-761 chars (看手系反笑爱委乎) open with a ~167–173° stroke — outside every bucket window, so the move-set cannot express them and honest traces would deflect under LOCKED S1-D032 matching. Options: widen pie's window as a real-form grace (needs an S1-D032 amendment at BOTH derive and match), add a 6th bucket, or keep dropping them. Dropped for M1f; needs a move-set ruling | move-set ruling, Code |
 
