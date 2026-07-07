@@ -34,12 +34,12 @@ const TRAIL_ARC_STEP = 0.035;    // ×S — uniform resample step
 const TRAIL_MIN_SEG = 0.07;      // ×S — slivers below this merge away
 const TRAIL_MAX_SEGS = 3;        // charter cap: ≤3 segments per stroke verb
 
-// Ecology E2 [S1-D020 → flipped ON by S1-D056]: the gate demanded a choice
-// axis before heat could ignite flammable matter — placement choice (S1-D052)
-// is that axis, and the playtest evidence discharged the condition. `?e2=0`
-// is the kill switch (S1-D054 runtime resolution in 03-canvas). The covenant
-// stands: ignition transforms, never destroys — kind+seed survive the burn
-// and regrowth returns the same element; e1.destructions stays 0.
+// Ecology E2 [S1-D020 → flipped ON by S1-D056]: heat ignites flammable matter
+// by proximity alone — placement is a dice roll (S1-D059), so ignition is an
+// accident of where things land, not a targeted act. `?e2=0` is the kill
+// switch (S1-D054 runtime resolution in 03-canvas). The covenant stands:
+// ignition transforms, never destroys — kind+seed survive the burn and
+// regrowth returns the same element; e1.destructions stays 0.
 const E2_ENABLED = true;
 
 // Render budget [LEAN — C4]

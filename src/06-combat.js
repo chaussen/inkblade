@@ -113,10 +113,6 @@ function resolveSlash(tr) {
     checkComponent(target.comp);
     if (g.strokes.every(s => s.cut)) {
       g.done = true;
-      // Placement choice (S1-D052): the final cutting slash's exit point is
-      // the world-mark anchor — writing becomes aiming. Transient, never
-      // persisted; a relock re-aims.
-      state.lockExit = { x: tr[tr.length - 1][0] / W, y: tr[tr.length - 1][1] / H };
       setTimeout(() => beginResolve(g.intact), 380);
     }
   } else {

@@ -22,18 +22,31 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D057, 2026-07-07)
+## Current state (as of S1-D060, 2026-07-07)
 - **Full delegation live (S1-D049)**: John has handed off all rulings — Code
   decides (including LOCKED amendments), logs rationale, ships, and reports.
-- Artifact: `inkblade-m2a.html` (BUILD_ID `S1-M2a-b3-20260707`); tests target it
+- Artifact: `inkblade-m2a.html` (BUILD_ID `S1-M2a-b4-20260707`); tests target it
   via `tests/helpers.js` TARGET_FILE default (`INKBLADE_TARGET` env overrides).
-- **M2a is complete and E2 is LIVE** (S1-D057): placement choice (final-stroke
-  exit pulls placeEl; `ecology.placement.pull` fire 0.85 / default 0.3 / seal
-  0.5; UNIQUE exempt) + ignition/regrowth (per-stage `ecology.ignition`
-  flame/ember, `regrow` clocks; one hop; sun never ignites; kind+seed survive
-  the burn — transformed ≠ destroyed). `?e2=0` is the kill switch.
+- **Checkpoint 1 verdict landed (S1-D059) — M2b POSTPONED.** John's playtest of
+  M2a surfaced four rulings, now the priority: (1) placement-choice aiming
+  RETIRED — placement is pure chance again, interactions come from accidental
+  proximity/collision (shipped as chunk A, S1-D060); (2) the world still
+  doesn't read as 3D (standing S1-D040 ask, unresolved by M1d's depth-staging
+  illusion) — folds into chunk B; (3) only 13 world.kind families exist and
+  489/500 basic-tier chars render with no visual identity at all (plain seal)
+  — confirmed duplicate: 大/山 share `peak`; chunk C; (4) canvas/UI needs a full
+  redesign (500-char list too small to read) — chunk B. Execution order: A
+  (done) → B (canvas/UI + 3D legibility) → C (visual symbols, first batch,
+  checkpoint before scaling to 500 then 3,000–7,000).
+- **M2a-b2 ignition/regrowth mechanics are UNCHANGED** by the S1-D059 ruling —
+  only the aim bias on top of placement was removed: per-stage
+  `ecology.ignition` flame/ember, `regrow` clocks; one hop; sun never
+  ignites; kind+seed survive the burn (transformed ≠ destroyed). `?e2=0` is
+  the kill switch.
 - New sim seams: `E2_ON` (03-canvas), `updateIgnition`/`updateBurnLife`
   (09-world-sim), burn visuals (10-world-render), save v2 additive `burn`.
+  `ecology.placement` is GONE from pack data (S1-D059/D060) — `placeEl` is
+  pure max-spacing random again, no lockExit anywhere in state.
 - Move-set: pie carries a second real-form center at 180° (flat-撇 grace,
   S1-D049a/D050/D051) at derive AND match; hooks keep strict pre-grace
   bucketing so they never harden into required pie tokens.
@@ -65,16 +78,40 @@ top-down for anything marked here; nothing below is real until logged there.
 | M2a-b1 | S1-M2a-b1-20260706 | Placement choice (resolves OPEN-14): lockExit anchor pulls placeEl scoring, weights in pack data (fire decisive/default subtle/UNIQUE exempt), flick-through aiming, smoke16 added; E2 still gated | S1-D052–D053 |
 | M2a-b2 | S1-M2a-b2-20260707 | E2 ignition + regrowth behind the gate (?e2=1): per-stage kindle (embers slower/closer), burn walk to ash→sprout→sapling→itself (same seed), one hop, sun never ignites, save v2 +burn, smoke17 added | S1-D054–D055 |
 | M2a-b3 | S1-M2a-b3-20260707 | **The flip: E2 default-ON, M2a complete.** ?e2=0 kill switch; gate assertions inverted (smoke11/17 T1); smoke17 T7 = the promise with real gestures (write 火, flick at a tree, it kindles and regrows) | S1-D056–D057 |
+| M2a-b4 | S1-M2a-b4-20260707 | **Chunk A of Checkpoint 1's verdict: the aim mechanic retired.** John's playtest ruled release-point aiming awkward; `placeEl` reverts to pure random max-spacing, `ecology.placement` dropped from packs, `state.lockExit` removed. Ignition/regrowth (b2) untouched — proximity-driven "collision" interactions were already the model asked for. smoke16 inverted (exit-independent placement); smoke17 T7 rewritten (accidental collision, not aim) | S1-D059–D060 |
 
 ## Planned
-### M2b — demand world (OPEN-9) — NEXT (design brief needed; log the plan as the next free S1-D0xx before code)
+### Chunk B — canvas/UI redesign + 3D legibility — NEXT (S1-D059(2)(4); plan entry before code)
+John's checkpoint-1 verdict: the 500-char roster view is too small to read and
+needs a full redesign, and the standing "make the world read as 3D" ask
+(S1-D040) still isn't landing through M1d's depth-staging illusion alone.
+Bundle both — a canvas layout pass is the natural place to push depth legibility
+further (stronger scale/mist/occlusion contrast, or a clearer visual language
+for "far vs near") while also giving the enlarged symbol set (chunk C) room to
+be seen. Scope TBD at plan-entry time; must not regress smoke12's depth
+contract or perf budget.
+
+### Chunk C — visual symbol expansion — first batch, then checkpoint (S1-D059(3))
+Confirmed: only 13 `world.kind` families exist; 489/500 basic-tier chars (98%)
+render with no visual identity (plain seal fallback); 大/山 literally share one
+kind (`peak`). John wants every character visually unique and asked whether
+Code can do this or needs another AI for visual design. Ruling: Code attempts
+it — procedural canvas iconography (the existing technique for fire/tree/sun/
+moon/walker), leaning on the radical-driven approach already flagged in the
+backlog (`radicalClasses`, 口讠扌辶纟宀 etc. unmapped) since most of these
+characters are literally pictographic. Ship a first batch covering the worst
+offenders (dedupe 大/山, give 二/三/十 clearer forms, add several new radical
+families) and STOP for a John quality/legibility checkpoint before scaling to
+the rest of the 500, then the 3,000–7,000 roster (S1-D043).
+
+### M2b — demand world (OPEN-9) — POSTPONED (S1-D059: everything waits on chunks A–C)
 World state generates wants ("the grove is dark — write something that burns");
 repertoire choice replaces some ghost glyphs. Needs a want-authoring model that
 never becomes a quest log. Solves OPEN-3 diegetically. With E2 live, wants can
 now be *answerable*: a want for light is answered by written fire that actually
 kindles; regrowth means answering never permanently costs the world anything.
 
-### M2a — E2 ignition + placement choice — COMPLETE (S1-D057, all three builds shipped)
+### M2a — E2 ignition + placement choice — COMPLETE, placement half later amended (S1-D057 closed it; S1-D059/D060 retired the aim mechanic in b4 — see above)
 Resolves OPEN-14. Why E2 was gated (S1-D020): ignition without a *choice* is
 just weather — the player must be able to mean it. So the milestone has two
 halves, choice first:
@@ -115,7 +152,7 @@ plan entry: the actual radius/dwell numbers (pack data).
 - World state generates wants ("the grove is dark — write something that burns"); repertoire choice replaces some ghost glyphs. Needs want-authoring model that never becomes a quest log. Solves OPEN-3 diegetically.
 
 ### Backlog (unscheduled)
-- Radical map growth: 口讠扌辶纟宀 etc. unmapped (378/500 are seals today) — each new family renderer + radicalClasses row converts dozens of seals into scenery.
+- ~~Radical map growth~~ PROMOTED to chunk C (S1-D059(3)) — 口讠扌辶纟宀 etc. unmapped (489/500 are seals today, current count) — each new family renderer + radicalClasses row converts dozens of seals into scenery.
 - Next roster tiers toward 3,000–7,000 (S1-D043 path): extend roster file, ship as more chapters; nothing but data + the existing loader.
 - Audio pass (palette beyond crackle/startle; John ruled lower priority).
 - Real-device mobile perf measurement (headless 300@60fps logged S1-D042; pre-render only if a device breaches).
@@ -129,5 +166,5 @@ plan entry: the actual radius/dwell numbers (pack data).
 | OPEN-6 | PvP model (literacy asymmetry as arsenal + matchmaking problem) | parked M2+ |
 | OPEN-8 | Component wash: always-on vs fading with mastery (mastery-fade adds a progression system — Fun Gate check required) | unscheduled; ask John before adding any progression |
 | OPEN-9 | Demand world — want-authoring model that never becomes a quest log | M2b headline |
-| OPEN-14 | ~~E2 choice axis~~ RESOLVED S1-D049: placement choice (M2a); repertoire stays M2b | — |
+| OPEN-14 | ~~E2 choice axis~~ RESOLVED S1-D049, AMENDED S1-D059: aim-based placement retired, chance+collision preferred; repertoire stays M2b | — |
 | OPEN-15 | ~~Flat-撇 gap~~ RESOLVED S1-D049, shipped S1-D051 (M1f-b2): pie real-form grace at 180° | — |

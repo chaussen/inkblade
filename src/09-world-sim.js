@@ -12,26 +12,18 @@ const worldRand = SEED_PARAM !== null ? rng(parseInt(SEED_PARAM, 10) || 1) : Mat
 
 function placeEl(k, s, isNew){
   const [y1, y2] = bandFor(k);
-  // Placement choice (S1-D052, OPEN-14): the lock gesture's exit point pulls
-  // candidate scoring toward where the player ended the final stroke — exit
-  // x lands in the field, exit y maps into the kind's band (high = far, low
-  // = near). Pull weights are pack data (ecology.placement.pull); no data or
-  // UNIQUE kinds → pull 0 → pure max-spacing, exactly the old selection.
-  const pulls = ECOLOGY && ECOLOGY.placement && ECOLOGY.placement.pull;
-  const pull = (pulls && state.lockExit && !UNIQUE[k])
-    ? (pulls[k] !== undefined ? pulls[k] : (pulls.default || 0)) : 0;
-  const ax = pull ? Math.max(0.08, Math.min(0.92, state.lockExit.x)) : 0;
-  const ay = pull ? y1 + Math.max(0, Math.min(1, state.lockExit.y)) * (y2 - y1) : 0;
-  // candidates scored by 2D distance to same-kind neighbors — the depth
-  // field (S1-D041) fills in both axes, not a strip
+  // Placement is a dice roll, not an aim (S1-D059, supersedes S1-D052/D053):
+  // John's playtest ruling — release point is low priority, interactions
+  // should emerge from things randomly landing near each other, not from a
+  // targeting act. Candidates scored by 2D distance to same-kind neighbors
+  // only (the depth field, S1-D041, fills in both axes, not a strip).
   let bx = 0.5, by = (y1 + y2) / 2, bd = -1e9;
   for (let i = 0; i < 10; i++){
     const cx = 0.08 + worldRand() * 0.84;
     const cy = y1 + worldRand() * (y2 - y1);
     let d = 1e9;
     for (const e of state.world.els) if (e.k === k) d = Math.min(d, Math.hypot(e.x - cx, e.y - cy));
-    const score = pull ? (1 - pull) * Math.min(d, 1.4) - pull * Math.hypot(cx - ax, cy - ay) : d;
-    if (score > bd) { bd = score; bx = cx; by = cy; }
+    if (d > bd) { bd = d; bx = cx; by = cy; }
   }
   const el = {
     k, x: bx, y: by, s,

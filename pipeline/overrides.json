@@ -609,13 +609,6 @@
     },
     "ashDecayMs": 180000,
     "heatAuraR": 0.1,
-    "placement": {
-      "pull": {
-        "default": 0.3,
-        "fire": 0.85,
-        "seal": 0.5
-      }
-    },
     "ignition": {
       "flame": {
         "r": 0.07,

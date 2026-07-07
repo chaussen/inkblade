@@ -9,7 +9,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { TARGET_FILE, launch, slash, slashStrokes, glyph, M, sleep, W, H } = require('./helpers');
+const { TARGET_FILE, launch, slash, slashStrokes, M, sleep } = require('./helpers');
 
 const ROOT = '/home/zni/projects/inkblade';
 const PORT = 8087;
@@ -28,7 +28,6 @@ const ECO = {
   ashDecayMs: 3000,
   ignition: { flame: { r: 0.10, dwellMs: 800 }, ember: { r: 0.05, dwellMs: 1500 }, coolMs: 2000 },
   regrow: { ashMs: 1500, sproutMs: 1200, saplingMs: 1200 },
-  placement: { pull: { default: 0.3, fire: 0.85, seal: 0.5 } },
 };
 
 function makeFixtures() {
@@ -235,28 +234,21 @@ const invariant = async (p, label) => {
   await p.close();
 
   // T7: the M2a promise end-to-end with REAL gestures — a tree stands in the
-  // world; the player writes 火 and flicks the final stroke through toward
-  // it. Placement plants the fire beside the tree (S1-D052), the fire
-  // kindles it (E2, default-ON), and the tree regrows into itself. No seeded
-  // fire, no forced coordinates: writing was the aiming and the arson.
+  // world; the player writes 火 with an ordinary lock (no aiming — S1-D059
+  // retired the aim mechanic). Placement is a dice roll, so the tree sits
+  // at the exact spot seed 24's random draw is known to land a fire (found
+  // empirically, same fixture, same rng — placeEl's candidate scoring for a
+  // kind's FIRST instance in an empty world is just that draw). The fire
+  // lands on top of it by accident, kindles it (E2, default-ON), and the
+  // tree regrows into itself — a collision, not a command.
   p = await page(browser, errors);
-  // the flick ends at EXIT; placeEl maps exit y into fire's band [0.60,0.88],
-  // so the tree stands at the anchor that exit produces — aiming is honest
-  const EXIT = { x: 0.75, y: 0.78 };
-  const TREE = { x: EXIT.x, y: 0.60 + EXIT.y * 0.28 };
+  const TREE = { x: 0.8896, y: 0.6823 }; // seed 24's fire lands exactly here
   await seedWorld(p, [tree(TREE.x, TREE.y, 9)]);
   await p.goto(`${BASE}?pack=${PACK}&char=${encodeURIComponent('火')}&seed=24`);
   await sleep(400);
   await slash(p, 150, 520, 260, 520); // title → play
   await sleep(250);
-  await slashStrokes(p, [0, 1, 2]);
-  const g = await glyph(p);
-  const pts = g.strokes[3].pts;
-  await p.mouse.move(pts[0][0], pts[0][1]);
-  await p.mouse.down();
-  for (let j = 1; j < pts.length; j++) await p.mouse.move(pts[j][0], pts[j][1], { steps: 4 });
-  await p.mouse.move(EXIT.x * W, EXIT.y * H, { steps: 10 }); // the flick-through: aim at the tree
-  await p.mouse.up();
+  await slashStrokes(p, [0, 1, 2, 3]);
   const planted = await pollUntil(p, async () => {
     const f = (await els(p)).find(e => e.k === 'fire');
     return f ? f : null;
@@ -267,7 +259,7 @@ const invariant = async (p, label) => {
     return t && t.burn ? t : null;
   }, 9000);
   console.log('T7 written arson: fire at', JSON.stringify(planted), '→ tree', JSON.stringify(kindled));
-  if (!kindled) throw new Error('T7 FAIL: the aimed fire must kindle the tree it was written beside');
+  if (!kindled) throw new Error('T7 FAIL: the fire must kindle the tree it landed beside');
   const returned = await pollUntil(p, async () => {
     const t = (await els(p)).find(e => e.k === 'tree');
     return t && !t.burn ? t : null;
@@ -276,7 +268,7 @@ const invariant = async (p, label) => {
   m = await invariant(p, 'T7');
   if (m.e2.ignitions < 1 || m.e2.regrowths < 1) throw new Error('T7 FAIL: e2 metrics must record the cycle');
   if (m.locks !== 1) throw new Error('T7 FAIL: the 火 lock itself must be clean (locks=' + m.locks + ')');
-  console.log('T7 the promise holds: written, aimed, kindled, regrown — destructions 0');
+  console.log('T7 the promise holds: written, landed by chance, kindled, regrown — destructions 0');
   await p.close();
 
   if (errors.length) { console.log('ERRORS:', errors); throw new Error('console/page errors present'); }
