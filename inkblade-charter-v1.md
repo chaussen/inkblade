@@ -282,6 +282,56 @@ Run on every addition; any wrong answer → stop, escalate to router with a log 
 | 2026-07-04 | S1-D002 | Stability rule imported from the Lab's shared principles: sequences that match the real lexicon LOCK (assemble, speak, manifest meaning); broken order FIZZLES (crumble, still "did a thing"). "Wrong" is never surfaced; gold/ash per-stroke ink is the only order feedback and the entire pedagogy | chat | LOCKED | — |
 | 2026-07-04 | S1-D001 | Combo-orthography model adopted: identity claim per §1.1; dictation game named as the anti-pattern; original contribution asserted — **combo-orthography**: a writing system's standardized production sequence as a game's combo system, the lexicon as the curated combo book, order rules as learnable combo grammar. S1 chartered as an independent Lab track; no fight protocol against R4/v3 (different literacy operations, nothing contested) | John + chat | LOCKED | — |
 
+## 11. Playtest Checkpoint Log — append-only, newest on top (S1-D058)
+
+The actual checkpoint messages handed to John, verbatim, kept alongside their
+ship entries so the invitation and its eventual verdict both have a durable
+record.
+
+### Checkpoint — M2a-b4: the aim mechanic retired (2026-07-07, follows S1-D060; verdict pending)
+
+> **Where.** Same artifact, same server:
+> ```
+> cd ~/projects/inkblade && python3 -m http.server 8000
+> ```
+> `http://localhost:8000/inkblade-m2a.html?reset=1`
+>
+> **What's new vs. what you just played:** Dragging past the end of your final
+> stroke used to steer where the mark planted — that's gone. Placement is now
+> a straight dice roll, same as everything else in the world. If a fire
+> happens to land near a tree, it catches; if not, it doesn't. No more
+> "aiming."
+>
+> **What to try:** Play a few rounds writing 木 (tree) and 火 (fire) back to
+> back, without trying to control where anything lands. Watch for a fire and
+> a tree happening to end up close together — that's the "collision" moment
+> (it should still ignite exactly like before, just by accident now instead
+> of on purpose).
+>
+> **Verdict needed:** Does this feel more like the "things collide and react"
+> world you described, now that aiming is out of the loop?
+>
+> On your other three points — investigated, and confirmed all of them:
+> 1. **3D**: there's no true 3D — it's a 2D canvas with a depth illusion
+>    (things scale/fade by vertical position) from an earlier milestone. It
+>    evidently isn't reading as "3D" to you. Folded into the next chunk
+>    (canvas redesign) rather than treated as separate.
+> 2. **Duplicate/missing symbols**: confirmed exactly — only 13 distinct
+>    visual symbols exist in the whole game, and 489 of the 500 basic-tier
+>    characters (98%) have no symbol at all, just a plain stamp with the
+>    character printed on it. And yes, 大 (big) and 山 (mountain) literally
+>    share one symbol, differing only by size — the duplicate spotted.
+> 3. **Canvas redesign**: queued right after the 3D fix, since it needs room
+>    for the expanded symbol set.
+>
+> **Plan, in order:** (B) canvas/UI redesign + fix the 3D legibility, then
+> (C) a real pass at giving every character its own symbol — starting with a
+> first batch (fixing 大/山, the numbers, and adding several new families)
+> checkpointed on quality before scaling to the full 500 and beyond. Symbol
+> design done in-house rather than outsourced — same procedural-drawing
+> technique the good examples (fire/tree/mountain/sun/moon) already use, just
+> needs to cover more ground. M2b (demand world) is on hold until these land.
+
 ---
 
 ## Appendix — Glossary
