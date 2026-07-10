@@ -111,6 +111,55 @@
     "terrain": {
       "cls": "structure",
       "tags": []
+    },
+    "bigfig": {
+      "cls": "agent",
+      "tags": [
+        "living"
+      ]
+    },
+    "gate": {
+      "cls": "structure",
+      "tags": []
+    },
+    "horse": {
+      "cls": "agent",
+      "tags": [
+        "living"
+      ]
+    },
+    "heart": {
+      "cls": "structure",
+      "tags": []
+    },
+    "wind": {
+      "cls": "structure",
+      "tags": []
+    },
+    "bolt": {
+      "cls": "structure",
+      "tags": []
+    },
+    "cart": {
+      "cls": "structure",
+      "tags": []
+    },
+    "banner": {
+      "cls": "structure",
+      "tags": [
+        "flammable"
+      ]
+    },
+    "dwelling": {
+      "cls": "structure",
+      "tags": [
+        "shelter",
+        "flammable"
+      ]
+    },
+    "skylight": {
+      "cls": "structure",
+      "tags": []
     }
   },
   "chars": {
@@ -210,9 +259,9 @@
       },
       "world": {
         "tier": 1,
-        "kind": "peak",
+        "kind": "bigfig",
         "params": {
-          "scale": 1.1
+          "scale": 1.15
         }
       },
       "expectVerbs": [
@@ -761,6 +810,132 @@
         "rock",
         "crag"
       ]
+    },
+    "口": {
+      "class": "banner",
+      "forms": [
+        "flag",
+        "scroll"
+      ]
+    },
+    "讠": {
+      "class": "banner",
+      "forms": [
+        "flag",
+        "scroll"
+      ]
+    },
+    "言": {
+      "class": "banner",
+      "forms": [
+        "scroll"
+      ]
+    },
+    "纟": {
+      "class": "banner",
+      "forms": [
+        "scroll"
+      ]
+    },
+    "宀": {
+      "class": "dwelling",
+      "forms": [
+        "hut",
+        "pavilion"
+      ]
+    },
+    "日": {
+      "class": "skylight",
+      "forms": [
+        "glow",
+        "dawn"
+      ]
+    },
+    "扌": {
+      "class": "figure",
+      "forms": [
+        "stoop"
+      ]
+    },
+    "辶": {
+      "class": "figure",
+      "forms": [
+        "stroll"
+      ]
+    }
+  },
+  "charsExtra": {
+    "门": {
+      "world": {
+        "tier": 1,
+        "kind": "gate",
+        "params": {}
+      }
+    },
+    "马": {
+      "world": {
+        "tier": 1,
+        "kind": "horse",
+        "params": {}
+      }
+    },
+    "心": {
+      "world": {
+        "tier": 1,
+        "kind": "heart",
+        "params": {}
+      }
+    },
+    "风": {
+      "world": {
+        "tier": 1,
+        "kind": "wind",
+        "params": {}
+      }
+    },
+    "电": {
+      "world": {
+        "tier": 1,
+        "kind": "bolt",
+        "params": {}
+      }
+    },
+    "车": {
+      "world": {
+        "tier": 1,
+        "kind": "cart",
+        "params": {}
+      }
+    },
+    "家": {
+      "world": {
+        "tier": 2,
+        "class": "dwelling",
+        "params": {
+          "form": "hut",
+          "scale": 1.15
+        }
+      }
+    },
+    "天": {
+      "world": {
+        "tier": 2,
+        "class": "skylight",
+        "params": {
+          "form": "glow",
+          "scale": 1.2
+        }
+      }
+    },
+    "花": {
+      "world": {
+        "tier": 2,
+        "class": "flora",
+        "params": {
+          "form": "flower",
+          "scale": 1.1
+        }
+      }
     }
   }
 }

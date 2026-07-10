@@ -244,7 +244,10 @@ function autoWorld(ch, d) {
   return { tier: 2, class: rc.class, params: { form } };
 }
 function buildChar(ch) {
-  const ov = overrides.chars[ch] || {};
+  // charsExtra (S1-D066): curation for chars OUTSIDE the core roster — the
+  // core stays the 23-char curated tier; basic-tier chars can still carry
+  // hand-picked worlds/glosses without joining core.
+  const ov = overrides.chars[ch] || (overrides.charsExtra && overrides.charsExtra[ch]) || {};
   const g = gfx[ch], d = dict[ch];
   if (!g) { queue.push({ ch, issue: 'no glyph data' }); return null; }
   const strokes = [];

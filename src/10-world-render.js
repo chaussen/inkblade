@@ -13,6 +13,10 @@ const ELEMENT_DRAW = {
   terrace: drawTerraceEl, horizon: drawHorizonEl, path: drawPathEl, seal: drawSealEl,
   sun: drawSunEl, moon: drawMoonEl, field: drawFieldEl, water: drawWaterEl,
   flora: drawFloraEl, terrain: drawTerrainEl, figure: drawFigureEl,
+  // chunk C batch 1 (S1-D066): every character earns a face
+  bigfig: drawBigFigEl, gate: drawGateEl, horse: drawHorseEl, heart: drawHeartEl,
+  wind: drawWindEl, bolt: drawBoltEl, cart: drawCartEl,
+  banner: drawBannerEl, dwelling: drawDwellingEl, skylight: drawSkylightEl,
 };
 function drawWorld(dt, now){
   // the backdrop means an empty world is still a place (S1-D063/D064) —
@@ -604,6 +608,18 @@ function drawFloraEl(el, now, p){
       wx.fillStyle = `rgba(${92 + Math.floor(r()*20)},${110 + Math.floor(r()*18)},${74 + Math.floor(r()*14)},0.5)`;
       wx.beginPath(); wx.ellipse(fx2 + sway * 0.4, fy, fr * 1.15, fr * 0.75, 0, 0, Math.PI * 2); wx.fill();
     }
+  } else if (form === 'flower'){ // 花 and friends: petals a child can name
+    wx.beginPath(); wx.moveTo(0, 0); wx.quadraticCurveTo(sway * 0.3, -h * 0.6, sway * 0.5, -h); wx.stroke();
+    wx.fillStyle = 'rgba(104,128,74,0.6)';
+    wx.beginPath(); wx.ellipse(-h * 0.2 + sway * 0.3, -h * 0.45, h * 0.2, h * 0.09, -0.5, 0, Math.PI * 2); wx.fill();
+    const cx2 = sway * 0.5, cy2 = -h;
+    wx.fillStyle = 'rgba(206,110,120,0.65)';
+    for (let i = 0; i < 5; i++){
+      const a = i / 5 * Math.PI * 2 + el.seed % 7;
+      wx.beginPath(); wx.ellipse(cx2 + Math.cos(a) * h * 0.16, cy2 + Math.sin(a) * h * 0.16, h * 0.13, h * 0.08, a, 0, Math.PI * 2); wx.fill();
+    }
+    wx.fillStyle = 'rgba(214,166,40,0.85)';
+    wx.beginPath(); wx.arc(cx2, cy2, h * 0.08, 0, Math.PI * 2); wx.fill();
   } else { // sprout
     wx.beginPath(); wx.moveTo(0, 0); wx.quadraticCurveTo(sway * 0.3, -h * 0.5, sway * 0.6, -h * 0.8); wx.stroke();
     wx.fillStyle = 'rgba(104,128,74,0.65)';
@@ -669,6 +685,241 @@ function drawFigureEl(el, now, p){
   // head
   const hx = stoop ? h * 0.12 : 0;
   wx.beginPath(); wx.arc(hx, -h * (stoop ? 0.86 : 0.95), h * 0.14, 0, Math.PI * 2); wx.fill();
+  wx.restore();
+}
+/* -------- chunk C batch 1 (S1-D066): bespoke kinds -------- *
+ * Kid-readable brush figures. Living kinds (bigfig, horse) ride the same
+ * beh/agent machinery as walkers — tags, not code, make them react. */
+function drawBigFigEl(el, now, p){
+  // 大 IS the pictograph: a big figure, arms spread wide
+  const B = el.beh;
+  const resting = B && B.mode === 'rest';
+  const span = resting ? 0 : 0.012 + (el.seed % 5) * 0.004;
+  const T = 9000 + (el.seed % 7) * 1200;
+  const ph = now / T * 2 * Math.PI + el.seed % 100;
+  const X = clamp01(el.x + Math.sin(ph) * span) * W;
+  const bob = Math.abs(Math.sin(now / 700 + el.seed)) * 2 * el.s;
+  const h = S * 0.13 * el.s * p;
+  if (h < 3) return;
+  const Y = el.y * H - bob;
+  wx.save();
+  wx.strokeStyle = '#241f18'; wx.fillStyle = '#241f18';
+  wx.globalAlpha = 0.92; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1.6, h * 0.10);
+  wx.beginPath(); wx.moveTo(X, Y - h * 0.30); wx.lineTo(X, Y - h * 0.72); wx.stroke(); // trunk
+  const wob = Math.sin(now / 900 + el.seed) * h * 0.03;
+  wx.beginPath(); wx.moveTo(X - h * 0.42, Y - h * 0.60 + wob); wx.lineTo(X + h * 0.42, Y - h * 0.60 - wob); wx.stroke(); // arms WIDE
+  wx.lineWidth = Math.max(1.3, h * 0.085);
+  wx.beginPath(); wx.moveTo(X, Y - h * 0.30); wx.lineTo(X - h * 0.22, Y); wx.stroke();
+  wx.beginPath(); wx.moveTo(X, Y - h * 0.30); wx.lineTo(X + h * 0.22, Y); wx.stroke();
+  wx.beginPath(); wx.arc(X, Y - h * 0.82, h * 0.11, 0, Math.PI * 2); wx.fill();
+  wx.restore();
+}
+function drawGateEl(el, now, p){
+  // 门: an open doorframe standing in the field — things may pass through
+  const X = el.x * W, Y = el.y * H, h = S * 0.11 * el.s * p, w = h * 0.72;
+  if (h < 3) return;
+  wx.save();
+  wx.strokeStyle = 'rgba(94,62,40,0.85)'; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1.6, h * 0.09);
+  wx.beginPath(); wx.moveTo(X - w / 2, Y); wx.lineTo(X - w / 2, Y - h); wx.stroke();
+  wx.beginPath(); wx.moveTo(X + w / 2, Y); wx.lineTo(X + w / 2, Y - h); wx.stroke();
+  wx.lineWidth = Math.max(1.8, h * 0.11);
+  wx.beginPath(); wx.moveTo(X - w * 0.72, Y - h * 0.96); wx.lineTo(X + w * 0.72, Y - h * 0.96); wx.stroke(); // lintel
+  wx.lineWidth = Math.max(1.2, h * 0.06);
+  wx.beginPath(); wx.moveTo(X - w * 0.60, Y - h * 1.10); wx.lineTo(X + w * 0.60, Y - h * 1.10); wx.stroke(); // cap
+  wx.restore();
+}
+function drawHorseEl(el, now, p){
+  // 马: a brush horse that ambles the field (living — E1 applies via tags)
+  const B = el.beh;
+  const span = 0.04 + (el.seed % 6) * 0.01;
+  const T = 6000 + (el.seed % 8) * 800;
+  const ph = now / T * 2 * Math.PI + el.seed % 100;
+  const X = clamp01(el.x + Math.sin(ph) * span) * W;
+  const dir = Math.cos(ph) >= 0 ? 1 : -1;
+  const hop = B && B.hopT > 0 ? Math.sin((1 - B.hopT / 400) * Math.PI) * 8 * el.s : 0;
+  const trot = Math.abs(Math.sin(now / 190 + el.seed)) * 2.4 * el.s + hop;
+  const L = S * 0.10 * el.s * p; // body length
+  if (L < 4) return;
+  const Y = el.y * H - trot;
+  wx.save(); wx.translate(X, Y); wx.scale(dir, 1);
+  wx.strokeStyle = '#3a2c1c'; wx.fillStyle = '#3a2c1c';
+  wx.globalAlpha = 0.9; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1.6, L * 0.16);
+  wx.beginPath(); wx.moveTo(-L * 0.45, -L * 0.52); wx.quadraticCurveTo(0, -L * 0.66, L * 0.38, -L * 0.55); wx.stroke(); // back
+  wx.lineWidth = Math.max(1.3, L * 0.11);
+  wx.beginPath(); wx.moveTo(L * 0.38, -L * 0.55); wx.lineTo(L * 0.58, -L * 0.92); wx.stroke(); // neck
+  wx.beginPath(); wx.moveTo(L * 0.58, -L * 0.92); wx.lineTo(L * 0.80, -L * 0.84); wx.stroke(); // head
+  const kick = Math.sin(now / 190 + el.seed) * L * 0.08;
+  wx.lineWidth = Math.max(1.1, L * 0.08);
+  wx.beginPath(); wx.moveTo(-L * 0.40, -L * 0.50); wx.lineTo(-L * 0.46 - kick, 0); wx.stroke();
+  wx.beginPath(); wx.moveTo(-L * 0.28, -L * 0.52); wx.lineTo(-L * 0.20 + kick, 0); wx.stroke();
+  wx.beginPath(); wx.moveTo(L * 0.22, -L * 0.55); wx.lineTo(L * 0.16 - kick, 0); wx.stroke();
+  wx.beginPath(); wx.moveTo(L * 0.36, -L * 0.55); wx.lineTo(L * 0.44 + kick, 0); wx.stroke();
+  wx.beginPath(); wx.moveTo(-L * 0.45, -L * 0.52); wx.quadraticCurveTo(-L * 0.62, -L * 0.44 + kick, -L * 0.66, -L * 0.24); wx.stroke(); // tail
+  wx.restore();
+}
+function drawHeartEl(el, now, p){
+  // 心: a soft cinnabar heart, breathing — pure charm
+  const X = el.x * W, Y = el.y * H;
+  const beat = 1 + 0.06 * Math.sin(now / 480 + el.seed);
+  const r = S * 0.032 * el.s * p * beat;
+  if (r < 2) return;
+  wx.save();
+  wx.translate(X, Y - r * 1.6);
+  wx.fillStyle = 'rgba(178,57,42,0.72)';
+  wx.beginPath();
+  wx.moveTo(0, r * 0.9);
+  wx.bezierCurveTo(-r * 1.5, -r * 0.3, -r * 0.7, -r * 1.2, 0, -r * 0.35);
+  wx.bezierCurveTo(r * 0.7, -r * 1.2, r * 1.5, -r * 0.3, 0, r * 0.9);
+  wx.fill();
+  wx.restore();
+}
+function drawWindEl(el, now, p){
+  // 风: swirl strokes rolling across their spot — motion made visible
+  const X = el.x * W, Y = el.y * H, w = S * 0.09 * el.s * p;
+  if (w < 3) return;
+  wx.save();
+  wx.strokeStyle = 'rgba(120,134,148,0.55)'; wx.lineCap = 'round';
+  for (let i = 0; i < 3; i++){
+    const q = ((now / (2200 + i * 300) + el.seed + i * 0.33) % 1);
+    const ox = (q - 0.5) * w * 1.6;
+    const oy = -S * (0.02 + 0.022 * i) * el.s;
+    const a = Math.sin(q * Math.PI);
+    wx.globalAlpha = 0.55 * a;
+    wx.lineWidth = Math.max(1, w * 0.055 * (1.2 - i * 0.25));
+    wx.beginPath();
+    wx.moveTo(X + ox - w * 0.5, Y + oy);
+    wx.quadraticCurveTo(X + ox - w * 0.05, Y + oy - w * 0.22, X + ox + w * 0.3, Y + oy - w * 0.06);
+    wx.quadraticCurveTo(X + ox + w * 0.52, Y + oy + w * 0.04, X + ox + w * 0.42, Y + oy + w * 0.14);
+    wx.stroke();
+  }
+  wx.restore();
+}
+function drawBoltEl(el, now, p){
+  // 电: a cloudlet with a zigzag bolt that flickers
+  const X = el.x * W, Y = el.y * H, h = S * 0.10 * el.s * p;
+  if (h < 3) return;
+  const flick = (Math.floor(now / 340) + el.seed) % 5 !== 0; // mostly on, brief blink
+  wx.save();
+  wx.fillStyle = 'rgba(150,158,172,0.55)';
+  for (let j = 0; j < 3; j++){
+    const ox = (j - 1) * h * 0.28;
+    wx.beginPath(); wx.ellipse(X + ox, Y - h * 0.95 + (j % 2 ? h * 0.05 : 0), h * 0.26, h * 0.16, 0, 0, Math.PI * 2); wx.fill();
+  }
+  if (flick){
+    wx.strokeStyle = 'rgba(214,166,40,0.9)'; wx.lineWidth = Math.max(1.4, h * 0.07); wx.lineJoin = 'round';
+    wx.beginPath();
+    wx.moveTo(X + h * 0.05, Y - h * 0.82);
+    wx.lineTo(X - h * 0.10, Y - h * 0.45);
+    wx.lineTo(X + h * 0.08, Y - h * 0.40);
+    wx.lineTo(X - h * 0.06, Y - h * 0.02);
+    wx.stroke();
+  }
+  wx.restore();
+}
+function drawCartEl(el, now, p){
+  // 车: two wheels and a body — waiting to be pulled somewhere someday
+  const X = el.x * W, Y = el.y * H, w = S * 0.075 * el.s * p;
+  if (w < 3) return;
+  wx.save();
+  wx.strokeStyle = 'rgba(94,62,40,0.85)'; wx.fillStyle = 'rgba(122,88,54,0.35)';
+  wx.lineCap = 'round'; wx.lineWidth = Math.max(1.2, w * 0.08);
+  const wr = w * 0.30;
+  for (const ox of [-w * 0.42, w * 0.42]){
+    wx.beginPath(); wx.arc(X + ox, Y - wr, wr, 0, Math.PI * 2); wx.stroke();
+    wx.beginPath(); wx.moveTo(X + ox - wr * 0.7, Y - wr - wr * 0.7); wx.lineTo(X + ox + wr * 0.7, Y - wr + wr * 0.7); wx.stroke();
+    wx.beginPath(); wx.moveTo(X + ox - wr * 0.7, Y - wr + wr * 0.7); wx.lineTo(X + ox + wr * 0.7, Y - wr - wr * 0.7); wx.stroke();
+  }
+  wx.beginPath(); wx.rect(X - w * 0.62, Y - wr * 2 - w * 0.34, w * 1.24, w * 0.34); wx.fill(); wx.stroke();
+  wx.beginPath(); wx.moveTo(X + w * 0.62, Y - wr * 2 - w * 0.17); wx.lineTo(X + w * 1.0, Y - wr * 2 - w * 0.30); wx.stroke(); // handle
+  wx.restore();
+}
+/* -------- chunk C batch 1 (S1-D066): tier-2 family renderers -------- *
+ * One renderer per family, per-char `form` + seed variance = siblings. */
+function drawBannerEl(el, now, p){
+  // speech & thread chars: a little word-banner fluttering on a stick
+  const X = el.x * W, Y = el.y * H;
+  const r = rng(el.seed);
+  const form = (el.p && el.p.form) || 'flag';
+  const h = S * 0.085 * el.s * p * (0.9 + r() * 0.25);
+  if (h < 3) return;
+  const flut = Math.sin(now / 420 + el.seed) * h * 0.06;
+  wx.save();
+  wx.strokeStyle = 'rgba(94,62,40,0.8)'; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1, h * 0.05);
+  wx.beginPath(); wx.moveTo(X, Y); wx.lineTo(X, Y - h); wx.stroke(); // stick
+  if (form === 'flag'){
+    wx.fillStyle = 'rgba(196,120,70,0.45)';
+    wx.beginPath();
+    wx.moveTo(X, Y - h);
+    wx.quadraticCurveTo(X + h * 0.32, Y - h + h * 0.10 + flut, X + h * 0.55, Y - h + h * 0.06 + flut * 1.4);
+    wx.lineTo(X + h * 0.52, Y - h * 0.68 + flut * 1.4);
+    wx.quadraticCurveTo(X + h * 0.28, Y - h * 0.72 + flut, X, Y - h * 0.70);
+    wx.closePath(); wx.fill();
+  } else { // scroll: a hanging strip, weighted at the foot
+    wx.fillStyle = 'rgba(236,227,207,0.9)';
+    wx.strokeStyle = 'rgba(120,104,80,0.55)'; wx.lineWidth = 1;
+    const sw = h * 0.30;
+    wx.beginPath(); wx.rect(X - sw / 2 + flut * 0.4, Y - h, sw, h * 0.62); wx.fill(); wx.stroke();
+    wx.fillStyle = CINNABAR; wx.globalAlpha = 0.75;
+    wx.fillRect(X - sw * 0.22 + flut * 0.4, Y - h + h * 0.08, sw * 0.44, sw * 0.44);
+  }
+  wx.restore();
+}
+function drawDwellingEl(el, now, p){
+  // roof chars: a little house — shelter to rest by, and it can burn + regrow
+  const X = el.x * W, Y = el.y * H;
+  const r = rng(el.seed);
+  const form = (el.p && el.p.form) || 'hut';
+  const w = S * (form === 'pavilion' ? 0.085 : 0.075) * el.s * p * (0.9 + r() * 0.2);
+  if (w < 3) return;
+  const wallH = w * (form === 'pavilion' ? 0.55 : 0.62);
+  wx.save();
+  wx.strokeStyle = 'rgba(94,62,40,0.85)'; wx.lineJoin = 'round'; wx.lineCap = 'round';
+  wx.lineWidth = Math.max(1.2, w * 0.06);
+  if (form === 'hut'){
+    wx.fillStyle = 'rgba(206,186,150,0.55)';
+    wx.beginPath(); wx.rect(X - w * 0.55, Y - wallH, w * 1.1, wallH); wx.fill(); wx.stroke();
+    wx.fillStyle = 'rgba(122,88,54,0.75)';
+    wx.beginPath(); wx.moveTo(X - w * 0.75, Y - wallH); wx.lineTo(X, Y - wallH - w * 0.55); wx.lineTo(X + w * 0.75, Y - wallH); wx.closePath(); wx.fill(); wx.stroke();
+    wx.fillStyle = 'rgba(70,50,34,0.8)';
+    wx.beginPath(); wx.rect(X - w * 0.14, Y - wallH * 0.62, w * 0.28, wallH * 0.62); wx.fill(); // door
+  } else { // pavilion: open posts under a swooping roof
+    wx.beginPath(); wx.moveTo(X - w * 0.45, Y); wx.lineTo(X - w * 0.45, Y - wallH); wx.stroke();
+    wx.beginPath(); wx.moveTo(X + w * 0.45, Y); wx.lineTo(X + w * 0.45, Y - wallH); wx.stroke();
+    wx.fillStyle = 'rgba(122,88,54,0.75)';
+    wx.beginPath();
+    wx.moveTo(X - w * 0.8, Y - wallH);
+    wx.quadraticCurveTo(X, Y - wallH - w * 0.5, X + w * 0.8, Y - wallH);
+    wx.quadraticCurveTo(X + w * 0.3, Y - wallH - w * 0.12, X - w * 0.3, Y - wallH - w * 0.12);
+    wx.closePath(); wx.fill(); wx.stroke();
+  }
+  wx.restore();
+}
+function drawSkylightEl(el, now, p){
+  // sun-radical chars: a glow in the sky — light without being THE sun
+  const X = el.x * W, Y = el.y * H;
+  const form = (el.p && el.p.form) || 'glow';
+  const r = S * 0.045 * el.s * p;
+  if (r < 2) return;
+  const breathe = 1 + 0.04 * Math.sin(now / 3000 + el.seed);
+  wx.save();
+  if (form === 'dawn'){
+    const g = wx.createLinearGradient(X, Y - r, X, Y + r * 1.6);
+    g.addColorStop(0, 'rgba(232,170,90,0.34)'); g.addColorStop(1, 'rgba(232,170,90,0)');
+    wx.fillStyle = g;
+    wx.beginPath(); wx.ellipse(X, Y + r * 0.3, r * 2.4, r * 1.3, 0, Math.PI, 0); wx.fill();
+    wx.strokeStyle = 'rgba(214,140,70,0.5)'; wx.lineWidth = 1.6;
+    wx.beginPath(); wx.arc(X, Y + r * 0.3, r * breathe, Math.PI, 0); wx.stroke();
+  } else { // glow: soft radiance behind a cloud wisp
+    const g = wx.createRadialGradient(X, Y, r * 0.3, X, Y, r * 2.2 * breathe);
+    g.addColorStop(0, 'rgba(238,196,110,0.34)'); g.addColorStop(1, 'rgba(238,196,110,0)');
+    wx.fillStyle = g; wx.fillRect(X - r * 2.5, Y - r * 2.5, r * 5, r * 5);
+    wx.fillStyle = 'rgba(250,246,236,0.6)';
+    wx.beginPath(); wx.ellipse(X, Y + r * 0.35, r * 1.15, r * 0.42, 0, 0, Math.PI * 2); wx.fill();
+  }
   wx.restore();
 }
 // Seal / stele (C3): a small stone slab bearing a cinnabar seal impression.

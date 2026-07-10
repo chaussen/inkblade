@@ -68,7 +68,7 @@ const WORLD_CAP = 300; // C4 soft budget: 60fps at 300 elements (M1d, measured b
 // composition tuning; matter classes and char→element mappings are
 // pack data, S1-D020/D024)
 const UNIQUE = { horizon: 1, sun: 1, moon: 1 };
-const ZI = { sun:0, moon:0, peak:1, ridge:2, terrace:3, field:3, horizon:4, tree:5, fire:5, resttree:5, path:6, seal:6, water:6, walker:7, crowd:7 };
+const ZI = { sun:0, moon:0, skylight:0, peak:1, ridge:2, terrace:3, field:3, horizon:4, tree:5, fire:5, resttree:5, dwelling:5, gate:5, path:6, seal:6, water:6, cart:6, banner:6, heart:6, bolt:6, walker:7, crowd:7, bigfig:7, horse:7, wind:7 };
 
 // Depth staging [LEAN — S1-D041, deepened S1-D061]: the scroll's y-axis IS
 // its depth axis (shan-shui convention: higher on the paper = farther away),
@@ -82,7 +82,7 @@ const GROUND_FAR  = 0.56;   // farthest ground y
 const GROUND_NEAR = 0.96;   // nearest ground y
 const DEPTH_SCALE_FAR  = 0.42;
 const DEPTH_SCALE_NEAR = 1.45;
-const DEPTH_EXEMPT = { horizon: 1, sun: 1, moon: 1 }; // sky + the fixed reference line
+const DEPTH_EXEMPT = { horizon: 1, sun: 1, moon: 1, skylight: 1 }; // sky + the fixed reference line
 const MIST_TOP = 0.55, MIST_BOTTOM = 0.72, MIST_ALPHA = 0.26;
 // Second mist stage [LEAN — S1-D061]: a gentler dissolve continuing into the
 // midfield, so atmosphere fades continuously with distance (it also covers
@@ -127,8 +127,14 @@ function bandFor(k){
     case 'path':    return [0.66, 0.88];
     case 'seal':    return [0.62, 0.86];
     case 'sun': case 'moon': return [0.09, 0.16];
+    case 'skylight': return [0.14, 0.26];
     case 'field':   return [0.62, 0.76];
     case 'water':   return [0.64, 0.88];
+    // chunk C batch 1 (S1-D066)
+    case 'dwelling': case 'gate': return [0.62, 0.84];
+    case 'cart': case 'banner': return [0.64, 0.88];
+    case 'heart': case 'wind': case 'bolt': return [0.58, 0.78];
+    case 'bigfig': case 'horse': return [0.62, 0.90];
     default:        return [0.62, 0.90]; // walker, crowd, unknown kinds
   }
 }

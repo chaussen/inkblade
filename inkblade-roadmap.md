@@ -22,7 +22,20 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D065, 2026-07-10)
+## Current state (as of S1-D067, 2026-07-11)
+- Artifact: `inkblade-m2d.html` (BUILD_ID `S1-M2d-b1-20260710`), helpers
+  TARGET default. **Chunk C batch 1 SHIPPED (S1-D066/D067), checkpoint
+  pending — John's quality verdict gates scaling.** 7 bespoke kinds (大
+  bigfig / 门 gate / 马 horse / 心 heart / 风 wind / 电 bolt / 车 cart), 3
+  tier-2 families (banner ← 口讠言纟, dwelling ← 宀+家, skylight ← 日+天),
+  flora flower (花), radicals 扌辶 → figure. Basic seals 377→277. Tags make
+  the new matter reactive today (living horse; shelter+flammable dwelling —
+  walker rests by huts, huts burn and regrow). Pipeline: `charsExtra` block
+  curates non-core chars without growing the 23-char core roster. smoke19.
+- Next batch candidates when scaling is green-lit: radical families 亠冖八
+  力刀又土王白田目金钅... toward 0 seals; then the 3,000–7,000 tiers.
+
+## Previous state (as of S1-D065, 2026-07-10)
 - **Full delegation live (S1-D049)**: John has handed off all rulings — Code
   decides (including LOCKED amendments), logs rationale, ships, and reports.
 - **AUDIENCE IS CHILDREN (S1-D063, LOCKED)** — picture-book clarity, wonder-
@@ -95,6 +108,7 @@ top-down for anything marked here; nothing below is real until logged there.
 | M2a-b4 | S1-M2a-b4-20260707 | **Chunk A of Checkpoint 1's verdict: the aim mechanic retired.** John's playtest ruled release-point aiming awkward; `placeEl` reverts to pure random max-spacing, `ecology.placement` dropped from packs, `state.lockExit` removed. Ignition/regrowth (b2) untouched — proximity-driven "collision" interactions were already the model asked for. smoke16 inverted (exit-independent placement); smoke17 T7 rewritten (accidental collision, not aim) | S1-D059–D060 |
 | M2c-b1 | S1-M2c-b1-20260710 | **Chunk B: the scroll gains depth + the legible ledger.** Perspective convergence (render-only), depth scale 0.42/1.45 (3.45×), two-stage mist, batched contact shadows, sky/ground paper furniture, windowed roster ledger with counter (fixes the 2px-cells-at-500 bug). smoke18 added; smoke12 perf calibration hardened to min-of-2 sampling | S1-D061–D062 |
 | M2c-b2 | S1-M2c-b2-20260710 | **The illustrated valley (answers the "hollow" verdict).** Always-present backdrop on the world layer: 3 ridgeline silhouettes, 4 drifting clouds, 56 perspective-scaled ground tufts/pebbles, fixed seed 42, `__S1_SCENE`; empty-world early-return removed. smoke18 T6 added; perf: absolute budget passed WITH backdrop (17.41ms @300) | S1-D063–D065 |
+| M2d-b1 | S1-M2d-b1-20260710 | **Chunk C batch 1: every character earns a face.** 大→bigfig dedupe, 6 more bespoke kinds (gate/horse/heart/wind/bolt/cart), banner/dwelling/skylight families + flora flower, radicals 口讠言纟宀日扌辶 mapped; basic seals 377→277; interaction tags live (rest-by-hut, hut burns+regrows); pipeline charsExtra; smoke19 | S1-D066–D067 |
 
 ## Planned
 ### Chunk B — canvas/UI redesign + 3D legibility — SHIPPED (S1-D061/D062, M2c-b1; playtest checkpoint pending)
