@@ -27,6 +27,7 @@ function drawWorld(dt, now){
   // ground far→near so near occludes far — y is depth
   const els = [...state.world.els].sort((a, b) =>
     (ZI[a.k] === 0 ? -1 : a.y) - (ZI[b.k] === 0 ? -1 : b.y));
+  drawContactShadows(els, now);
   for (const el of els){
     const age = el.born ? now - el.born : 1e9;
     if (age < 0) continue; // planted between frames; rAF timestamp lags performance.now()
@@ -36,6 +37,10 @@ function drawWorld(dt, now){
     wx = isLiveHeat(el) ? ex : worldCtx;
     const k = depthK(el);
     wx.save();
+    // perspective convergence (S1-D061): shift the whole element to its
+    // converged screen x — renderers keep drawing at el.x*W and inherit it
+    const cdx = (worldScreenX(el) - el.x) * W;
+    if (cdx) wx.translate(cdx, 0);
     if (k !== 1){
       // scale the whole element (line weights included) about its ground anchor
       const ax = el.x * W, ay = el.y * H;
@@ -79,15 +84,48 @@ function drawWorld(dt, now){
   ctx.drawImage(eventLayer, 0, 0, W, H);
   ctx.restore();
 }
-// Atmospheric perspective (S1-D041): a paper-tone mist band over the far
-// zone — distance reads as ink dissolving into the paper, the shan-shui way.
+// Contact shadows (S1-D061): a soft ground ellipse anchors matter to the
+// plane — under everything except sky/horizon, heat (fire is light), and wet
+// matter (a pool casts nothing). All shadows are ONE batched path filled at a
+// single alpha (perf: one fill, and overlaps never double-darken); depth
+// scale and convergence are applied numerically, no per-element transforms.
+function drawContactShadows(els, now){
+  wx.save();
+  wx.globalAlpha = SHADOW_ALPHA;
+  wx.fillStyle = 'rgba(60,52,40,1)';
+  wx.beginPath();
+  for (const el of els){
+    if (DEPTH_EXEMPT[el.k] || kindHasTag(el.k, 'heat') || kindHasTag(el.k, 'wet')) continue;
+    const age = el.born ? now - el.born : 1e9;
+    if (age < 0) continue;
+    const pe = 1 - Math.pow(1 - Math.max(0, Math.min(1, age / 700)), 3);
+    const k = depthK(el);
+    const sx = worldScreenX(el) * W, sy = el.y * H + S * 0.004 * k;
+    const rx = S * 0.05 * el.s * k * pe, ry = S * 0.013 * el.s * k * pe;
+    if (rx < 1) continue;
+    wx.moveTo(sx + rx, sy);
+    wx.ellipse(sx, sy, rx, ry, 0, 0, Math.PI * 2);
+  }
+  wx.fill();
+  wx.restore();
+}
+// Atmospheric perspective (S1-D041, deepened S1-D061): a paper-tone mist
+// band over the far zone, then a gentler second stage dissolving on into the
+// midfield — distance reads as ink dissolving into the paper, the shan-shui
+// way, and the fade is continuous instead of a single band.
 function drawMist(){
   const y0 = MIST_TOP * H, y1 = MIST_BOTTOM * H;
   const g = wx.createLinearGradient(0, y0, 0, y1);
   g.addColorStop(0, 'rgba(236,227,207,' + MIST_ALPHA + ')');
-  g.addColorStop(1, 'rgba(236,227,207,0)');
+  g.addColorStop(1, 'rgba(236,227,207,' + MIST2_ALPHA + ')');
   wx.fillStyle = g;
   wx.fillRect(0, y0, W, y1 - y0);
+  const y2 = MIST2_BOTTOM * H;
+  const g2 = wx.createLinearGradient(0, y1, 0, y2);
+  g2.addColorStop(0, 'rgba(236,227,207,' + MIST2_ALPHA + ')');
+  g2.addColorStop(1, 'rgba(236,227,207,0)');
+  wx.fillStyle = g2;
+  wx.fillRect(0, y1, W, y2 - y1);
 }
 function drawWorldParticles(dt) {
   for (const p of state.worldParticles) {

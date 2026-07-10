@@ -7,7 +7,7 @@ const puppeteer = require('puppeteer');
 const W = 800, H = 600;
 // The live build under test. Frozen suites (smoke1-4) keep their own frozen
 // targets; suites 5+ follow the current milestone artifact.
-const TARGET_FILE = process.env.INKBLADE_TARGET || 'inkblade-m2a.html';
+const TARGET_FILE = process.env.INKBLADE_TARGET || 'inkblade-m2c.html';
 const TARGET = 'file:///home/zni/projects/inkblade/' + TARGET_FILE;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 

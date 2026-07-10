@@ -70,26 +70,50 @@ const WORLD_CAP = 300; // C4 soft budget: 60fps at 300 elements (M1d, measured b
 const UNIQUE = { horizon: 1, sun: 1, moon: 1 };
 const ZI = { sun:0, moon:0, peak:1, ridge:2, terrace:3, field:3, horizon:4, tree:5, fire:5, resttree:5, path:6, seal:6, water:6, walker:7, crowd:7 };
 
-// Depth staging [LEAN — S1-D041]: the scroll's y-axis IS its depth axis
-// (shan-shui convention: higher on the paper = farther away), so depth is a
-// pure render projection — saves carry no new field. Ground elements scale
-// from DEPTH_SCALE_FAR at GROUND_FAR to DEPTH_SCALE_NEAR at GROUND_NEAR and
-// paint far→near; a mist band gives the far zone atmospheric perspective.
+// Depth staging [LEAN — S1-D041, deepened S1-D061]: the scroll's y-axis IS
+// its depth axis (shan-shui convention: higher on the paper = farther away),
+// so depth is a pure render projection — saves carry no new field. Ground
+// elements scale from DEPTH_SCALE_FAR at GROUND_FAR to DEPTH_SCALE_NEAR at
+// GROUND_NEAR and paint far→near; a mist band gives the far zone atmospheric
+// perspective. S1-D061 strengthens the read: perspective x-convergence
+// toward a vanishing center, per-element atmospheric fade, and contact
+// shadows anchoring matter to the ground plane.
 const GROUND_FAR  = 0.56;   // farthest ground y
 const GROUND_NEAR = 0.96;   // nearest ground y
-const DEPTH_SCALE_FAR  = 0.55;
-const DEPTH_SCALE_NEAR = 1.25;
+const DEPTH_SCALE_FAR  = 0.42;
+const DEPTH_SCALE_NEAR = 1.45;
 const DEPTH_EXEMPT = { horizon: 1, sun: 1, moon: 1 }; // sky + the fixed reference line
 const MIST_TOP = 0.55, MIST_BOTTOM = 0.72, MIST_ALPHA = 0.26;
+// Second mist stage [LEAN — S1-D061]: a gentler dissolve continuing into the
+// midfield, so atmosphere fades continuously with distance (it also covers
+// world particles — renderers own their internal alphas, so atmospheric fade
+// lives in the compositor, not per element).
+const MIST2_TOP = 0.72, MIST2_BOTTOM = 0.86, MIST2_ALPHA = 0.09;
+// Perspective convergence [LEAN — S1-D061]: at the far edge of the ground
+// the x-field squeezes to PERSP_FAR of its width about the vanishing center;
+// at the near edge it is uncompressed. Render-only — el.x stays world-space
+// (saves, E1/E2 distances untouched).
+const PERSP_FAR = 0.80;
+// Contact shadow [LEAN — S1-D061]: the ground-anchor ellipse under matter.
+const SHADOW_ALPHA = 0.12;
 // Fire is light, and light reads through paper [LEAN — S1-D045]: live heat
 // events (and their sparks) composite at no less than this alpha, so a burn
 // stays visible under the writing veil. Figure-ground for structures/agents
 // (S1-D019) is unchanged — only light burns through.
 const EVENT_MIN_ALPHA = 0.85;
+function depthQ(el){
+  return Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
+}
 function depthK(el){
   if (DEPTH_EXEMPT[el.k]) return 1;
-  const q = Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
-  return DEPTH_SCALE_FAR + q * (DEPTH_SCALE_NEAR - DEPTH_SCALE_FAR);
+  return DEPTH_SCALE_FAR + depthQ(el) * (DEPTH_SCALE_NEAR - DEPTH_SCALE_FAR);
+}
+// Screen-space x for a world element under perspective convergence (S1-D061).
+// Normalized (×W at the call site). Sky/horizon keep their world x.
+function worldScreenX(el){
+  if (DEPTH_EXEMPT[el.k]) return el.x;
+  const f = PERSP_FAR + depthQ(el) * (1 - PERSP_FAR);
+  return 0.5 + (el.x - 0.5) * f;
 }
 function bandFor(k){
   switch(k){

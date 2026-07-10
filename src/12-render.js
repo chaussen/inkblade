@@ -163,28 +163,65 @@ function drawHUD() {
     ctx.fillText('连 ' + state.streak, 18, 16);
     ctx.restore();
   }
+  // Roster ledger (S1-D061, replaces the all-chars-in-one-row strip that
+  // shrank to ~2px cells at 500 chars): a windowed strip of legible tiles
+  // centered on the current character, with a locked/total counter. Reads
+  // identically at 23 chars and 500.
   const n = CHARS.length;
-  const cell = Math.min(40, (W - 32) / n - 6);
-  const total = n * (cell + 6) - 6;
-  let x = (W - total) / 2;
-  const y = H - cell - 12;
+  const win = Math.min(n, 11, Math.max(5, Math.floor((W - 140) / 36)));
+  const cell = Math.min(44, Math.max(28, (W - 200) / win - 8));
+  const curIdx = Math.max(0, state.glyph ? CHARS.indexOf(state.glyph.def) : 0);
+  let lockedCount = 0;
+  for (const c of CHARS) if (state.locked[c.ch]) lockedCount++;
+  const lo = Math.max(0, Math.min(curIdx - (win >> 1), n - win));
+  window.__S1_HUD = { cellPx: cell, win, lockedCount, total: n, lo };
+  const total = win * (cell + 8) - 8;
+  const y = H - cell - 14;
   ctx.save();
+  // strip + counter centered as one group so the counter never overflows
+  const counterFont = '600 ' + Math.max(12, cell * 0.34) + 'px Georgia, serif';
+  const packId = (PACK && PACK.meta && PACK.meta.id) ? ' · ' + PACK.meta.id : '';
+  const counterText = lockedCount + ' / ' + n + packId;
+  ctx.font = counterFont;
+  const counterW = ctx.measureText(counterText).width;
+  let x = Math.max(8, (W - total - 14 - counterW) / 2);
+  // a soft paper backdrop calms the ledger band — near-field world matter
+  // (walkers wander to y≈0.96) stays visible but stops competing with tiles
+  ctx.fillStyle = 'rgba(236,227,207,0.55)';
+  roundRect(x - 10, y - 8, total + 14 + counterW + 26, cell + 16, 10); ctx.fill();
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  for (const c of CHARS) {
-    if (state.locked[c.ch]) {
+  for (let i = lo; i < lo + win; i++) {
+    const c = CHARS[i];
+    // edge tiles fade when the roster continues past the window
+    const edge = (i === lo && lo > 0) || (i === lo + win - 1 && lo + win < n);
+    ctx.globalAlpha = edge ? 0.4 : 1;
+    if (i === curIdx) {
+      const grow = cell * 0.14;
+      ctx.strokeStyle = GOLD; ctx.lineWidth = 2.2;
+      roundRect(x - grow/2, y - grow, cell + grow, cell + grow, 7); ctx.stroke();
+      ctx.fillStyle = state.locked[c.ch] ? CINNABAR : 'rgba(70,62,48,0.55)';
+      ctx.font = '600 ' + (cell * 0.7) + 'px ' + CHAR_FONT;
+      ctx.fillText(c.ch, x + cell/2, y + cell/2 - grow/2 + cell*0.04);
+    } else if (state.locked[c.ch]) {
       ctx.fillStyle = CINNABAR;
-      roundRect(x, y, cell, cell, 5); ctx.fill();
+      roundRect(x, y, cell, cell, 6); ctx.fill();
       ctx.fillStyle = '#f3e9d6';
       ctx.font = (cell * 0.62) + 'px ' + CHAR_FONT;
       ctx.fillText(c.ch, x + cell/2, y + cell/2 + cell*0.04);
     } else {
       ctx.strokeStyle = 'rgba(70,62,48,0.25)'; ctx.lineWidth = 1.2;
-      roundRect(x, y, cell, cell, 5); ctx.stroke();
+      roundRect(x, y, cell, cell, 6); ctx.stroke();
       ctx.fillStyle = 'rgba(70,62,48,0.28)';
-      ctx.beginPath(); ctx.arc(x + cell/2, y + cell/2, 2, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + cell/2, y + cell/2, 2.2, 0, Math.PI*2); ctx.fill();
     }
-    x += cell + 6;
+    x += cell + 8;
   }
+  // the ledger's counter: how much of this scroll's lexicon is yours
+  ctx.globalAlpha = 0.75;
+  ctx.fillStyle = INK;
+  ctx.font = counterFont;
+  ctx.textAlign = 'left';
+  ctx.fillText(counterText, x + 6, y + cell/2);
   ctx.restore();
   if (state.banner) {
     state.banner.t += 16;

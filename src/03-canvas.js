@@ -48,6 +48,32 @@ function makePaper() {
     p.lineWidth = 0.8;
     p.beginPath(); p.moveTo(x, y); p.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); p.stroke();
   }
+  // Scene furniture (S1-D061): the paper itself carries the landscape's
+  // sky/ground division so the scroll reads as a SCENE even before anything
+  // is written. All washes stay far above every ink-probe threshold — this
+  // is tinted silk, not ink. No content is painted (no mountains, no
+  // horizon line — those are the player's to write).
+  const skyG = p.createLinearGradient(0, 0, 0, GROUND_FAR * H);
+  skyG.addColorStop(0, 'rgba(206,216,224,0.20)');
+  skyG.addColorStop(1, 'rgba(206,216,224,0)');
+  p.fillStyle = skyG; p.fillRect(0, 0, W, GROUND_FAR * H);
+  const gndG = p.createLinearGradient(0, GROUND_FAR * H, 0, H);
+  gndG.addColorStop(0, 'rgba(196,178,140,0)');
+  gndG.addColorStop(1, 'rgba(196,178,140,0.22)');
+  p.fillStyle = gndG; p.fillRect(0, GROUND_FAR * H, W, H - GROUND_FAR * H);
+  // Foreshortened ground grain: horizontal-leaning fibers that lengthen and
+  // spread toward the near edge and converge toward the vanishing center at
+  // the far line — the ground plane recedes like a real floor.
+  for (let i = 0; i < 260; i++) {
+    const q = Math.pow(Math.random(), 0.7); // bias strokes toward the near field
+    const y = (GROUND_FAR + q * (1 - GROUND_FAR)) * H;
+    const f = PERSP_FAR + q * (1 - PERSP_FAR);
+    const x = W / 2 + (Math.random() - 0.5) * W * f;
+    const l = (3 + Math.random() * 14) * (0.3 + q);
+    p.strokeStyle = 'rgba(122,102,72,0.055)';
+    p.lineWidth = 0.9;
+    p.beginPath(); p.moveTo(x - l / 2, y); p.lineTo(x + l / 2, y + (Math.random() - 0.5) * 2); p.stroke();
+  }
   const g = p.createRadialGradient(W/2, H/2, Math.min(W,H)*0.35, W/2, H/2, Math.max(W,H)*0.75);
   g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(88,68,40,0.13)');
   p.fillStyle = g; p.fillRect(0, 0, W, H);

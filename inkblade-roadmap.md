@@ -22,11 +22,19 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D060, 2026-07-07)
+## Current state (as of S1-D062, 2026-07-10)
 - **Full delegation live (S1-D049)**: John has handed off all rulings — Code
   decides (including LOCKED amendments), logs rationale, ships, and reports.
-- Artifact: `inkblade-m2a.html` (BUILD_ID `S1-M2a-b4-20260707`); tests target it
+- Artifact: `inkblade-m2c.html` (BUILD_ID `S1-M2c-b1-20260710`); tests target it
   via `tests/helpers.js` TARGET_FILE default (`INKBLADE_TARGET` env overrides).
+- **Chunk B is SHIPPED (S1-D061/D062) and waiting on its playtest checkpoint**
+  (charter §11): perspective convergence (`worldScreenX`, PERSP_FAR 0.80,
+  render-only), depth scale 0.42/1.45, two-stage mist, batched contact
+  shadows, sky/ground washes + foreshortened grain on the paper texture,
+  windowed roster ledger (44px tiles at any roster size, `__S1_HUD`).
+  smoke12's throttled-host perf calibration now compares min-of-2 samples.
+- **Chunk C is NEXT** (S1-D059(3), plan entry required before code): unique
+  visual symbols — first batch, then a John quality checkpoint before scale.
 - **Checkpoint 1 verdict landed (S1-D059) — M2b POSTPONED.** John's playtest of
   M2a surfaced four rulings, now the priority: (1) placement-choice aiming
   RETIRED — placement is pure chance again, interactions come from accidental
@@ -79,19 +87,12 @@ top-down for anything marked here; nothing below is real until logged there.
 | M2a-b2 | S1-M2a-b2-20260707 | E2 ignition + regrowth behind the gate (?e2=1): per-stage kindle (embers slower/closer), burn walk to ash→sprout→sapling→itself (same seed), one hop, sun never ignites, save v2 +burn, smoke17 added | S1-D054–D055 |
 | M2a-b3 | S1-M2a-b3-20260707 | **The flip: E2 default-ON, M2a complete.** ?e2=0 kill switch; gate assertions inverted (smoke11/17 T1); smoke17 T7 = the promise with real gestures (write 火, flick at a tree, it kindles and regrows) | S1-D056–D057 |
 | M2a-b4 | S1-M2a-b4-20260707 | **Chunk A of Checkpoint 1's verdict: the aim mechanic retired.** John's playtest ruled release-point aiming awkward; `placeEl` reverts to pure random max-spacing, `ecology.placement` dropped from packs, `state.lockExit` removed. Ignition/regrowth (b2) untouched — proximity-driven "collision" interactions were already the model asked for. smoke16 inverted (exit-independent placement); smoke17 T7 rewritten (accidental collision, not aim) | S1-D059–D060 |
+| M2c-b1 | S1-M2c-b1-20260710 | **Chunk B: the scroll gains depth + the legible ledger.** Perspective convergence (render-only), depth scale 0.42/1.45 (3.45×), two-stage mist, batched contact shadows, sky/ground paper furniture, windowed roster ledger with counter (fixes the 2px-cells-at-500 bug). smoke18 added; smoke12 perf calibration hardened to min-of-2 sampling | S1-D061–D062 |
 
 ## Planned
-### Chunk B — canvas/UI redesign + 3D legibility — NEXT (S1-D059(2)(4); plan entry before code)
-John's checkpoint-1 verdict: the 500-char roster view is too small to read and
-needs a full redesign, and the standing "make the world read as 3D" ask
-(S1-D040) still isn't landing through M1d's depth-staging illusion alone.
-Bundle both — a canvas layout pass is the natural place to push depth legibility
-further (stronger scale/mist/occlusion contrast, or a clearer visual language
-for "far vs near") while also giving the enlarged symbol set (chunk C) room to
-be seen. Scope TBD at plan-entry time; must not regress smoke12's depth
-contract or perf budget.
+### Chunk B — canvas/UI redesign + 3D legibility — SHIPPED (S1-D061/D062, M2c-b1; playtest checkpoint pending)
 
-### Chunk C — visual symbol expansion — first batch, then checkpoint (S1-D059(3))
+### Chunk C — visual symbol expansion — NEXT: first batch, then checkpoint (S1-D059(3); plan entry before code)
 Confirmed: only 13 `world.kind` families exist; 489/500 basic-tier chars (98%)
 render with no visual identity (plain seal fallback); 大/山 literally share one
 kind (`peak`). John wants every character visually unique and asked whether
