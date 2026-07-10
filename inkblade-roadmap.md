@@ -22,19 +22,25 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D062, 2026-07-10)
+## Current state (as of S1-D065, 2026-07-10)
 - **Full delegation live (S1-D049)**: John has handed off all rulings — Code
   decides (including LOCKED amendments), logs rationale, ships, and reports.
-- Artifact: `inkblade-m2c.html` (BUILD_ID `S1-M2c-b1-20260710`); tests target it
+- **AUDIENCE IS CHILDREN (S1-D063, LOCKED)** — picture-book clarity, wonder-
+  forward interactions. Also LOCKED there: no engine/framework switch (vanilla
+  Canvas 2D stays; Phaser 3/4 are natively 2D-only, three.js = full rewrite).
+- Artifact: `inkblade-m2c.html` (BUILD_ID `S1-M2c-b2-20260710`); tests target it
   via `tests/helpers.js` TARGET_FILE default (`INKBLADE_TARGET` env overrides).
-- **Chunk B is SHIPPED (S1-D061/D062) and waiting on its playtest checkpoint**
-  (charter §11): perspective convergence (`worldScreenX`, PERSP_FAR 0.80,
-  render-only), depth scale 0.42/1.45, two-stage mist, batched contact
-  shadows, sky/ground washes + foreshortened grain on the paper texture,
-  windowed roster ledger (44px tiles at any roster size, `__S1_HUD`).
-  smoke12's throttled-host perf calibration now compares min-of-2 samples.
+- **Chunk B shipped in two builds, checkpoint pending on b2** (charter §11):
+  b1 (S1-D061/D062) — perspective convergence (`worldScreenX`, PERSP_FAR
+  0.80, render-only), depth scale 0.42/1.45, two-stage mist, batched contact
+  shadows, paper sky/ground washes, windowed roster ledger (`__S1_HUD`);
+  smoke12 perf calibration now min-of-2. b2 (S1-D063–D065, answering John's
+  "hollow" verdict) — the illustrated valley: `drawBackdrop()` on the world
+  layer (ridgelines/drifting clouds/ground tufts, fixed seed 42, `__S1_SCENE`,
+  empty-world early-return removed), smoke18 T6.
 - **Chunk C is NEXT** (S1-D059(3), plan entry required before code): unique
-  visual symbols — first batch, then a John quality checkpoint before scale.
+  visual symbols for every char — first batch, then a John quality checkpoint
+  before scale. Design for children's eyes (S1-D063).
 - **Checkpoint 1 verdict landed (S1-D059) — M2b POSTPONED.** John's playtest of
   M2a surfaced four rulings, now the priority: (1) placement-choice aiming
   RETIRED — placement is pure chance again, interactions come from accidental
@@ -88,6 +94,7 @@ top-down for anything marked here; nothing below is real until logged there.
 | M2a-b3 | S1-M2a-b3-20260707 | **The flip: E2 default-ON, M2a complete.** ?e2=0 kill switch; gate assertions inverted (smoke11/17 T1); smoke17 T7 = the promise with real gestures (write 火, flick at a tree, it kindles and regrows) | S1-D056–D057 |
 | M2a-b4 | S1-M2a-b4-20260707 | **Chunk A of Checkpoint 1's verdict: the aim mechanic retired.** John's playtest ruled release-point aiming awkward; `placeEl` reverts to pure random max-spacing, `ecology.placement` dropped from packs, `state.lockExit` removed. Ignition/regrowth (b2) untouched — proximity-driven "collision" interactions were already the model asked for. smoke16 inverted (exit-independent placement); smoke17 T7 rewritten (accidental collision, not aim) | S1-D059–D060 |
 | M2c-b1 | S1-M2c-b1-20260710 | **Chunk B: the scroll gains depth + the legible ledger.** Perspective convergence (render-only), depth scale 0.42/1.45 (3.45×), two-stage mist, batched contact shadows, sky/ground paper furniture, windowed roster ledger with counter (fixes the 2px-cells-at-500 bug). smoke18 added; smoke12 perf calibration hardened to min-of-2 sampling | S1-D061–D062 |
+| M2c-b2 | S1-M2c-b2-20260710 | **The illustrated valley (answers the "hollow" verdict).** Always-present backdrop on the world layer: 3 ridgeline silhouettes, 4 drifting clouds, 56 perspective-scaled ground tufts/pebbles, fixed seed 42, `__S1_SCENE`; empty-world early-return removed. smoke18 T6 added; perf: absolute budget passed WITH backdrop (17.41ms @300) | S1-D063–D065 |
 
 ## Planned
 ### Chunk B — canvas/UI redesign + 3D legibility — SHIPPED (S1-D061/D062, M2c-b1; playtest checkpoint pending)

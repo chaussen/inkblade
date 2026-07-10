@@ -15,14 +15,13 @@ const ELEMENT_DRAW = {
   flora: drawFloraEl, terrain: drawTerrainEl, figure: drawFigureEl,
 };
 function drawWorld(dt, now){
-  if (!state.world.els.length && !state.worldParticles.length) {
-    METRICS.perf.worldLayer = false;
-    return;
-  }
-  METRICS.perf.worldLayer = true;
+  // the backdrop means an empty world is still a place (S1-D063/D064) —
+  // the old empty-world early-return is gone
+  METRICS.perf.worldLayer = state.world.els.length > 0 || state.worldParticles.length > 0;
   const worldCtx = wx;
   worldCtx.clearRect(0, 0, W, H);
   ex.clearRect(0, 0, W, H);
+  drawBackdrop(now);
   // painter's algorithm down the depth axis (S1-D041): sky first, then
   // ground far→near so near occludes far — y is depth
   const els = [...state.world.els].sort((a, b) =>
@@ -83,6 +82,93 @@ function drawWorld(dt, now){
   ctx.globalAlpha = Math.max(attention.worldAlpha, EVENT_MIN_ALPHA);
   ctx.drawImage(eventLayer, 0, 0, W, H);
   ctx.restore();
+}
+/* -------- the illustrated valley (S1-D063/D064) -------- *
+ * An always-present backdrop so the world reads as a PLACE, not a void:
+ * distant ridgelines, drifting clouds, ground tufts with perspective
+ * density. Pure presentation furniture — no pack content, no save impact,
+ * laid out from a FIXED seed (the valley is the same place every session;
+ * ?seed= world randomness is untouched). It draws on the world layer, so
+ * it recedes behind the veil while writing and blooms on lock like the
+ * rest of the living scroll. Geometry is cached per resize; the per-frame
+ * cost is a handful of path fills. Tones sit far above every ink-probe
+ * threshold — silk, not ink (smoke18 T5/T6). */
+let BACKDROP = null;
+function buildBackdrop(){
+  const r = rng(42);
+  const ridges = [];
+  // three overlapping ridgelines above the horizon band, farther = paler
+  for (let i = 0; i < 3; i++){
+    const baseY = 0.555 - i * 0.035;
+    const pts = [];
+    const n = 7 + Math.floor(r() * 3);
+    for (let j = 0; j <= n; j++){
+      const px = j / n;
+      pts.push([px, baseY - (0.025 + r() * 0.045) * Math.sin(px * Math.PI * (1.5 + i * 0.5) + r() * 2) - r() * 0.012]);
+    }
+    ridges.push({ pts, baseY, alpha: 0.20 - i * 0.055 });
+  }
+  const clouds = [];
+  for (let i = 0; i < 4; i++){
+    clouds.push({
+      x: r(), y: 0.10 + r() * 0.22, s: 0.5 + r() * 0.8,
+      speed: 0.000007 + r() * 0.000005, puffs: 3 + Math.floor(r() * 2), seed: Math.floor(r() * 1e6),
+    });
+  }
+  const tufts = [];
+  for (let i = 0; i < 56; i++){
+    const q = Math.pow(r(), 0.75); // denser near
+    const y = GROUND_FAR + 0.03 + q * (1 - GROUND_FAR - 0.06);
+    const f = PERSP_FAR + q * (1 - PERSP_FAR);
+    tufts.push({ x: 0.5 + (r() - 0.5) * 0.96 * f, y, q, kind: r() < 0.75 ? 'grass' : 'pebble', seed: Math.floor(r() * 1e6) });
+  }
+  BACKDROP = { ridges, clouds, tufts };
+  window.__S1_SCENE = { ridges: ridges.length, clouds: clouds.length, tufts: tufts.length };
+}
+function drawBackdrop(now){
+  if (!BACKDROP) buildBackdrop();
+  const B = BACKDROP;
+  wx.save();
+  // ridgelines, far to near
+  for (let i = B.ridges.length - 1; i >= 0; i--){
+    const rd = B.ridges[i];
+    wx.fillStyle = 'rgba(122,132,152,' + rd.alpha + ')';
+    wx.beginPath();
+    wx.moveTo(-4, GROUND_FAR * H + 6);
+    for (const [px, py] of rd.pts) wx.lineTo(px * W, py * H);
+    wx.lineTo(W + 4, GROUND_FAR * H + 6);
+    wx.closePath(); wx.fill();
+  }
+  // clouds — brighter than the paper, drifting slowly (a child can watch one cross)
+  for (const c of B.clouds){
+    const cx = ((c.x + now * c.speed) % 1.2 - 0.1) * W;
+    const cy = c.y * H, cs = S * 0.09 * c.s;
+    wx.fillStyle = 'rgba(252,249,240,0.55)';
+    for (let j = 0; j < c.puffs; j++){
+      const ox = (j - (c.puffs - 1) / 2) * cs * 0.75;
+      const rr = cs * (0.55 + (((c.seed >> j) % 5) / 10));
+      wx.beginPath(); wx.ellipse(cx + ox, cy + (j % 2 ? cs * 0.10 : 0), rr, rr * 0.62, 0, 0, Math.PI * 2); wx.fill();
+    }
+  }
+  // ground tufts + pebbles, perspective-scaled
+  for (const t of B.tufts){
+    const X = t.x * W, Y = t.y * H;
+    const k = DEPTH_SCALE_FAR + t.q * (DEPTH_SCALE_NEAR - DEPTH_SCALE_FAR);
+    if (t.kind === 'grass'){
+      const h = S * 0.016 * k;
+      wx.strokeStyle = 'rgba(122,136,96,0.30)'; wx.lineWidth = Math.max(0.7, h * 0.12); wx.lineCap = 'round';
+      for (let j = -1; j <= 1; j++){
+        wx.beginPath(); wx.moveTo(X, Y);
+        wx.quadraticCurveTo(X + j * h * 0.35, Y - h * 0.6, X + j * h * 0.7, Y - h * (0.8 + (j === 0 ? 0.25 : 0)));
+        wx.stroke();
+      }
+    } else {
+      const w2 = S * 0.007 * k;
+      wx.fillStyle = 'rgba(150,142,126,0.32)';
+      wx.beginPath(); wx.ellipse(X, Y, w2, w2 * 0.6, 0, 0, Math.PI * 2); wx.fill();
+    }
+  }
+  wx.restore();
 }
 // Contact shadows (S1-D061): a soft ground ellipse anchors matter to the
 // plane — under everything except sky/horizon, heat (fire is light), and wet

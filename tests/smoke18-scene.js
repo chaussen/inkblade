@@ -124,6 +124,25 @@ const server = http.createServer((req, res) => {
   console.log('T5 furniture probes (must all be 0):', JSON.stringify(counts));
   for (const [zone, v] of Object.entries(counts))
     if (v.ink !== 0 || v.tree !== 0) throw new Error('T5 FAIL: scene furniture counts as ink in the ' + zone + ' zone: ' + JSON.stringify(v));
+
+  // T6: the illustrated valley (S1-D063/D064) — an EMPTY world still shows a
+  // backdrop (ridgelines/clouds/tufts exist and actually tint pixels), so the
+  // scroll is a place, not a void; and per T5 above, none of it reads as ink.
+  const scene = await p.evaluate(() => window.__S1_SCENE);
+  console.log('T6 backdrop:', JSON.stringify(scene));
+  if (!scene || !(scene.ridges >= 2 && scene.clouds >= 3 && scene.tufts >= 30))
+    throw new Error('T6 FAIL: backdrop must exist on an empty world: ' + JSON.stringify(scene));
+  const tinted = await p.evaluate(() => {
+    const c = document.querySelector('canvas');
+    const g = c.getContext('2d');
+    // the ridge band: pixels must differ from bare paper (a tint is present)
+    const d = g.getImageData(Math.round(0.80 * c.width), Math.round(0.53 * c.height), 60, 20).data;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 236) > 8 && d[i + 2] > d[i] - 40) n++;
+    return n;
+  });
+  console.log('T6 ridge-band tinted px:', tinted);
+  if (!(tinted > 100)) throw new Error('T6 FAIL: the ridge band shows no backdrop tint (' + tinted + 'px)');
   await p.close();
 
   if (errors.length) { console.log('ERRORS:', errors); throw new Error('console/page errors present'); }
