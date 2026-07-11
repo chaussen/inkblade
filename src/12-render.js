@@ -237,7 +237,7 @@ function drawHUD() {
       let bx = W / 2, by = GY + S + Math.min(H * 0.055, 40), sc = 1;
       if (B.ax != null) {
         sc = 0.72;
-        bx = Math.max(70, Math.min(W - 70, B.ax * W));
+        bx = Math.max(70, Math.min(W - 70, B.ax * W + CAM.px * (B.kf || 0)));
         by = Math.max(44, Math.min(H - Math.min(W, H) * 0.17, B.ay * H + Math.min(H * 0.05, 32)));
       }
       ctx.save();

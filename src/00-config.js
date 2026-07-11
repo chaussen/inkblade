@@ -109,6 +109,18 @@ const TRANSIT_COALESCE_MS = 300;
 const TRANSIT_FLIGHT_MS   = 620;
 const TRANSIT_STAGGER_MS  = 90;
 const TRANSIT_ARC_LIFT    = 0.16; // ×H — how high the droplet's arc rises
+// The world breathes [LEAN — S1-D072]: a motion-parallax camera. Depth's
+// missing cue was MOTION — near matter slides more than far matter under a
+// slow idle drift plus a pointer-following pan. Render-only: el.x, saves,
+// sim distances never move. The pan target freezes while a trail is active
+// (writing is never disturbed); prefers-reduced-motion pins the camera.
+const CAM_DRIFT       = 0.008; // ×W — idle sway amplitude
+const CAM_POINTER     = 0.020; // ×W — max pointer pan at the near layer
+const CAM_EASE_MS     = 450;   // exponential ease toward the target
+const PARALLAX_FAR    = 0.18;  // layer factor at GROUND_FAR…
+const PARALLAX_NEAR   = 1.0;   // …to the near edge (sky/horizon shift 0)
+const PARALLAX_FG     = 1.18;  // the foreground band slides fastest
+const FG_CLUMPS       = 7;     // near-field occluders (grass clumps/stones)
 function depthQ(el){
   return Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
 }

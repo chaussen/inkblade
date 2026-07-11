@@ -159,14 +159,17 @@ function arriveTransit(T, m, quiet){
   const el = m.el;
   delete el.transit;
   el.born = performance.now(); // the grow-in + fresh gold ring start here
-  // the banner names the thing WHERE it appears (first arrival of the lock)
+  // the banner names the thing WHERE it appears (first arrival of the lock);
+  // kf lets the HUD ride the camera with the element's own layer (S1-D072)
   if (!T.bannerDone){
     T.bannerDone = true;
-    state.banner = { pinyin: T.def.pinyin, gloss: T.def.gloss, t: 0, ax: worldScreenX(el), ay: el.y };
+    state.banner = { pinyin: T.def.pinyin, gloss: T.def.gloss, t: 0,
+                     ax: worldScreenX(el), ay: el.y,
+                     kf: DEPTH_EXEMPT[el.k] ? 0 : PARALLAX_FAR + depthQ(el) * (PARALLAX_NEAR - PARALLAX_FAR) };
   }
   if (quiet) return;
   sfxArrive();
-  const X = worldScreenX(el) * W, Y = el.y * H, k = depthK(el);
+  const X = worldScreenX(el) * W + camShiftFor(el), Y = el.y * H, k = depthK(el);
   for (let i = 0; i < 10; i++) addParticle(state.worldParticles, {
     x: X + (Math.random() - 0.5) * 10 * k, y: Y - 2,
     vx: (Math.random() - 0.5) * 60 * k, vy: -18 - Math.random() * 42,
@@ -215,7 +218,7 @@ function drawTransit(dt){
       }
       const q = t / TRANSIT_FLIGHT_MS, e = q * q * (3 - 2 * q);
       const el = m.el;
-      const tx = worldScreenX(el) * W, ty = el.y * H;
+      const tx = worldScreenX(el) * W + camShiftFor(el), ty = el.y * H;
       // quadratic arc over the midpoint — the drop is thrown, not slid
       const lift = TRANSIT_ARC_LIFT * H * (0.5 + 0.5 * Math.min(1, Math.hypot(tx - cx, ty - cy) / (0.6 * H)));
       const mx2 = (cx + tx) / 2, my2 = Math.min(cy, ty) - lift;
