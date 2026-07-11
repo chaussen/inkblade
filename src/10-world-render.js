@@ -32,6 +32,7 @@ function drawWorld(dt, now){
     (ZI[a.k] === 0 ? -1 : a.y) - (ZI[b.k] === 0 ? -1 : b.y));
   drawContactShadows(els, now);
   for (const el of els){
+    if (el.transit) continue; // ink in flight — it hasn't landed yet (S1-D069)
     const age = el.born ? now - el.born : 1e9;
     if (age < 0) continue; // planted between frames; rAF timestamp lags performance.now()
     const p = Math.max(0, Math.min(1, age / 700));
@@ -185,7 +186,7 @@ function drawContactShadows(els, now){
   wx.fillStyle = 'rgba(60,52,40,1)';
   wx.beginPath();
   for (const el of els){
-    if (DEPTH_EXEMPT[el.k] || kindHasTag(el.k, 'heat') || kindHasTag(el.k, 'wet')) continue;
+    if (el.transit || DEPTH_EXEMPT[el.k] || kindHasTag(el.k, 'heat') || kindHasTag(el.k, 'wet')) continue;
     const age = el.born ? now - el.born : 1e9;
     if (age < 0) continue;
     const pe = 1 - Math.pow(1 - Math.max(0, Math.min(1, age / 700)), 3);

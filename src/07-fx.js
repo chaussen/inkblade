@@ -120,6 +120,124 @@ function beam(y, p) {
   ctx.fillRect(Math.max(0, head - 260), y - 5, Math.min(head, W) - Math.max(0, head - 260), 10);
   ctx.globalAlpha = 1;
 }
+/* -------- the ink travels (S1-D069) -------- *
+ * Lock transition: the glyph's strokes coalesce into an ink droplet that
+ * flies to the planted element and becomes it. Pure presentation — matter
+ * is chosen at lock (spawnWorldFor) and hidden behind `transit` until the
+ * droplet lands; coordinates are stored normalized so a mid-flight resize
+ * stays sane. reduce-motion hosts reveal instantly (the pre-M2e look). */
+function beginTransit(def, els){
+  if (!els || !els.length || !state.glyph) return;
+  finishTransit(); // defensive: never strand hidden matter
+  const T = {
+    def, t: 0, bannerDone: false,
+    strokes: [], cx: 0, cy: 0,
+    els: els.map((el, i) => ({ el, delay: i * TRANSIT_STAGGER_MS, arrived: false, trail: [] })),
+  };
+  let n = 0;
+  for (const st of state.glyph.strokes){
+    const pts = strokeScreenPts(st).map(p => [p[0] / W, p[1] / H]);
+    T.strokes.push(pts);
+    for (const p of pts){ T.cx += p[0]; T.cy += p[1]; n++; }
+  }
+  T.cx /= n; T.cy /= n;
+  if (reduceMotion){ // no flight: reveal now, banner now — motion is optional
+    for (const m of T.els) arriveTransit(T, m, true);
+    return;
+  }
+  for (const st of state.glyph.strokes) st.hidden = true; // the transit owns the ink now
+  state.transit = T;
+}
+function finishTransit(){
+  const T = state.transit;
+  if (!T) return;
+  for (const m of T.els) if (!m.arrived) arriveTransit(T, m, true);
+  state.transit = null;
+}
+function arriveTransit(T, m, quiet){
+  m.arrived = true;
+  const el = m.el;
+  delete el.transit;
+  el.born = performance.now(); // the grow-in + fresh gold ring start here
+  // the banner names the thing WHERE it appears (first arrival of the lock)
+  if (!T.bannerDone){
+    T.bannerDone = true;
+    state.banner = { pinyin: T.def.pinyin, gloss: T.def.gloss, t: 0, ax: worldScreenX(el), ay: el.y };
+  }
+  if (quiet) return;
+  sfxArrive();
+  const X = worldScreenX(el) * W, Y = el.y * H, k = depthK(el);
+  for (let i = 0; i < 10; i++) addParticle(state.worldParticles, {
+    x: X + (Math.random() - 0.5) * 10 * k, y: Y - 2,
+    vx: (Math.random() - 0.5) * 60 * k, vy: -18 - Math.random() * 42,
+    grav: 170, life: 0.35 + Math.random() * 0.3,
+    size: 1.5 + Math.random() * 1.5,
+    color: Math.random() < 0.25 ? GOLD : INK }, MAX_WORLD_PARTICLES);
+}
+function transitInk(e){ // gold at takeoff → ink at landing
+  const r = Math.round(201 + (27 - 201) * e), g = Math.round(153 + (23 - 153) * e), b = Math.round(43 + (18 - 43) * e);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+function drawTransit(dt){
+  const T = state.transit;
+  if (!T) return;
+  T.t += dt;
+  const cx = T.cx * W, cy = T.cy * H;
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (T.t < TRANSIT_COALESCE_MS){
+    // coalesce: the strokes contract to their centroid, ink turning gold
+    const q = T.t / TRANSIT_COALESCE_MS, e = q * q * (3 - 2 * q);
+    ctx.globalAlpha = 0.95;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = Math.max(2, S * 0.078 * (1 - e * 0.72));
+    for (const pts of T.strokes){
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i++){
+        const x = cx + (pts[i][0] * W - cx) * (1 - e);
+        const y = cy + (pts[i][1] * H - cy) * (1 - e);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else {
+    let live = false;
+    for (const m of T.els){
+      if (m.arrived) continue;
+      const t = T.t - TRANSIT_COALESCE_MS - m.delay;
+      if (t >= TRANSIT_FLIGHT_MS){ arriveTransit(T, m); continue; }
+      live = true;
+      if (t < 0){ // waiting its stagger turn: a droplet pulsing at the centroid
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = GOLD;
+        ctx.beginPath(); ctx.arc(cx, cy, S * 0.028 * (1 + 0.1 * Math.sin(T.t / 60)), 0, Math.PI * 2); ctx.fill();
+        continue;
+      }
+      const q = t / TRANSIT_FLIGHT_MS, e = q * q * (3 - 2 * q);
+      const el = m.el;
+      const tx = worldScreenX(el) * W, ty = el.y * H;
+      // quadratic arc over the midpoint — the drop is thrown, not slid
+      const lift = TRANSIT_ARC_LIFT * H * (0.5 + 0.5 * Math.min(1, Math.hypot(tx - cx, ty - cy) / (0.6 * H)));
+      const mx2 = (cx + tx) / 2, my2 = Math.min(cy, ty) - lift;
+      const x = (1 - e) * (1 - e) * cx + 2 * (1 - e) * e * mx2 + e * e * tx;
+      const y = (1 - e) * (1 - e) * cy + 2 * (1 - e) * e * my2 + e * e * ty;
+      const r = S * 0.030 * (1 - e) + S * 0.013 * depthK(el) * e; // shrinks INTO the depth
+      m.trail.push([x, y, r]);
+      if (m.trail.length > 9) m.trail.shift();
+      for (let i = 0; i < m.trail.length; i++){
+        const [px, py, pr] = m.trail[i];
+        ctx.globalAlpha = 0.30 * (i + 1) / m.trail.length;
+        ctx.fillStyle = transitInk(e);
+        ctx.beginPath(); ctx.arc(px, py, pr * (0.55 + 0.45 * (i + 1) / m.trail.length), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = transitInk(e);
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    if (!live && T.els.every(m => m.arrived)) state.transit = null;
+  }
+  ctx.restore();
+}
 function beamV(x, p) {
   const head = p * (H + 200) - 100;
   const grd = ctx.createLinearGradient(0, head - 260, 0, head);

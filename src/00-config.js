@@ -101,6 +101,14 @@ const SHADOW_ALPHA = 0.12;
 // stays visible under the writing veil. Figure-ground for structures/agents
 // (S1-D019) is unchanged — only light burns through.
 const EVENT_MIN_ALPHA = 0.85;
+// The ink travels [LEAN — S1-D069]: on lock the glyph's strokes coalesce
+// into a droplet that flies to the planted element; the element reveals on
+// arrival. COALESCE+FLIGHT ≈ the old +900ms plant delay, so world timing
+// (grow-in, suite waits) is unchanged. Stagger spaces group members' drops.
+const TRANSIT_COALESCE_MS = 300;
+const TRANSIT_FLIGHT_MS   = 620;
+const TRANSIT_STAGGER_MS  = 90;
+const TRANSIT_ARC_LIFT    = 0.16; // ×H — how high the droplet's arc rises
 function depthQ(el){
   return Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
 }

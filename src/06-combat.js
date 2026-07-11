@@ -182,8 +182,9 @@ function beginResolve(locked) {
     const isNew = !state.locked[def.ch];
     if (!isNew) METRICS.world.relocks++;
     state.locked[def.ch] = true;
-    setTimeout(() => spawnWorldFor(def, isNew), 900);
-    state.banner = { pinyin: def.pinyin, gloss: def.gloss, t: 0 };
+    // the ink travels (S1-D069): matter is chosen NOW, revealed when the
+    // droplet lands; the banner names the thing where it appears
+    beginTransit(def, spawnWorldFor(def, isNew));
     sfxLock();
     setTimeout(() => speak(def.ch), 220);
     setTimeout(() => spawnFx(def), 300);

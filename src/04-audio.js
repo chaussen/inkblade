@@ -17,6 +17,7 @@ function sfxMiniLock()  { tone(660, 0.3, 'triangle', 0.12); tone(990, 0.2, 'sine
 function sfxMiniAsh()   { tone(220, 0.25, 'sine', 0.1); }
 function sfxLock()      { tone(196, 1.1, 'triangle', 0.16); tone(392, 0.9, 'sine', 0.07, 0.05); tone(587, 0.6, 'sine', 0.05, 0.1); }
 function sfxFizzle()    { tone(300, 0.25, 'sine', 0.08); tone(210, 0.35, 'sine', 0.07, 0.08); }
+function sfxArrive()    { tone(620, 0.10, 'triangle', 0.05); tone(930, 0.12, 'sine', 0.03, 0.03); }
 // Ambient world-event cue hook (S1-D027): world events that happen while the
 // world is receded must not be silent-missable. No caller exists until
 // ecology E1 lands (M1c) — E1 events route through here.

@@ -87,7 +87,8 @@ function drawGlyph(dt, now) {
     }
     ctx.restore();
   }
-  if (state.mode === 'resolve' && state.resolve && state.resolve.kind === 'lock') {
+  // while a transit runs, the coalesce IS the gold flash (S1-D069)
+  if (state.mode === 'resolve' && state.resolve && state.resolve.kind === 'lock' && !state.transit) {
     const p = Math.min(1, state.resolve.t / 500);
     ctx.globalAlpha = (1 - p) * 0.5;
     ctx.strokeStyle = GOLD; ctx.lineWidth = (S * 0.1 + p * S * 0.03) * wf;
@@ -229,15 +230,25 @@ function drawHUD() {
     const a = bt < 300 ? bt/300 : (bt > 2100 ? Math.max(0, 1 - (bt-2100)/400) : 1);
     if (a <= 0) { state.banner = null; }
     else {
+      // the name appears where the thing appears (S1-D069): anchored beside
+      // the planted element (normalized anchor, clamped clear of the ledger);
+      // banners without an anchor keep the legacy center position.
+      const B = state.banner;
+      let bx = W / 2, by = GY + S + Math.min(H * 0.055, 40), sc = 1;
+      if (B.ax != null) {
+        sc = 0.72;
+        bx = Math.max(70, Math.min(W - 70, B.ax * W));
+        by = Math.max(44, Math.min(H - Math.min(W, H) * 0.17, B.ay * H + Math.min(H * 0.05, 32)));
+      }
       ctx.save();
       ctx.globalAlpha = a;
       ctx.textAlign = 'center';
       ctx.fillStyle = INK;
-      ctx.font = '600 ' + Math.round(Math.min(W,H)*0.05) + 'px ' + CHAR_FONT;
-      ctx.fillText(state.banner.pinyin, W/2, GY + S + Math.min(H*0.055, 40));
+      ctx.font = '600 ' + Math.round(Math.min(W,H)*0.05*sc) + 'px ' + CHAR_FONT;
+      ctx.fillText(B.pinyin, bx, by);
       ctx.globalAlpha = a * 0.7;
-      ctx.font = Math.round(Math.min(W,H)*0.026) + 'px Georgia, serif';
-      ctx.fillText(state.banner.gloss, W/2, GY + S + Math.min(H*0.055, 40) + Math.min(W,H)*0.045);
+      ctx.font = Math.round(Math.min(W,H)*0.026*sc) + 'px Georgia, serif';
+      ctx.fillText(B.gloss, bx, by + Math.min(W,H)*0.045*sc);
       ctx.restore();
     }
   }

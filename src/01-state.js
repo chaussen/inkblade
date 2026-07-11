@@ -20,6 +20,7 @@ const state = {
   shake: 0,
   resolve: null,
   banner: null,
+  transit: null,   // the ink in flight between glyph and world (S1-D069)
   world: { els: [] },
 };
 const METRICS = window.__S1_METRICS = {

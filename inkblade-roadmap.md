@@ -22,7 +22,22 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D067, 2026-07-11)
+## Current state (as of S1-D069, 2026-07-11)
+- **Checkpoint-3 verdict landed (S1-D068, LOCKED): M2d-b1 ACCEPTED.** Core
+  gameplay loop is fixed; 3D + visuals are cosmetic; chunk C stops bespoke
+  batches — remaining 277 seals get faces when the swappable sprite pack
+  block exists. **THE FUTURE GOAL (next MAJOR milestone after the cosmetic
+  chunk): object↔object interactions — the sandbox world web** (reframes
+  M2b's headline; tags-on-every-kind discipline continues as groundwork).
+- Approved cosmetic order (exploration doc
+  `inkblade-3d-transition-visuals-exploration.md`, branch
+  `claude/game-3d-rendering-exploration-39t6no`): **(1) M2e lock transition
+  "the ink travels" (S1-D069 plan, IN PROGRESS)** → (2) motion-parallax
+  camera → (3) sprite pack block + seal coverage → (4) WebGL billboard pilot
+  ONLY if the parallax checkpoint still reads flat. Each step: plan entry +
+  John checkpoint.
+
+## Previous state (as of S1-D067, 2026-07-11)
 - Artifact: `inkblade-m2d.html` (BUILD_ID `S1-M2d-b1-20260710`), helpers
   TARGET default. **Chunk C batch 1 SHIPPED (S1-D066/D067), checkpoint
   pending — John's quality verdict gates scaling.** 7 bespoke kinds (大

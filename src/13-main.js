@@ -32,6 +32,7 @@ function frame(now) {
   drawEffects(dt);
   drawParticles(dt);
   drawTrails(dt);
+  drawTransit(dt); // the ink travels above the veil (S1-D069)
   if (state.mode !== 'title') drawHUD();
   ctx.restore();
 
