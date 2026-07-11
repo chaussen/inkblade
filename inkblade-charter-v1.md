@@ -221,6 +221,7 @@ Run on every addition; any wrong answer → stop, escalate to router with a log 
 
 | date | id | decision | by | status | supersedes |
 |---|---|---|---|---|---|
+| 2026-07-11 | S1-D073 | **M2f-b1 shipped and verified** (`inkblade-m2f.html`, BUILD_ID **S1-M2f-b1-20260711**; m2e freezes as the John-approved snapshot; helpers TARGET bumped) — **the world breathes**, per S1-D072 exactly: `CAM` camera (idle drift = two summed sines ~26s/~9.6s at 0.008×W + pointer pan ±0.020×W, eased 450ms) with per-depth-layer shift 0.18→1.0 applied in `drawWorld`'s per-element translate (renderers inherit; DEPTH_EXEMPT sky shifts 0), backdrop ridges 0.10/0.07/0.04, clouds 0.06, tufts by own q, contact shadows numerically, and the transit droplet target + arrival banner ride the same shift (the ink still lands ON the drawn object); pan target frozen while a trail is active; `prefers-reduced-motion` pins the camera at 0; **foreground occluder band** — 7 near-edge clumps (grass/stones, parallax 1.18, drawn after the element pass) complete the depth sandwich, each ONE single-fill path at α≤0.34 so self-overlap can never darken below the ink-probe thresholds (blended tone ≥ r190; the S1-D062 batched-shadow trick); `__S1_SCENE` gains additive `fg:7`, `__S1_CAM` exposes {px,target}. Verified smoke21 (6 tests): drift alive and bounded; **the parallax contract measured off the live canvas with real pointer moves — near tree slid 22.7px against 22.3 predicted (pan × 0.84), far tree 7.8 against 8.1 (pan × 0.30), drift-proof via normalization by the sampled camera**; writing gate (target frozen mid-trail, live after); reduced-motion pinned 0; fg band tints 19,200px while counting ZERO under both ink thresholds; render-only (el.x bit-identical across a full sweep). One suite-infra note: smoke21's mini HTTP server answers /favicon.ico with 204 so the zero-console-error contract stays strict instead of ignoring resource noise. Full battery green: smoke5–21 + frozen smoke1–4, zero console errors; smoke12 perf 17.73ms avg @300 (absolute budget; camera + foreground ≈ +1ms vs m2e's 16.56). Eyeball: the title valley alone now breathes — hills, tufts, and the new foreground clumps slide at their own depths under the pointer. Next: STOP at the M2f-b1 checkpoint (§11) — **this is the verdict that decides whether the WebGL billboard pilot (S1-D068(2) step 4) is ever needed**; the sprite pack block (step 3) may plan in parallel | code (Claude) | LEAN | — |
 | 2026-07-11 | S1-D072 | **M2f-b1 plan — the world breathes (motion-parallax camera; S1-D068(2) step 2, exploration doc §1 option C).** Diagnosis stands from the exploration: every shipped depth cue is STATIC; the missing cue is motion parallax. The build, all presentation-layer (el.x/saves/sim/bands untouched): (1) **A camera** (`CAM {px, target}`, 10-world-render): idle drift = two summed slow sines (~26s + ~9.6s periods, amplitude CAM_DRIFT ×W ≈ 8px) + pointer parallax (window pointermove target, ±CAM_POINTER ×W ≈ 16px at the near layer), exponentially eased (CAM_EASE_MS ≈ 450); **gated**: target freezes while a trail is active (writing is never disturbed), and `prefers-reduced-motion` pins the camera at 0. (2) **Per-depth-layer shift**: elements shift by `CAM.px · (PARALLAX_FAR + depthQ·(PARALLAX_NEAR−PARALLAX_FAR))` (0.18 far → 1.0 near) applied inside `drawWorld`'s per-element translate (renderers inherit); DEPTH_EXEMPT sky/horizon shift 0; contact shadows shift numerically with their elements; backdrop ridges shift 0.10/0.07/0.04 (farther = less), clouds 0.06, ground tufts by their own q; the transit droplet's target and the arrival banner take the same shift so the ink lands ON the drawn object. (3) **Foreground occluder band**: ~7 large near-field grass clumps/stones (y 0.965–1.01, parallax factor 1.18 — faster than everything) drawn AFTER the element pass, completing the depth sandwich (things in front AND behind). Probe-safety by construction: each clump is ONE single-fill path at alpha ≤0.32 (the S1-D062 batched-shadow trick — self-overlap can't double-darken), blended tone ≥ r190 — above smoke12's r<110 and smoke13/18's r<150 thresholds at ANY position; clump placement non-overlapping. (4) `__S1_SCENE` gains additive `fg` count; `window.__S1_CAM` exposes {px, target} for tests. (5) New artifact `inkblade-m2f.html` (m2e freezes as the John-approved snapshot), BUILD_ID S1-M2f-b1-20260711, helpers TARGET bumps. (6) **smoke21-parallax.js**: camera alive (px changes over time, bounded); differential layer shift with REAL pointer moves (near element's ink centroid shifts ≥2× a far element's between pointer-left and pointer-right holds); writing gate (target frozen while a trail is down); reduced-motion pins 0; fg present (SCENE.fg > 0, paints px in the near band) while smoke18 T5's zero-ink contract re-proves on this build; camera never touches el.x (sim coords identical before/after a pointer sweep). Perf: per-element multiply-add + ~7 fills — smoke12's absolute budget must hold. Risk audit: idle drift in headless (no pointer) is ±~8px at near — inside every probe half-box (≥35px); T5's nearGround box overlaps the fg band, handled by the tone floor above | code (Claude) | LEAN | — |
 | 2026-07-11 | S1-D071 | **Checkpoint-4 verdict (John) — M2e-b1 APPROVED; step 2 authorized.** Verbatim: "yes the transition is good enough. i can approve this build. now start the step 2." Rulings: (1) the ink-travels transition ships as-is (speed/legibility/banner placement all accepted — no tuning pass needed); `inkblade-m2e.html` is an approved snapshot; (2) proceed immediately with S1-D068(2) step 2 — the motion-parallax camera (M2f) | John | LOCKED | — |
 | 2026-07-11 | S1-D070 | **M2e-b1 shipped and verified** (`inkblade-m2e.html`, BUILD_ID **S1-M2e-b1-20260711**; m2d freezes; helpers TARGET bumped) — **the ink travels**, per S1-D069 exactly: placement chooses at lock (`spawnWorldFor` returns transit-flagged els; render, contact shadows, and the whole sim skip them — a flying fire gives no heat and its life clock is frozen until landing; `saveWorld`'s explicit field pick omits the flag, so a mid-flight reload completes the plant instantly); coalesce ≈300ms (the glyph's strokes contract to their centroid AS the gold flash — originals hide, the resolve-lock overlay skips while a transit runs); flight ≈620ms (quadratic arc with TRANSIT_ARC_LIFT, droplet shrinks toward the target's `depthK` — departure INTO the depth — gold→ink trail; group members stagger 90ms); arrival stamps `born` (the existing 700ms grow-in + fresh gold ring play unchanged), splashes ink particles, sounds a soft arrival tone, and **the banner now rises at the arrival, anchored at the element's converged x — the name appears where the thing appears**. reduce-motion hosts reveal instantly (the pre-M2e look). Total plant latency ≈920ms ≈ the old +900ms setTimeout, so world timing is unchanged by design and no suite wait needed retiming. Verified smoke20 (7 tests): transit contract (chosen at lock, revealed on arrival); `?seed=` determinism byte-identical across runs (the worldRand stream is untouched); grove stagger measured 83ms; banner anchored at `worldScreenX` to 1e-5; a flying fire's `life.t` frozen at 0 then ticking after landing; mid-flight reload lands the element with no transit; 115 dark px of real ink at the anchor post-arrival. **Full battery green on this build: smoke5–20 + frozen smoke1–4, zero console errors; smoke12 perf 16.56ms avg @300 (absolute budget — better than m2c-b2's 17.41ms; the transit costs nothing measurable).** Eyeball: the mid-flight droplet arcs with its trail while the world holds; the tree blooms where the drop lands with "mù / tree" named beside it. Next: STOP at the M2e-b1 checkpoint (§11) — verdict wanted on transition legibility/feel; the motion-parallax camera (S1-D068(2) step 2) may plan in parallel | code (Claude) | LEAN | — |
@@ -299,6 +300,45 @@ Run on every addition; any wrong answer → stop, escalate to router with a log 
 The actual checkpoint messages handed to John, verbatim, kept alongside their
 ship entries so the invitation and its eventual verdict both have a durable
 record.
+
+### Checkpoint — M2f-b1: the world breathes (2026-07-11, follows S1-D073; verdict pending — THE 3D-legibility verdict: decides whether the WebGL billboard pilot is ever needed)
+
+> **Where.** New artifact — note the **m2f**:
+> ```
+> cd ~/projects/inkblade && git fetch origin && git checkout claude/game-3d-rendering-exploration-39t6no && python3 -m http.server 8000
+> ```
+> `http://localhost:8000/inkblade-m2f.html?reset=1` (corner stamp
+> `S1-M2f-b1-20260711`).
+>
+> **What's new vs m2e:** the world moved from a painting to a diorama.
+> - **Move your mouse (or finger) around WITHOUT drawing** — the whole
+>   valley slides with your pointer: distant hills barely, the middle
+>   ground more, near things the most. This motion is the 3D cue that was
+>   always missing.
+> - **New foreground grass and stones along the bottom edge** — they slide
+>   fastest of all and stand IN FRONT of near trees and walkers, so the
+>   world now has depth in both directions.
+> - Even untouched, the scene drifts gently on its own, like a held
+>   camera breathing.
+> - Writing is never disturbed: the camera freezes the moment you start a
+>   slash and resumes after.
+>
+> **What to try (~3 min):**
+> 1. On the title screen, sweep your pointer slowly left and right — watch
+>    the hills, tufts, and foreground grass slide at different speeds.
+> 2. Write a few characters (木, 林, 人, 山) to fill the field, then sweep
+>    again — near trees should slide visibly more than far ones, and the
+>    foreground grass should pass in front of them.
+> 3. Write 木 and watch the ink-drop land — the drop and the name still
+>    stick to the object while everything slides.
+>
+> **Verdict needed — THE 3D question:** with motion, does the world
+> finally read as 3D/deep to you? This verdict decides the biggest open
+> fork: if YES, the vanilla-canvas approach is vindicated and we skip the
+> WebGL rewrite pilot entirely (cosmetic track moves to step 3, the
+> swappable sprite block); if NO, I build the WebGL billboard pilot as a
+> separate experiment. Also: is the movement amount right for children —
+> too subtle, too seasick, or just alive?
 
 ### Checkpoint — M2e-b1: the ink travels (2026-07-11, follows S1-D070; VERDICT S1-D071: APPROVED — "the transition is good enough. i can approve this build"; step 2 (parallax camera) authorized)
 

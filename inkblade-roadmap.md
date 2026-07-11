@@ -22,15 +22,22 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D070, 2026-07-11)
-- Artifact: `inkblade-m2e.html` (BUILD_ID `S1-M2e-b1-20260711`), helpers
-  TARGET default. **M2e-b1 "the ink travels" SHIPPED (S1-D069/D070),
-  checkpoint pending** — the lock transition: strokes coalesce to a gold
-  droplet, arc into the world shrinking into depth, the object blooms from
-  the splash, banner (pinyin/gloss) rises AT the arrival beside the object.
-  Transit matter is sim-exempt and never persists; ?seed= determinism
-  byte-identical; plant latency ≈920ms ≈ the old +900ms. smoke20; full
-  battery green (smoke5–20 + frozen 1–4; perf 16.56ms @300).
+## Current state (as of S1-D073, 2026-07-11)
+- Artifact: `inkblade-m2f.html` (BUILD_ID `S1-M2f-b1-20260711`), helpers
+  TARGET default. **M2f-b1 "the world breathes" SHIPPED (S1-D072/D073),
+  checkpoint pending — THIS checkpoint carries the 3D-legibility verdict
+  that decides whether the WebGL billboard pilot (step 4) is ever needed.**
+  Motion-parallax camera (idle drift + pointer pan, eased; per-depth-layer
+  shift 0.18→1.0, sky exempt; trail-gated; reduced-motion pinned 0) +
+  foreground occluder band (7 single-fill clumps, parallax 1.18, silk
+  tone-floor). Transit droplet + arrival banner ride the camera. smoke21;
+  full battery green (smoke5–21 + frozen 1–4; perf 17.73ms @300).
+- **M2e-b1 "the ink travels" APPROVED by John (S1-D071, LOCKED)** —
+  `inkblade-m2e.html` frozen as the approved snapshot. Lock transition:
+  strokes coalesce to a gold droplet, arc into the world shrinking into
+  depth, the object blooms from the splash, banner rises AT the arrival
+  beside the object. Transit matter sim-exempt, never persists; ?seed=
+  determinism byte-identical; plant latency ≈920ms ≈ the old +900ms.
 - **Checkpoint-3 verdict (S1-D068, LOCKED): M2d-b1 ACCEPTED.** Core
   gameplay loop is fixed; 3D + visuals are cosmetic; chunk C stops bespoke
   batches — remaining 277 seals get faces when the swappable sprite pack
@@ -39,10 +46,11 @@ top-down for anything marked here; nothing below is real until logged there.
   M2b's headline; tags-on-every-kind discipline continues as groundwork).
 - Approved cosmetic order (exploration doc
   `inkblade-3d-transition-visuals-exploration.md`, this branch): (1) M2e
-  lock transition — SHIPPED, checkpoint pending → **(2) motion-parallax
-  camera — NEXT (plan entry required)** → (3) sprite pack block + seal
-  coverage → (4) WebGL billboard pilot ONLY if the parallax checkpoint
-  still reads flat. Each step: plan entry + John checkpoint.
+  lock transition — SHIPPED + APPROVED (S1-D071) → (2) M2f motion-parallax
+  camera — SHIPPED, **checkpoint pending (the 3D verdict)** → **(3) sprite
+  pack block + seal coverage — NEXT (plan entry required; may draft in
+  parallel with the checkpoint)** → (4) WebGL billboard pilot ONLY if the
+  M2f checkpoint still reads flat. Each step: plan entry + John checkpoint.
 - Session note: work lives on branch
   `claude/game-3d-rendering-exploration-39t6no` (remote-session mandate);
   merge to master brings m2e + smoke20 + charter/roadmap entries together.
@@ -134,7 +142,8 @@ top-down for anything marked here; nothing below is real until logged there.
 | M2c-b1 | S1-M2c-b1-20260710 | **Chunk B: the scroll gains depth + the legible ledger.** Perspective convergence (render-only), depth scale 0.42/1.45 (3.45×), two-stage mist, batched contact shadows, sky/ground paper furniture, windowed roster ledger with counter (fixes the 2px-cells-at-500 bug). smoke18 added; smoke12 perf calibration hardened to min-of-2 sampling | S1-D061–D062 |
 | M2c-b2 | S1-M2c-b2-20260710 | **The illustrated valley (answers the "hollow" verdict).** Always-present backdrop on the world layer: 3 ridgeline silhouettes, 4 drifting clouds, 56 perspective-scaled ground tufts/pebbles, fixed seed 42, `__S1_SCENE`; empty-world early-return removed. smoke18 T6 added; perf: absolute budget passed WITH backdrop (17.41ms @300) | S1-D063–D065 |
 | M2d-b1 | S1-M2d-b1-20260710 | **Chunk C batch 1: every character earns a face.** 大→bigfig dedupe, 6 more bespoke kinds (gate/horse/heart/wind/bolt/cart), banner/dwelling/skylight families + flora flower, radicals 口讠言纟宀日扌辶 mapped; basic seals 377→277; interaction tags live (rest-by-hut, hut burns+regrows); pipeline charsExtra; smoke19 | S1-D066–D067 |
-| M2e-b1 | S1-M2e-b1-20260711 | **The ink travels (lock transition).** Character→object made legible: strokes coalesce → droplet arcs into the world shrinking into depth → object blooms from the splash; banner moves to arrival, anchored beside the object; transit matter sim-exempt + never persisted; seed determinism byte-identical; smoke20 | S1-D068–D070 |
+| M2e-b1 | S1-M2e-b1-20260711 | **The ink travels (lock transition).** Character→object made legible: strokes coalesce → droplet arcs into the world shrinking into depth → object blooms from the splash; banner moves to arrival, anchored beside the object; transit matter sim-exempt + never persisted; seed determinism byte-identical; smoke20. **APPROVED (S1-D071)** | S1-D068–D071 |
+| M2f-b1 | S1-M2f-b1-20260711 | **The world breathes (motion-parallax camera).** Idle drift + pointer pan, eased, per-depth-layer shift 0.18→1.0 (sky exempt, shadows/backdrop/transit/banner ride along); trail-gated, reduced-motion pinned; foreground occluder band (7 single-fill clumps, parallax 1.18) completes the depth sandwich; smoke21 (drift-proof layer contract) | S1-D072–D073 |
 
 ## Planned
 ### Chunk B — canvas/UI redesign + 3D legibility — SHIPPED (S1-D061/D062, M2c-b1; playtest checkpoint pending)
