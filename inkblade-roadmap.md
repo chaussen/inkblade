@@ -22,8 +22,8 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D076, 2026-07-11)
-- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b1-20260711`), helpers
+## Current state (as of S1-D077, 2026-07-11)
+- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b2-20260711`), helpers
   TARGET default. **M2g-b1 "the WebGL pilot" SHIPPED (S1-D075/D076),
   checkpoint pending — an EXPERIMENT verdict (continue polishing the real
   3D camera, or park it and move to the sprite pack block).** Gated behind
@@ -35,10 +35,23 @@ top-down for anything marked here; nothing below is real until logged there.
   composite underneath unchanged; E2 ignition glow stays live per-frame via
   a `drawBurnFx` position override. Logged limitations: no 3D-space ambient
   particles, fire flicker is texture-refresh-rate not per-frame, no contact
-  shadows, camera framing hand-tuned. smoke22 (6 tests, incl. a forced-
-  WebGL-unavailable fallback proving the pilot can never crash the game);
-  full battery green (smoke5–22 + frozen 1–4; perf 17.05ms @300, i.e. the
-  module costs nothing when inactive).
+  shadows, camera framing hand-tuned.
+- **M2g-b2 (S1-D077): camera-unresponsive fix, same checkpoint.** John's
+  mid-playtest report ("pointer does not affect camera at all," tried
+  mobile finger + mouse) surfaced three real gaps: touch has no hover (any
+  finger-drag on the fullscreen canvas becomes a writing trail immediately,
+  so the pointer-follow listener never fired for a phone); OS `prefers-
+  reduced-motion` silently zeroed the WHOLE camera with no way to tell why;
+  the R3D camera's eye+center moved almost together, reading as barely-
+  there even on a working mouse. Fixes: `?motion=1` override (accessibility
+  default preserved without it); a `pointerdown` nudge (touch/click now get
+  an immediate aim-toward-there cue); the camera reformulated as a real
+  eye-orbit around a near-fixed look-at point. Verified directly (touch tap,
+  motion override, hover) — a near tree now visibly shifts ~120px across
+  the pointer's range (was a few px). Full battery re-green (smoke5–22 +
+  frozen 1–4; perf 16.53ms @300, no regression). smoke22 (6 tests, incl. a
+  forced-WebGL-unavailable fallback proving the pilot can never crash the
+  game).
 - **M2f-b1 "the world breathes" verdict (S1-D074, LOCKED): "just
   acceptable."** Read per the plan's own fork as authorization for the
   WebGL pilot rather than a hard stop. `inkblade-m2f.html` stands as the

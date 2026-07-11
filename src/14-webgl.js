@@ -170,9 +170,13 @@ function r3dWorldPos(el){
   return [(el.x - 0.5) * 2 * R3D_HALF_W, 0, (1 - depthQ(el)) * R3D_DEPTH];
 }
 function r3dUpdateCamera(){
-  const yaw = CAM.px * R3D_YAW_SCALE;
-  const eye = [yaw * R3D_HALF_W * 0.5, R3D_EYE_H, -R3D_EYE_BACK];
-  const center = [yaw * R3D_HALF_W * 0.15, 0, R3D_DEPTH * 0.5];
+  // the eye swings sideways while the look-at point stays nearly fixed —
+  // a real orbit around the scene, not a translate (S1-D077: the pilot's
+  // first camera formula moved eye and center almost together, which read
+  // as barely-there even when CAM.px was genuinely changing)
+  const pan = CAM.px * R3D_PAN_SCALE;
+  const eye = [pan, R3D_EYE_H, -R3D_EYE_BACK];
+  const center = [pan * 0.12, 0, R3D_DEPTH * 0.5];
   R3D.view = m4LookAt(eye, center, [0, 1, 0]);
   R3D.proj = m4Perspective(R3D_FOV, Math.max(0.1, W / H), R3D_NEAR, R3D_FAR);
   R3D.viewProj = m4Multiply(R3D.proj, R3D.view);

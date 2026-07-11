@@ -131,7 +131,7 @@ const R3D_EYE_BACK    = 3.2;    // camera pulled back beyond the near edge
 const R3D_FOV         = 52 * Math.PI / 180;
 const R3D_NEAR        = 0.1, R3D_FAR = 30;
 const R3D_FOG_NEAR    = 4.5, R3D_FOG_FAR = 11.5;
-const R3D_YAW_SCALE   = 1.6 / 100; // CAM.px (already ×W-ish px) → camera yaw
+const R3D_PAN_SCALE   = 0.09;    // CAM.px → world units the eye swings sideways (an orbit, not a translate)
 const R3D_PX_WORLD    = 0.015;   // world units per stamp-canvas pixel, ×el.s (tight content bbox, not the full canvas)
 const R3D_SCALE_REF   = 0.145;  // calibrates elScreenPos's depthK-equivalent
 const R3D_STAMP       = 192;    // sprite texture size, px

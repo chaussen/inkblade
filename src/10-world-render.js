@@ -26,10 +26,24 @@ const ELEMENT_DRAW = {
  * pins the camera at 0. */
 const CAM = { px: 0, target: 0 };
 window.__S1_CAM = CAM; // test-readable (smoke21)
+function camAim(e){
+  CAM.target = Math.max(-1, Math.min(1, (e.clientX / W - 0.5) * 2));
+}
 window.addEventListener('pointermove', e => {
   if (trail || reduceMotion) return; // never steer the camera mid-slash
-  CAM.target = Math.max(-1, Math.min(1, (e.clientX / W - 0.5) * 2));
+  camAim(e);
 }, { passive: true });
+// Touch has no hover — pointermove only fires DURING contact, and any touch
+// drag on the fullscreen canvas immediately becomes a writing trail (05-
+// input.js sets it on pointerdown), so the listener above never fires for a
+// finger (S1-D077, found by playtest: "pointer does not affect camera at
+// all" on mobile). A pointerdown nudge — before trail is assigned — gives
+// touch (and a plain mouse click) at least an aim-toward-there cue; it
+// can't hover-orbit, but it isn't inert either.
+window.addEventListener('pointerdown', e => {
+  if (reduceMotion) return;
+  camAim(e);
+}, { passive: true, capture: true });
 function updateCamera(dt, now){
   if (reduceMotion){ CAM.px = 0; return; }
   const drift = (Math.sin(now / 4200) + 0.35 * Math.sin(now / 1530)) * CAM_DRIFT * W;
