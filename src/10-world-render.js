@@ -41,6 +41,25 @@ function camShiftFor(el){
   if (DEPTH_EXEMPT[el.k]) return 0;
   return CAM.px * (PARALLAX_FAR + depthQ(el) * (PARALLAX_NEAR - PARALLAX_FAR));
 }
+// The ash/sprout/sapling/base draw decision (S1-D054), factored out so the
+// WebGL pilot's offscreen sprite stamp (S1-D075) can reuse the EXACT SAME
+// "what does this element currently look like" logic the 2D path uses —
+// one definition, two consumers, never drifting apart. No glow/particles
+// here (drawBurnFx is a separate call the 2D loop makes only for live
+// burning/embers/smoke phases) — a stamp texture shouldn't carry FX.
+function drawGroundMatter(el, draw, now, pe){
+  const bp = el.burn && el.burn.phase;
+  if (bp === 'ash') { drawBurnAsh(el, now, pe); return; }
+  if (bp === 'sprout') { drawBurnSprout(el, now, pe); return; }
+  if (bp === 'sapling'){
+    const q = ECOLOGY && ECOLOGY.regrow ? Math.min(1, el.burn.t / ECOLOGY.regrow.saplingMs) : 1;
+    const young = { ...el, s: el.s * (0.35 + 0.65 * q) };
+    if (draw) draw(young, now, pe); else { el.sealFallback = true; drawSealEl(el, now, pe); }
+    return;
+  }
+  if (draw) draw(el, now, pe);
+  else { el.sealFallback = true; drawSealEl(el, now, pe); } // unknown kind self-heals to a seal
+}
 function drawWorld(dt, now){
   // the backdrop means an empty world is still a place (S1-D063/D064) —
   // the old empty-world early-return is gone
@@ -50,6 +69,25 @@ function drawWorld(dt, now){
   worldCtx.clearRect(0, 0, W, H);
   ex.clearRect(0, 0, W, H);
   drawBackdrop(now);
+  // the WebGL pilot (S1-D075, ?r3d=1) takes over ground-matter rendering —
+  // default path (r3d unset, or GL init failed) is drawGroundElements2D,
+  // byte-identical to the pre-pilot build
+  if (R3D_ON && r3dReady()) drawGroundR3D(now);
+  else drawGroundElements2D(now);
+  wx = worldCtx;
+  drawMist();
+  drawForeground();
+  drawWorldParticles(dt);
+  ctx.save();
+  ctx.globalAlpha = attention.worldAlpha;
+  ctx.drawImage(worldLayer, 0, 0, W, H);
+  // fire is light: live events hold ≥EVENT_MIN_ALPHA under the veil
+  ctx.globalAlpha = Math.max(attention.worldAlpha, EVENT_MIN_ALPHA);
+  ctx.drawImage(eventLayer, 0, 0, W, H);
+  ctx.restore();
+}
+function drawGroundElements2D(now){
+  const worldCtx = wx;
   // painter's algorithm down the depth axis (S1-D041): sky first, then
   // ground far→near so near occludes far — y is depth
   const els = [...state.world.els].sort((a, b) =>
@@ -81,17 +119,8 @@ function drawWorld(dt, now){
     // while it burns, its matter stays on the world layer and its fire is
     // drawn as light on the burn-through overlay.
     const bp = el.burn && el.burn.phase;
-    if (bp === 'ash') drawBurnAsh(el, now, pe);
-    else if (bp === 'sprout') drawBurnSprout(el, now, pe);
-    else if (bp === 'sapling'){
-      const q = ECOLOGY && ECOLOGY.regrow ? Math.min(1, el.burn.t / ECOLOGY.regrow.saplingMs) : 1;
-      const young = { ...el, s: el.s * (0.35 + 0.65 * q) };
-      if (draw) draw(young, now, pe); else { el.sealFallback = true; drawSealEl(el, now, pe); }
-    } else {
-      if (draw) draw(el, now, pe);
-      else { el.sealFallback = true; drawSealEl(el, now, pe); } // unknown kind self-heals to a seal
-      if (bp) drawBurnFx(el, now, pe);
-    }
+    drawGroundMatter(el, draw, now, pe);
+    if (bp && bp !== 'ash' && bp !== 'sprout' && bp !== 'sapling') drawBurnFx(el, now, pe);
     if (el.fresh && age < 900){
       const q = age / 900;
       wx.save();
@@ -102,17 +131,6 @@ function drawWorld(dt, now){
     }
     wx.restore();
   }
-  wx = worldCtx;
-  drawMist();
-  drawForeground();
-  drawWorldParticles(dt);
-  ctx.save();
-  ctx.globalAlpha = attention.worldAlpha;
-  ctx.drawImage(worldLayer, 0, 0, W, H);
-  // fire is light: live events hold ≥EVENT_MIN_ALPHA under the veil
-  ctx.globalAlpha = Math.max(attention.worldAlpha, EVENT_MIN_ALPHA);
-  ctx.drawImage(eventLayer, 0, 0, W, H);
-  ctx.restore();
 }
 /* -------- the illustrated valley (S1-D063/D064) -------- *
  * An always-present backdrop so the world reads as a PLACE, not a void:
@@ -486,9 +504,11 @@ function drawFireAftermath(el, now, s, X, Y){
  * Burning matter is drawn by its own renderer; these add the fire ON it
  * (light → the `ex` overlay, S1-D045) and replace it through the regrowth
  * walk. Pure geometry, clocks read from pack data. */
-function drawBurnFx(el, now, p){
+function drawBurnFx(el, now, p, pos){
   const B = el.burn, F = ECOLOGY ? ECOLOGY.fire : null;
-  const X = el.x * W, Y = el.y * H, s = el.s * p;
+  // pos override (S1-D075): lets the WebGL pilot reposition this glow onto
+  // a billboard's true projected screen point — the 2D path never passes it
+  const X = pos ? pos.X : el.x * W, Y = pos ? pos.Y : el.y * H, s = pos ? pos.s : el.s * p;
   const g0 = wx; wx = ex; // fire is light: it burns through the veil
   wx.save();
   if (B.phase === 'burning'){

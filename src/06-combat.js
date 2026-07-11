@@ -226,6 +226,12 @@ function sparks(pos, color, n, tiny) {
   }
 }
 function addParticle(pool, p, cap) {
+  // the WebGL pilot's offscreen sprite stamp (S1-D075) calls the real 2D
+  // draw functions to build textures — several of them spawn particles as
+  // a side effect (falling leaves, aftermath smoke); without this guard the
+  // stamp pass would spawn real particles at nonsensical stamp-local coords
+  // every texture refresh. One choke point instead of touching every caller.
+  if (RASTERIZING_SPRITE) return;
   pool.push(p);
   if (pool.length > cap) pool.shift();
 }

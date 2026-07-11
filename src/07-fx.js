@@ -160,16 +160,20 @@ function arriveTransit(T, m, quiet){
   delete el.transit;
   el.born = performance.now(); // the grow-in + fresh gold ring start here
   // the banner names the thing WHERE it appears (first arrival of the lock);
-  // kf lets the HUD ride the camera with the element's own layer (S1-D072)
+  // kf lets the HUD ride the camera with the element's own layer (S1-D072);
+  // elRef (S1-D075) lets the WebGL pilot re-project a live position every
+  // frame instead of a frozen snapshot — ax/ay/kf stay exactly as before
+  // (the 2D path's contract, unchanged) for when R3D isn't active.
   if (!T.bannerDone){
     T.bannerDone = true;
     state.banner = { pinyin: T.def.pinyin, gloss: T.def.gloss, t: 0,
-                     ax: worldScreenX(el), ay: el.y,
+                     ax: worldScreenX(el), ay: el.y, elRef: el,
                      kf: DEPTH_EXEMPT[el.k] ? 0 : PARALLAX_FAR + depthQ(el) * (PARALLAX_NEAR - PARALLAX_FAR) };
   }
   if (quiet) return;
   sfxArrive();
-  const X = worldScreenX(el) * W + camShiftFor(el), Y = el.y * H, k = depthK(el);
+  const pos = elScreenPos(el);
+  const X = pos.x * W, Y = pos.y * H, k = pos.k;
   for (let i = 0; i < 10; i++) addParticle(state.worldParticles, {
     x: X + (Math.random() - 0.5) * 10 * k, y: Y - 2,
     vx: (Math.random() - 0.5) * 60 * k, vy: -18 - Math.random() * 42,
@@ -218,13 +222,16 @@ function drawTransit(dt){
       }
       const q = t / TRANSIT_FLIGHT_MS, e = q * q * (3 - 2 * q);
       const el = m.el;
-      const tx = worldScreenX(el) * W + camShiftFor(el), ty = el.y * H;
+      // elScreenPos (S1-D075): the 2D formula when R3D is off, the true
+      // billboard projection when it's on — the drop still lands ON the object
+      const tpos = elScreenPos(el);
+      const tx = tpos.x * W, ty = tpos.y * H;
       // quadratic arc over the midpoint — the drop is thrown, not slid
       const lift = TRANSIT_ARC_LIFT * H * (0.5 + 0.5 * Math.min(1, Math.hypot(tx - cx, ty - cy) / (0.6 * H)));
       const mx2 = (cx + tx) / 2, my2 = Math.min(cy, ty) - lift;
       const x = (1 - e) * (1 - e) * cx + 2 * (1 - e) * e * mx2 + e * e * tx;
       const y = (1 - e) * (1 - e) * cy + 2 * (1 - e) * e * my2 + e * e * ty;
-      const r = S * 0.030 * (1 - e) + S * 0.013 * depthK(el) * e; // shrinks INTO the depth
+      const r = S * 0.030 * (1 - e) + S * 0.013 * tpos.k * e; // shrinks INTO the depth
       m.trail.push([x, y, r]);
       if (m.trail.length > 9) m.trail.shift();
       for (let i = 0; i < m.trail.length; i++){

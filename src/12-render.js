@@ -237,8 +237,15 @@ function drawHUD() {
       let bx = W / 2, by = GY + S + Math.min(H * 0.055, 40), sc = 1;
       if (B.ax != null) {
         sc = 0.72;
-        bx = Math.max(70, Math.min(W - 70, B.ax * W + CAM.px * (B.kf || 0)));
-        by = Math.max(44, Math.min(H - Math.min(W, H) * 0.17, B.ay * H + Math.min(H * 0.05, 32)));
+        // R3D (S1-D075): re-project the live element every frame so the
+        // banner tracks a moving camera correctly; the 2D formula (ax/ay/kf,
+        // a fixed snapshot + a linear camera-shift) is UNCHANGED when R3D
+        // isn't active — this branch only ever takes the new path under ?r3d=1.
+        const pos = (R3D_ON && r3dReady() && B.elRef) ? elScreenPos(B.elRef) : null;
+        const px = pos ? pos.x * W : (B.ax * W + CAM.px * (B.kf || 0));
+        const py = pos ? pos.y * H + Math.min(H * 0.05, 32) : (B.ay * H + Math.min(H * 0.05, 32));
+        bx = Math.max(70, Math.min(W - 70, px));
+        by = Math.max(44, Math.min(H - Math.min(W, H) * 0.17, py));
       }
       ctx.save();
       ctx.globalAlpha = a;

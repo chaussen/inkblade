@@ -121,6 +121,23 @@ const PARALLAX_FAR    = 0.18;  // layer factor at GROUND_FAR…
 const PARALLAX_NEAR   = 1.0;   // …to the near edge (sky/horizon shift 0)
 const PARALLAX_FG     = 1.18;  // the foreground band slides fastest
 const FG_CLUMPS       = 7;     // near-field occluders (grass clumps/stones)
+// The WebGL pilot [LEAN — S1-D075]: raw WebGL (no dependency), gated behind
+// ?r3d=1. World-space mapping reuses depthQ (el.y→depth) and el.x (→world
+// X) unchanged — presentation-only, same as the 2D camera before it.
+const R3D_HALF_W      = 3.4;    // world X half-extent
+const R3D_DEPTH       = 7.5;    // world Z span (far..near)
+const R3D_EYE_H       = 4.4;    // camera height above the ground plane
+const R3D_EYE_BACK    = 3.2;    // camera pulled back beyond the near edge
+const R3D_FOV         = 52 * Math.PI / 180;
+const R3D_NEAR        = 0.1, R3D_FAR = 30;
+const R3D_FOG_NEAR    = 4.5, R3D_FOG_FAR = 11.5;
+const R3D_YAW_SCALE   = 1.6 / 100; // CAM.px (already ×W-ish px) → camera yaw
+const R3D_PX_WORLD    = 0.015;   // world units per stamp-canvas pixel, ×el.s (tight content bbox, not the full canvas)
+const R3D_SCALE_REF   = 0.145;  // calibrates elScreenPos's depthK-equivalent
+const R3D_STAMP       = 192;    // sprite texture size, px
+const R3D_STAMP_S     = 150;    // "S" fed to the reused 2D renderers for the stamp
+const R3D_STAMP_ANCHOR = 0.66;  // ground row, as a fraction from the stamp's top
+const R3D_REFRESH_MS  = 140;    // sprite texture refresh cadence
 function depthQ(el){
   return Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
 }
