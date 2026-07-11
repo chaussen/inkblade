@@ -22,20 +22,30 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D069, 2026-07-11)
-- **Checkpoint-3 verdict landed (S1-D068, LOCKED): M2d-b1 ACCEPTED.** Core
+## Current state (as of S1-D070, 2026-07-11)
+- Artifact: `inkblade-m2e.html` (BUILD_ID `S1-M2e-b1-20260711`), helpers
+  TARGET default. **M2e-b1 "the ink travels" SHIPPED (S1-D069/D070),
+  checkpoint pending** — the lock transition: strokes coalesce to a gold
+  droplet, arc into the world shrinking into depth, the object blooms from
+  the splash, banner (pinyin/gloss) rises AT the arrival beside the object.
+  Transit matter is sim-exempt and never persists; ?seed= determinism
+  byte-identical; plant latency ≈920ms ≈ the old +900ms. smoke20; full
+  battery green (smoke5–20 + frozen 1–4; perf 16.56ms @300).
+- **Checkpoint-3 verdict (S1-D068, LOCKED): M2d-b1 ACCEPTED.** Core
   gameplay loop is fixed; 3D + visuals are cosmetic; chunk C stops bespoke
   batches — remaining 277 seals get faces when the swappable sprite pack
   block exists. **THE FUTURE GOAL (next MAJOR milestone after the cosmetic
   chunk): object↔object interactions — the sandbox world web** (reframes
   M2b's headline; tags-on-every-kind discipline continues as groundwork).
 - Approved cosmetic order (exploration doc
-  `inkblade-3d-transition-visuals-exploration.md`, branch
-  `claude/game-3d-rendering-exploration-39t6no`): **(1) M2e lock transition
-  "the ink travels" (S1-D069 plan, IN PROGRESS)** → (2) motion-parallax
-  camera → (3) sprite pack block + seal coverage → (4) WebGL billboard pilot
-  ONLY if the parallax checkpoint still reads flat. Each step: plan entry +
-  John checkpoint.
+  `inkblade-3d-transition-visuals-exploration.md`, this branch): (1) M2e
+  lock transition — SHIPPED, checkpoint pending → **(2) motion-parallax
+  camera — NEXT (plan entry required)** → (3) sprite pack block + seal
+  coverage → (4) WebGL billboard pilot ONLY if the parallax checkpoint
+  still reads flat. Each step: plan entry + John checkpoint.
+- Session note: work lives on branch
+  `claude/game-3d-rendering-exploration-39t6no` (remote-session mandate);
+  merge to master brings m2e + smoke20 + charter/roadmap entries together.
 
 ## Previous state (as of S1-D067, 2026-07-11)
 - Artifact: `inkblade-m2d.html` (BUILD_ID `S1-M2d-b1-20260710`), helpers
@@ -124,11 +134,22 @@ top-down for anything marked here; nothing below is real until logged there.
 | M2c-b1 | S1-M2c-b1-20260710 | **Chunk B: the scroll gains depth + the legible ledger.** Perspective convergence (render-only), depth scale 0.42/1.45 (3.45×), two-stage mist, batched contact shadows, sky/ground paper furniture, windowed roster ledger with counter (fixes the 2px-cells-at-500 bug). smoke18 added; smoke12 perf calibration hardened to min-of-2 sampling | S1-D061–D062 |
 | M2c-b2 | S1-M2c-b2-20260710 | **The illustrated valley (answers the "hollow" verdict).** Always-present backdrop on the world layer: 3 ridgeline silhouettes, 4 drifting clouds, 56 perspective-scaled ground tufts/pebbles, fixed seed 42, `__S1_SCENE`; empty-world early-return removed. smoke18 T6 added; perf: absolute budget passed WITH backdrop (17.41ms @300) | S1-D063–D065 |
 | M2d-b1 | S1-M2d-b1-20260710 | **Chunk C batch 1: every character earns a face.** 大→bigfig dedupe, 6 more bespoke kinds (gate/horse/heart/wind/bolt/cart), banner/dwelling/skylight families + flora flower, radicals 口讠言纟宀日扌辶 mapped; basic seals 377→277; interaction tags live (rest-by-hut, hut burns+regrows); pipeline charsExtra; smoke19 | S1-D066–D067 |
+| M2e-b1 | S1-M2e-b1-20260711 | **The ink travels (lock transition).** Character→object made legible: strokes coalesce → droplet arcs into the world shrinking into depth → object blooms from the splash; banner moves to arrival, anchored beside the object; transit matter sim-exempt + never persisted; seed determinism byte-identical; smoke20 | S1-D068–D070 |
 
 ## Planned
 ### Chunk B — canvas/UI redesign + 3D legibility — SHIPPED (S1-D061/D062, M2c-b1; playtest checkpoint pending)
 
-### Chunk C — visual symbol expansion — NEXT: first batch, then checkpoint (S1-D059(3); plan entry before code)
+### The sandbox interaction web — THE NEXT MAJOR MILESTONE (S1-D068(3))
+Object↔object interactions are the only true game-loop enhancement left
+(John, S1-D068): fire+wood, person+shelter, water+fire, wind+flame,
+horse+cart... The E1/E2 tag machinery (living/heat/flammable/shelter/wet)
+IS the seed of this web — the milestone generalizes it into a data-driven
+interaction table (tag×tag → reaction) instead of bespoke rules. Waits for
+the cosmetic chunk to finish; every kind shipped meanwhile must carry tags
+(S1-D066 pattern) so the web has matter to react to. M2b's demand-world
+wants (OPEN-9) may ride on top once the web exists.
+
+### Chunk C — visual symbol expansion — batch 1 SHIPPED + ACCEPTED (S1-D068); scaling DEFERRED to the sprite pack block (cosmetic step 3)
 Confirmed: only 13 `world.kind` families exist; 489/500 basic-tier chars (98%)
 render with no visual identity (plain seal fallback); 大/山 literally share one
 kind (`peak`). John wants every character visually unique and asked whether
