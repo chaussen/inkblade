@@ -22,7 +22,17 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D082, 2026-07-12)
+## Current state (as of S1-D084, 2026-07-12)
+- **Pure-emergence breadth-threshold experiment built (S1-D084)** —
+  `prototypes/breadth-threshold/`. NOT a resolution of any real prior
+  decision: the brief it came from cited S1-D034–037 for content that
+  doesn't exist in this charter (checked directly, zero hits), so it's
+  logged as a fresh experiment on its own merits, not the fake history it
+  arrived with. Four breadth tiers (T0 shipped-only through T3), a blind
+  session launcher, a results viewer, session data survives a tab close.
+  Fully isolated from the shipped game (forked HTML, no BUILD_ID). Harness
+  verified end-to-end via headless Chromium; the actual decay-curve data
+  needs real multi-session human play — flagged plainly, not faked.
 - Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b4-20260712`), helpers
   TARGET default. **M2g-b4 (S1-D080): OPEN-12 licensing compliance —
   `LICENSE-ARPHIC.txt` at repo root, a small title-screen-only in-app

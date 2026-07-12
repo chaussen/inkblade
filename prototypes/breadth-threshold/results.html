@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- Reads the same-origin localStorage log every session writes to.
+     Must be opened from the same host the sessions were played on
+     (localStorage is per-origin) — e.g. the Pages deployment, not a
+     local file:// copy if the sessions were played on Pages. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Breadth-threshold results</title>
+<style>
+  body{font-family:-apple-system,sans-serif;background:#e9dfc9;color:#1b1712;
+    padding:1.5rem;max-width:900px;margin:0 auto}
+  h1{font-size:1.3rem}
+  table{border-collapse:collapse;width:100%;font-size:.85rem;margin-top:1rem}
+  th,td{text-align:left;padding:.4rem .6rem;border-bottom:1px solid #d9cbab;vertical-align:top}
+  th{color:#7a6f5c;text-transform:uppercase;font-size:.72rem;letter-spacing:.05em}
+  code{background:rgba(0,0,0,0.06);padding:.1rem .3rem;border-radius:4px;font-size:.8rem}
+  .empty{color:#7a6f5c}
+  button{font-size:.85rem;padding:.4rem .8rem;border-radius:6px;border:1px solid #b2392a;
+    background:transparent;color:#b2392a;cursor:pointer;margin-top:1rem}
+</style>
+</head>
+<body>
+<h1>Breadth-threshold experiment — raw session log</h1>
+<p>Every row is one <code>start-session.html</code> launch. <code>report:null</code>
+  means the session either hasn't ended yet or the tab was killed before any
+  15s checkpoint fired.</p>
+<div id="out"></div>
+<button id="dumpJson">Copy raw JSON</button>
+<script>
+'use strict';
+const KEY = 'breadth_experiment_log_v1';
+function loadLog() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
+const log = loadLog();
+const out = document.getElementById('out');
+if (!log.length) {
+  out.innerHTML = '<p class="empty">No sessions recorded on this origin yet.</p>';
+} else {
+  let html = '<table><tr><th>Tier</th><th>Started</th><th>End reason</th><th>Length</th>' +
+    '<th>Compositions</th><th>Distinct pairings</th><th>CPM curve</th><th>Novelty curve</th></tr>';
+  for (const e of log) {
+    const r = e.report;
+    html += `<tr>
+      <td>${e.tier}</td>
+      <td>${new Date(e.startedAt).toLocaleString()}</td>
+      <td>${r ? r.sessionEndReason : '<span class="empty">—</span>'}</td>
+      <td>${r ? Math.round(r.sessionLengthMs/1000) + 's' : '—'}</td>
+      <td>${r ? r.totalCompositions : '—'}</td>
+      <td>${r ? r.distinctPairingsTriggered : '—'}</td>
+      <td>${r ? r.compositionsPerMinute.join(', ') : '—'}</td>
+      <td>${r ? r.noveltyRatio.map(n => n==null?'–':n).join(', ') : '—'}</td>
+    </tr>`;
+  }
+  html += '</table>';
+  out.innerHTML = html;
+}
+document.getElementById('dumpJson').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(JSON.stringify(log, null, 2));
+  alert('Copied ' + log.length + ' session record(s) to clipboard.');
+});
+</script>
+</body>
+</html>

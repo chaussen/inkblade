@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- Blind session launcher for the breadth-threshold experiment (§3 of the
+     brief: "Don't let players see which tier they're in"). Static hosting
+     means true server-side blinding isn't available, so this is the
+     lightest thing that actually works for a two-person project: pick the
+     LEAST-covered tier so far (round-robin, not pure random — avoids
+     accidentally over-sampling one tier by chance), store it in
+     localStorage as an opaque session record, and redirect WITHOUT ever
+     showing "T0/T1/T2/T3" on screen. The tier is still technically visible
+     in the resulting URL's query string to anyone who looks — that's the
+     honest limit of client-only blinding — but it's never surfaced in the
+     UI, and there's no in-game text anywhere that reveals it either. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Breadth-threshold session</title>
+<style>
+  html,body{margin:0;height:100%;display:flex;align-items:center;justify-content:center;
+    background:#e9dfc9;font-family:Georgia,serif;color:#1b1712}
+  .card{max-width:520px;padding:2rem;text-align:center}
+  button{font-size:1.05rem;padding:.9rem 1.6rem;border-radius:8px;border:none;
+    background:#b2392a;color:#fff;cursor:pointer;margin-top:1rem}
+  p{line-height:1.5;color:#4a4038}
+  code{background:rgba(0,0,0,0.06);padding:.1rem .3rem;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Breadth-threshold session</h2>
+  <p>No tutorial, no purpose text — write freely for as long as it holds
+    your attention, or up to 20 minutes. Close the tab whenever you'd
+    stop naturally; that's a real data point too, not a failure to
+    finish.</p>
+  <p>You won't be told which configuration you're playing — that's
+    deliberate (comparing configs only works blind).</p>
+  <button id="go">Begin</button>
+</div>
+<script>
+'use strict';
+const KEY = 'breadth_experiment_log_v1';
+function loadLog() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
+function saveLog(log) { try { localStorage.setItem(KEY, JSON.stringify(log)); } catch (e) {} }
+
+document.getElementById('go').addEventListener('click', () => {
+  const tiers = ['T0', 'T1', 'T2', 'T3'];
+  const log = loadLog();
+  const counts = Object.fromEntries(tiers.map(t => [t, 0]));
+  for (const entry of log) if (counts[entry.tier] != null) counts[entry.tier]++;
+  const minCount = Math.min(...tiers.map(t => counts[t]));
+  const due = tiers.filter(t => counts[t] === minCount);
+  const tier = due[Math.floor(Math.random() * due.length)];
+  const startedAt = Date.now();
+  log.push({ tier, startedAt, report: null });
+  saveLog(log);
+  location.href = 'inkblade-breadth-experiment.html?tier=' + tier + '&reset=1&sid=' + startedAt;
+});
+</script>
+</body>
+</html>
