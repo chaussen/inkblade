@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment F — stillness (the signal is an absence).
+     Isolated prototype, not part of the shipped game.
+
+     Scene: four trees sway with idle animation. When the want is active,
+     ONE designated tree's sway amplitude goes to zero — nothing new is
+     drawn, an existing loop is suppressed. To test the brief's own named
+     risk (confusing intentional stillness with a performance hitch), a
+     DIFFERENT, non-want tree occasionally free­zes for one short beat too
+     (a fake "hitch") — clicking that one logs a false positive, since in
+     the real design nothing should be inferred from a momentary stutter. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal F — stillness</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:pointer}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<script>
+'use strict';
+const PAPER='#ece3cf', INK='#1b1712';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const ONSET_DELAY_MS = 1500;
+const HITCH_EVERY_MS = 4000, HITCH_DUR_MS = 350;
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const start = performance.now();
+let onsetAt = null, noticedAt = null, respondedAt = null;
+const M = window.__WANT_METRICS = {
+  experiment: 'F-stillness',
+  wantOnsetTime: null, stillnessDwellBeforeNotice: null, wantResolvedTime: null,
+  falsePositiveClicks: 0,
+};
+
+const trees = [
+  { x: 0.22, y: 0.68, phase: 0,   isWant: false },
+  { x: 0.42, y: 0.60, phase: 1.4, isWant: false },
+  { x: 0.60, y: 0.72, phase: 2.7, isWant: true  }, // this one goes still on want-onset
+  { x: 0.78, y: 0.64, phase: 4.1, isWant: false },
+];
+let lastHitchAt = 0, hitchTreeIdx = null, hitchStartedAt = 0;
+
+canvas.addEventListener('pointerdown', (e) => {
+  const now = performance.now();
+  for (const [i, t] of trees.entries()) {
+    const tx = t.x*W, ty = t.y*H;
+    if (Math.hypot(e.clientX-tx, e.clientY-ty) < Math.min(W,H)*0.06) {
+      if (t.isWant) {
+        if (onsetAt != null && noticedAt == null) { noticedAt = now; M.stillnessDwellBeforeNotice = now - onsetAt; }
+        if (onsetAt != null && respondedAt == null) { respondedAt = now; M.wantResolvedTime = now - onsetAt; }
+      } else if (i === hitchTreeIdx && (now - hitchStartedAt) < HITCH_DUR_MS) {
+        M.falsePositiveClicks++; // clicked a tree mid-hitch, mistaking noise for signal
+      }
+    }
+  }
+});
+
+function drawTree(x, y, s, swayDeg) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(swayDeg * Math.PI/180);
+  ctx.strokeStyle = '#5a4530'; ctx.lineWidth = 5*s;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-55*s); ctx.stroke();
+  ctx.fillStyle = '#4f6b3a';
+  ctx.beginPath(); ctx.ellipse(0,-72*s, 34*s, 26*s, 0, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function frame(now) {
+  const t = now - start;
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#c9b98c'; ctx.globalAlpha=0.35; ctx.fillRect(0,H*0.55,W,H*0.45); ctx.globalAlpha=1;
+
+  if (onsetAt == null && t > ONSET_DELAY_MS) { onsetAt = now; M.wantOnsetTime = now; }
+
+  // periodic fake hitch on a random NON-want tree — tests confusability
+  if (now - lastHitchAt > HITCH_EVERY_MS) {
+    lastHitchAt = now;
+    const candidates = trees.map((tr,i)=>i).filter(i => !trees[i].isWant);
+    hitchTreeIdx = candidates[Math.floor(Math.random()*candidates.length)];
+    hitchStartedAt = now;
+  }
+
+  const s = Math.min(W,H)/600;
+  for (const [i, tr] of trees.entries()) {
+    const frozen = tr.isWant && onsetAt != null; // the real signal: this tree stops swaying entirely
+    const hitching = i === hitchTreeIdx && (now - hitchStartedAt) < HITCH_DUR_MS; // decoy: brief freeze, means nothing
+    const sway = (frozen || hitching) ? 0 : Math.sin(t/1400 + tr.phase) * 6;
+    drawTree(tr.x*W, tr.y*H, s, sway);
+  }
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    document.getElementById('dbg').textContent =
+      `onset: ${onsetAt?Math.round(onsetAt-start):'-'}ms\n` +
+      `dwellBeforeNotice: ${M.stillnessDwellBeforeNotice?Math.round(M.stillnessDwellBeforeNotice):'-'}ms\n` +
+      `resolved: ${M.wantResolvedTime?Math.round(M.wantResolvedTime):'-'}ms\n` +
+      `falsePositiveClicks: ${M.falsePositiveClicks}\n` +
+      `(the still tree is the signal; a DIFFERENT tree randomly hitches\n` +
+      ` every ~4s for ${HITCH_DUR_MS}ms — clicking it during that window\n` +
+      ` = a false positive, testing stillness-vs-hitch confusion)`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

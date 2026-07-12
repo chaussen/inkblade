@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment G — ghost-ink echo (the world remembers your
+     own hand). Isolated prototype, not part of the shipped game.
+
+     Draw one stroke anywhere near the "source" marker (a real captured
+     pointer path — this is genuinely your own handwriting, not a canned
+     shape). Every few seconds after that, a translucent echo of YOUR
+     stroke drifts from the source to the want location and fades.
+     ?mode=generic swaps in a fixed template stroke instead, as the
+     brief's own control condition — same drift/fade choreography, so a
+     real test can compare response rates between the two and find out
+     whether personalization is load-bearing or just a nice-to-have. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal G — ghost-ink echo</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:crosshair}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;display:none}
+  #hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+    font:14px sans-serif;color:#1b1712;background:rgba(236,227,207,0.85);
+    padding:8px 14px;border-radius:8px;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<div id="hint">Draw one stroke near the left marker — that's your "glyph." It'll echo toward the right marker.</div>
+<script>
+'use strict';
+const PAPER='#ece3cf', INK='#1b1712', GOLD='#c9992b';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const MODE = new URLSearchParams(location.search).get('mode') === 'generic' ? 'generic' : 'personal';
+const ECHO_EVERY_MS = 4500;
+const ECHO_DUR_MS = 2200;
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const sourceX=0.22, sourceY=0.5, wantX=0.78, wantY=0.55;
+
+// generic-mode control stroke: a fixed template path (normalized -1..1 box)
+const GENERIC_PATH = [[-0.3,-0.6],[-0.1,0.5],[0.1,-0.6],[0.3,0.5]];
+
+let capturedPath = null; // personal mode: real captured pointer path
+let capturedAt = null;
+let drawing = false, currentStroke = [];
+const M = window.__WANT_METRICS = {
+  experiment: 'G-echo', mode: MODE,
+  echoSourceAge: null, echoNoticedRate_events: 0, echoNoticedRate_total: 0,
+  wantResolvedTime: null,
+};
+let echoesShown = 0, echoesRespondedTo = 0;
+let lastEchoAt = -Infinity;
+let activeEcho = null; // {startedAt}
+const start = performance.now();
+
+function nearSource(x,y){ return Math.hypot(x-sourceX*W, y-sourceY*H) < Math.min(W,H)*0.14; }
+function nearWant(x,y){ return Math.hypot(x-wantX*W, y-wantY*H) < Math.min(W,H)*0.1; }
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (MODE === 'personal' && capturedPath == null && nearSource(e.clientX, e.clientY)) {
+    drawing = true; currentStroke = [[e.clientX, e.clientY]];
+    return;
+  }
+  if (activeEcho && nearWant(e.clientX, e.clientY)) {
+    echoesRespondedTo++;
+    M.wantResolvedTime = performance.now() - activeEcho.startedAt;
+    activeEcho = null;
+  }
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (drawing) currentStroke.push([e.clientX, e.clientY]);
+});
+canvas.addEventListener('pointerup', () => {
+  if (drawing && currentStroke.length > 2) {
+    // normalize captured stroke to a -1..1 box around its own bbox, so it
+    // can be redrawn at any size/location later (source AND want spot)
+    const xs = currentStroke.map(p=>p[0]), ys = currentStroke.map(p=>p[1]);
+    const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+    const cx=(minX+maxX)/2, cy=(minY+maxY)/2, s=Math.max(20,(maxX-minX),(maxY-minY))/2;
+    capturedPath = currentStroke.map(p => [(p[0]-cx)/s, (p[1]-cy)/s]);
+    capturedAt = performance.now();
+  }
+  drawing = false;
+});
+
+function strokePathAt(path, cx, cy, scale, alpha, color) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  path.forEach((p, i) => {
+    const x = cx + p[0]*scale, y = cy + p[1]*scale;
+    if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+function frame(now) {
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#c9b98c'; ctx.globalAlpha=0.35; ctx.fillRect(0,H*0.42,W,H*0.58); ctx.globalAlpha=1;
+
+  const path = MODE === 'generic' ? GENERIC_PATH : capturedPath;
+  const ready = MODE === 'generic' || capturedPath != null;
+
+  // markers
+  ctx.save(); ctx.strokeStyle='rgba(70,62,48,0.35)'; ctx.setLineDash([4,4]); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(sourceX*W, sourceY*H, Math.min(W,H)*0.05, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(wantX*W, wantY*H, Math.min(W,H)*0.05, 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+  if (MODE === 'personal' && capturedPath == null) {
+    strokePathAt([[0,-0.7],[0,0.7]], sourceX*W, sourceY*H, Math.min(W,H)*0.04, 0.3, INK); // faint "draw here" cue
+  }
+
+  // live stroke being drawn
+  if (drawing && currentStroke.length > 1) {
+    ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath();
+    currentStroke.forEach((p,i)=> i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+    ctx.stroke(); ctx.restore();
+  }
+
+  // a small persistent rendering of the captured/generic glyph at its source
+  if (ready) strokePathAt(path, sourceX*W, sourceY*H, Math.min(W,H)*0.05, 0.5, INK);
+
+  // echo scheduling — only once we have a path to echo
+  if (ready && now - lastEchoAt > ECHO_EVERY_MS && activeEcho == null) {
+    lastEchoAt = now;
+    activeEcho = { startedAt: now };
+    echoesShown++;
+    M.echoSourceAge = MODE === 'generic' ? null : (now - capturedAt);
+  }
+  if (activeEcho) {
+    const et = (now - activeEcho.startedAt) / ECHO_DUR_MS;
+    if (et >= 1) {
+      activeEcho = null; // unresolved echo simply fades — never penalized, per §0
+    } else {
+      const cx = sourceX*W + (wantX*W - sourceX*W) * et;
+      const cy = sourceY*H + (wantY*H - sourceY*H) * et;
+      const alpha = 0.55 * Math.sin(Math.PI * et); // fades in, fades out — "surfacing then dissolving"
+      strokePathAt(path, cx, cy, Math.min(W,H)*0.05, alpha, GOLD);
+    }
+  }
+
+  M.echoNoticedRate_total = echoesShown;
+  M.echoNoticedRate_events = echoesRespondedTo;
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    document.getElementById('dbg').textContent =
+      `mode: ${MODE}\nhasPath: ${ready}\n` +
+      `echoesShown: ${echoesShown}\nechoesRespondedTo: ${echoesRespondedTo}\n` +
+      `echoSourceAge: ${M.echoSourceAge?Math.round(M.echoSourceAge):'-'}ms\n` +
+      `lastResolvedIn: ${M.wantResolvedTime?Math.round(M.wantResolvedTime):'-'}ms\n` +
+      `(personal mode: draw near the left marker first;\n` +
+      ` click the right marker while an echo is arriving = response)`;
+  }
+  if (ready) document.getElementById('hint').style.display = 'none';
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

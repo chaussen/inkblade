@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment H — whisper (audio-only, no visual layer at
+     all). Isolated prototype, not part of the shipped game.
+
+     Nothing on screen marks the want location. A soft, breath-like
+     synthesized texture (filtered noise — matching the shipped game's own
+     "no audio files, everything synthesized" convention, src/04-audio.js)
+     plays from its direction, stereo-panned, and gets very slightly louder
+     as the mouse (standing in for the player-avatar/camera position, per
+     the brief) approaches it. Click anywhere to respond; there is no
+     visual way to check your answer except by how the sound changes.
+
+     ?debugReveal=1 draws a faint circle at the real want location — a
+     DEV VERIFICATION AID ONLY, not part of the experiment itself, so I
+     (Claude, unable to actually listen) can visually confirm the panning/
+     volume math tracks the right point. Never set by default. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal H — whisper</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:crosshair}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;display:none}
+  #start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(233,223,201,0.95);font:16px sans-serif;color:#1b1712;cursor:pointer}
+  #start button{font:15px sans-serif;padding:.8rem 1.4rem;border-radius:8px;border:none;
+    background:#b2392a;color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<div id="start"><button id="startBtn">▶ Enable audio &amp; begin (headphones recommended)</button></div>
+<script>
+'use strict';
+const PAPER='#ece3cf';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const REVEAL = new URLSearchParams(location.search).get('debugReveal') === '1';
+const RESPOND_RADIUS = 0.12; // × min(W,H) — "found it by ear" tolerance
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const wantX = 0.66, wantY = 0.5; // never drawn unless ?debugReveal=1
+let mouseX = 0.5*innerWidth, mouseY = 0.5*innerHeight;
+addEventListener('pointermove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+const M = window.__WANT_METRICS = {
+  experiment: 'H-whisper', audioEnabled: false,
+  wantOnsetTime: null, audioOnlyResponseRate_responded: false, wantResolvedTime: null,
+};
+const start = performance.now();
+let onsetAt = null;
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (onsetAt == null) return;
+  const now = performance.now();
+  const d = Math.hypot(e.clientX - wantX*W, e.clientY - wantY*H) / Math.min(W,H);
+  if (d < RESPOND_RADIUS && !M.audioOnlyResponseRate_responded) {
+    M.audioOnlyResponseRate_responded = true;
+    M.wantResolvedTime = now - onsetAt;
+  }
+});
+
+// --- audio: filtered noise "breath," panned + volume-by-proximity ---
+let AC = null, noiseSrc = null, panner = null, gain = null, lowpass = null;
+function makeNoiseBuffer(ac, seconds) {
+  const buf = ac.createBuffer(1, ac.sampleRate * seconds, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * 0.6;
+  return buf;
+}
+function startAudio() {
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  noiseSrc = AC.createBufferSource();
+  noiseSrc.buffer = makeNoiseBuffer(AC, 4);
+  noiseSrc.loop = true;
+  lowpass = AC.createBiquadFilter();
+  lowpass.type = 'lowpass'; lowpass.frequency.value = 340; lowpass.Q.value = 0.4; // "wind through paper," not hiss
+  gain = AC.createGain(); gain.gain.value = 0.0001;
+  panner = AC.createStereoPanner ? AC.createStereoPanner() : null;
+  noiseSrc.connect(lowpass);
+  if (panner) { lowpass.connect(panner); panner.connect(gain); } else { lowpass.connect(gain); }
+  gain.connect(AC.destination);
+  noiseSrc.start();
+  onsetAt = performance.now();
+  M.audioOnlyResponseRate_responded = false;
+  M.wantOnsetTime = onsetAt;
+  document.getElementById('start').style.display = 'none';
+  M.audioEnabled = true;
+}
+document.getElementById('startBtn').addEventListener('click', startAudio);
+
+function frame(now) {
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#c9b98c'; ctx.globalAlpha=0.35; ctx.fillRect(0,H*0.4,W,H*0.6); ctx.globalAlpha=1;
+
+  if (REVEAL) {
+    ctx.save(); ctx.strokeStyle='rgba(178,57,42,0.5)'; ctx.setLineDash([5,5]); ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(wantX*W, wantY*H, Math.min(W,H)*RESPOND_RADIUS, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+
+  if (AC && gain) {
+    const dNorm = Math.hypot(mouseX - wantX*W, mouseY - wantY*H) / Math.min(W,H);
+    // volume: "barely above the noise floor" far away, still soft even at
+    // the source — this is a whisper, never a beacon
+    const targetGain = Math.max(0.0001, 0.09 * Math.pow(Math.max(0, 1 - dNorm/0.9), 1.6));
+    gain.gain.setTargetAtTime(targetGain, AC.currentTime, 0.15);
+    if (panner) {
+      const panX = Math.max(-1, Math.min(1, (wantX*W - W/2) / (W/2)));
+      panner.pan.setTargetAtTime(panX, AC.currentTime, 0.2);
+    }
+  }
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    const dNorm = onsetAt ? (Math.hypot(mouseX - wantX*W, mouseY - wantY*H) / Math.min(W,H)).toFixed(3) : '-';
+    document.getElementById('dbg').textContent =
+      `audioEnabled: ${M.audioEnabled}\nmouseDistToWant (norm): ${dNorm}\n` +
+      `currentGain: ${gain ? gain.gain.value.toFixed(4) : '-'}\n` +
+      `responded: ${M.audioOnlyResponseRate_responded}\n` +
+      `resolvedIn: ${M.wantResolvedTime?Math.round(M.wantResolvedTime):'-'}ms\n` +
+      `(click where you think the sound is loudest/most centered)`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment E — gathering (the want accumulates a physical
+     toll). Isolated prototype, not part of the shipped game.
+
+     Scene: ambient leaf/dust particles already drift across the clearing;
+     a weak bias pulls them toward the unresolved want location, where they
+     settle into a slowly growing pile. Unlike A-D, this signal is built to
+     be noticed ACROSS a session gap, not within one sitting — so unlike
+     the others, its clock runs on wall-clock Date.now() persisted to
+     localStorage, not performance.now(), and survives a real tab close.
+     Click the pile to simulate the player addressing it (clears it).
+     ?resetPile=1 wipes stored state. ?fastforward=MS simulates having been
+     away that long, for bench-testing without literally waiting. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal E — gathering</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:pointer}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<script>
+'use strict';
+const PAPER='#ece3cf', INK='#1b1712';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const KEY = 'want_e_gathering_v1';
+const RESET = new URLSearchParams(location.search).get('resetPile') === '1';
+const FASTFORWARD = +(new URLSearchParams(location.search).get('fastforward')) || 0;
+const PILE_MAX_MS = 6 * 60 * 1000; // real minutes to reach a full pile from empty
+
+if (RESET) localStorage.removeItem(KEY);
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const wantX = 0.68, wantY = 0.70; // fixed want location, near-ground
+
+// --- persisted pile state across real sessions ---
+function loadState() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return { pileMs: 0, lastSeen: Date.now(), everCleared: false };
+    return JSON.parse(raw);
+  } catch (e) { return { pileMs: 0, lastSeen: Date.now(), everCleared: false }; }
+}
+function saveState(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+
+const state = loadState();
+const now0 = Date.now();
+const gapMs = Math.max(0, now0 - state.lastSeen) + FASTFORWARD;
+const pileVisibleAtSessionStart = state.pileMs > PILE_MAX_MS * 0.15; // "a corner has quietly become overgrown"
+state.pileMs = Math.min(PILE_MAX_MS, state.pileMs + gapMs); // debris kept drifting in while the tab/world was away
+state.lastSeen = now0;
+saveState(state);
+
+const M = window.__WANT_METRICS = {
+  experiment: 'E-gathering',
+  pileVisibleAtSessionStart,
+  gapSinceLastVisitMs: gapMs,
+  pileFractionAtLoad: +(state.pileMs / PILE_MAX_MS).toFixed(3),
+  responseAfterNotice: null,
+};
+
+let noticedAt = null, clearedAt = null;
+const start = performance.now();
+
+canvas.addEventListener('pointerdown', (e) => {
+  const now = performance.now();
+  const px = wantX*W, py = wantY*H;
+  const hit = Math.hypot(e.clientX-px, e.clientY-py) < Math.min(W,H)*0.09;
+  if (hit) {
+    if (noticedAt == null) noticedAt = now;
+    if (clearedAt == null) {
+      clearedAt = now;
+      M.responseAfterNotice = 0; // immediate — clicking the pile IS noticing+responding at once here
+      state.pileMs = 0;
+      saveState(state);
+    }
+  }
+});
+
+// ambient particles: most just drift freely (world flavor); particles that
+// wander near the want zone get a weak bias pulling them the rest of the
+// way in and settling — no new particle TYPE, just an existing-particle
+// behavior tweak, per the brief's build-scope constraint
+const particles = Array.from({ length: 70 }, () => ({
+  x: Math.random(), y: Math.random()*0.5 + 0.45,
+  vx: (Math.random()-0.5)*0.00006, vy: (Math.random()-0.4)*0.00003,
+  settled: false, r: 2+Math.random()*3,
+}));
+
+function frame(now) {
+  const t = now - start;
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#c9b98c'; ctx.globalAlpha=0.35; ctx.fillRect(0,H*0.62,W,H*0.38); ctx.globalAlpha=1;
+
+  const pileFrac = clearedAt != null
+    ? Math.max(0, state.pileMs/PILE_MAX_MS - (now-clearedAt)/800)
+    : Math.min(1, state.pileMs/PILE_MAX_MS + t/PILE_MAX_MS); // keeps accreting live too, not just across sessions
+
+  // the pile itself: a cluster of small settled marks, density = pileFrac
+  const pileN = Math.round(pileFrac * 40);
+  ctx.save();
+  for (let i = 0; i < pileN; i++) {
+    // deterministic-ish scatter so it doesn't jitter every frame
+    const a = (i * 2.399963) % (Math.PI*2);
+    const r = (i % 9) * 2.2 * (0.5+pileFrac*0.5);
+    const px = wantX*W + Math.cos(a)*r, py = wantY*H + Math.sin(a)*r*0.5;
+    ctx.fillStyle = 'rgba(120,100,70,0.5)';
+    ctx.beginPath(); ctx.ellipse(px, py, 2.4, 1.6, a, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+
+  // free-drifting particles, weak bias once near the want zone
+  for (const p of particles) {
+    const px = p.x*W, py = p.y*H;
+    const d = Math.hypot(px - wantX*W, py - wantY*H);
+    if (d < Math.min(W,H)*0.16 && pileFrac < 0.98) {
+      p.vx += (wantX*W - px) * 0.0000006;
+      p.vy += (wantY*H - py) * 0.0000006;
+    }
+    p.x += p.vx * 16; p.y += p.vy * 16;
+    if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0;
+    if (p.y > 1) p.y = 0.45 + Math.random()*0.1;
+    ctx.fillStyle = 'rgba(140,120,85,0.35)';
+    ctx.beginPath(); ctx.arc(px, py, p.r, 0, Math.PI*2); ctx.fill();
+  }
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    document.getElementById('dbg').textContent =
+      `pileVisibleAtSessionStart: ${pileVisibleAtSessionStart}\n` +
+      `gapSinceLastVisit: ${Math.round(gapMs/1000)}s\n` +
+      `pileFraction: ${pileFrac.toFixed(3)}\n` +
+      `responseAfterNotice: ${M.responseAfterNotice}\n` +
+      `(click the debris cluster to clear it)\n` +
+      `?resetPile=1 wipes state, ?fastforward=MS simulates a gap`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
