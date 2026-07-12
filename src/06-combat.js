@@ -58,8 +58,20 @@ function advance() {
 
 function resolveSlash(tr) {
   state.trails.push({ pts: tr, life: 1, gold: false });
-  if (state.mode === 'title') { advance(); return; }
-  if (state.mode !== 'play' || !state.glyph || state.glyph.done) return;
+  if (state.mode === 'title') {
+    // Ninja Fruit mandate: state.glyph is already the opening character
+    // (pre-created at boot, 13-main.js) — fall through instead of
+    // discarding this trail, so the title-dismissing swipe is evaluated
+    // as a real first cut, not thrown away. Falls back to the old
+    // behavior only if the pack somehow isn't ready yet (defensive, not
+    // expected in practice — boot() always pre-creates before the first
+    // frame renders).
+    state.mode = 'play';
+    attentionOnGlyphAppear();
+    if (!state.glyph) { advance(); return; }
+  } else if (state.mode !== 'play' || !state.glyph || state.glyph.done) {
+    return;
+  }
 
   const g = state.glyph;
   const dx = tr[tr.length-1][0] - tr[0][0], dy = tr[tr.length-1][1] - tr[0][1];

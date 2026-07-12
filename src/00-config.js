@@ -9,6 +9,13 @@
 // non-gold resolution; idle after 6s without a cut.
 const HINT_FLAIL = 2;
 const HINT_IDLE_MS = 6000;
+// First-glyph hint delay (John's mandate, Ninja Fruit onboarding): the
+// opening character is now pre-created at boot and the title-dismissing
+// swipe is a real first attempt (13-main.js/06-combat.js) — if it whiffs,
+// the demonstration should feel like an immediate answer, not a second
+// 3.5s wait on top of however long the player already spent reading the
+// title. Was hardcoded 3500 inline.
+const FIRST_HINT_DELAY_MS = 1000;
 
 // Attention choreography [LEAN — S1-D019/D027]. The figure-ground
 // contract: writing → glyph owns (world recedes behind the veil);
@@ -120,13 +127,15 @@ const TRANSIT_COALESCE_MS = 300;
 const TRANSIT_FLIGHT_MS   = 620;
 const TRANSIT_STAGGER_MS  = 90;
 const TRANSIT_ARC_LIFT    = 0.16; // ×H — how high the droplet's arc rises
-// Pinyin/gloss banner (John's mandate, mobile playtest): the anchored-at-
-// arrival banner (S1-D069/D071) shrank to 0.72x and held only ~2.5s total —
-// too small and too brief to actually read on a real device. Legibility
-// wins over matching the un-anchored legacy size exactly; anchor POSITION
-// stays put (that placement was itself an approved verdict, S1-D071) —
-// only size and duration change here.
-const BANNER_ANCHORED_SCALE = 0.95; // was 0.72, hardcoded inline
+// Pinyin/gloss banner (John's mandate, mobile playtest — two rounds). Round
+// 1: the anchored-at-arrival banner (S1-D069/D071) shrank to 0.72x and held
+// only ~2.5s total — too small/brief to read on a real device; sized back
+// up and extended here. Round 2: reading-hands-on found even a bigger
+// version near the small planted object still wasn't the right READ — this
+// is a writing AND reading game, so the reveal now always centers on the
+// character itself (12-render.js), retiring S1-D069's arrival-anchor
+// POSITION (the size/duration constants below still apply at full scale,
+// no anchored-shrink case remains).
 const BANNER_HOLD_MS = 3400;        // was 2100
 const BANNER_FADE_MS = 500;         // was 400
 // The world breathes [LEAN — S1-D072]: a motion-parallax camera. Depth's

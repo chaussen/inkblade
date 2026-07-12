@@ -135,7 +135,14 @@ const snap = p => p.evaluate(() => ({
   await p.close();
 
   // T7: pixel evidence — after arrival + grow-in, real ink stands at the
-  // anchor (the droplet became the thing).
+  // anchor (the droplet became the thing). Threshold matches smoke21 T5's
+  // tree-color convention (r<150,g<160,b<130), not near-black: the r/g/b<110
+  // bound this used to use was calibrated (accidentally) against the OLD
+  // arrival-anchored banner text sitting right next to the object — bold
+  // near-black ink, not the tree's own muted brownish-green. Now that the
+  // banner always centers on the character instead (John's mandate, mobile
+  // playtest — reads better as a writing+reading game), this box measures
+  // only the tree's own ink, which was always the stated intent.
   p = await boot(browser, TARGET + '?reset=1&seed=5&char=木', errors);
   await lockGlyph(p);
   await sleep(2600);
@@ -147,10 +154,10 @@ const snap = p => p.evaluate(() => ({
     const box = 70 * dpr;
     const d = g.getImageData(X - box, Y - box * 1.6, box * 2, box * 2).data;
     let n = 0;
-    for (let i = 0; i < d.length; i += 4) if (d[i] < 110 && d[i + 1] < 110 && d[i + 2] < 110) n++;
+    for (let i = 0; i < d.length; i += 4) if (d[i] < 150 && d[i + 1] < 160 && d[i + 2] < 130) n++;
     return n;
   });
-  console.log('T7 ink at the anchor:', inkPx, 'dark px');
+  console.log('T7 ink at the anchor:', inkPx, 'tree-toned px');
   if (!(inkPx > 20)) throw new Error('T7 FAIL: the landed tree must paint ink at its anchor, got ' + inkPx + 'px');
   await p.close();
 

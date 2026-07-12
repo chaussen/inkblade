@@ -95,6 +95,22 @@ function drawGlyph(dt, now) {
     for (const st of g.strokes) { strokePath(st); ctx.stroke(); }
   }
   ctx.restore();
+  // Pinyin caption, always visible while writing (John's mandate: this is a
+  // writing AND reading game — pronunciation costs nothing pedagogically,
+  // it's not stroke order and leaks no sequence, S1-D003/D008 stand
+  // untouched). Sits ABOVE the glyph so it never collides with the lock
+  // reveal banner below it (BANNER_HOLD_MS now outlives ATTN_HOLD_MS, so a
+  // new glyph's caption and the previous glyph's reveal banner can be on
+  // screen at once — different positions, never the same pixels). Meaning
+  // (English gloss) still reveals only at lock — that's the payoff, not a
+  // spoiler.
+  ctx.save();
+  ctx.globalAlpha = g.appearT * 0.6;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = INK;
+  ctx.font = '600 ' + Math.round(Math.min(W,H)*0.032) + 'px ' + CHAR_FONT;
+  ctx.fillText(g.def.pinyin, W / 2, GY - Math.min(H * 0.045, 32));
+  ctx.restore();
   if (g.breathe > 0) g.breathe -= dt;
   if (g.comet > 0) { drawComet(g, dt); g.comet -= dt; }
 }
@@ -230,36 +246,25 @@ function drawHUD() {
     const a = bt < 300 ? bt/300 : (bt > BANNER_HOLD_MS ? Math.max(0, 1 - (bt-BANNER_HOLD_MS)/BANNER_FADE_MS) : 1);
     if (a <= 0) { state.banner = null; }
     else {
-      // the name appears where the thing appears (S1-D069): anchored beside
-      // the planted element (normalized anchor, clamped clear of the ledger);
-      // banners without an anchor keep the legacy center position.
+      // Reveal banner: always centered with the character (John's mandate —
+      // this is a writing AND reading game; pinyin/meaning need to be read,
+      // not shrunk and pushed out near the small planted object). Retires
+      // S1-D069's arrival-anchor POSITION — the transit droplet still
+      // visibly delivers the ink to the object, this text just no longer
+      // tries to live next to it too. B.ax/ay/elRef (07-fx.js) stay as data
+      // — smoke20 T4 asserts the banner still anchors correctly to the
+      // arrived element — just unused for text placement here now.
       const B = state.banner;
-      let bx = W / 2, by = GY + S + Math.min(H * 0.055, 40), sc = 1;
-      if (B.ax != null) {
-        sc = BANNER_ANCHORED_SCALE;
-        // R3D (S1-D075): re-project the live element every frame so the
-        // banner tracks a moving camera correctly; the 2D formula (ax/ay/kf,
-        // a fixed snapshot + a linear camera-shift) is UNCHANGED when R3D
-        // isn't active — this branch only ever takes the new path under ?r3d=1.
-        const pos = (R3D_ON && r3dReady() && B.elRef) ? elScreenPos(B.elRef) : null;
-        const px = pos ? pos.x * W : (B.ax * W + CAM.px * (B.kf || 0));
-        const py = pos ? pos.y * H + Math.min(H * 0.05, 32) : (B.ay * H + Math.min(H * 0.05, 32));
-        // clamp margins scale with sc — a bigger banner needs more clearance
-        // from the edges to avoid clipping (tied to the size change above,
-        // not re-tuned independently)
-        const mx = 70 * (sc / 0.72), myTop = 44 * (sc / 0.72);
-        bx = Math.max(mx, Math.min(W - mx, px));
-        by = Math.max(myTop, Math.min(H - Math.min(W, H) * 0.19, py));
-      }
+      const bx = W / 2, by = GY + S + Math.min(H * 0.055, 40);
       ctx.save();
       ctx.globalAlpha = a;
       ctx.textAlign = 'center';
       ctx.fillStyle = INK;
-      ctx.font = '600 ' + Math.round(Math.min(W,H)*0.05*sc) + 'px ' + CHAR_FONT;
+      ctx.font = '600 ' + Math.round(Math.min(W,H)*0.05) + 'px ' + CHAR_FONT;
       ctx.fillText(B.pinyin, bx, by);
       ctx.globalAlpha = a * 0.7;
-      ctx.font = Math.round(Math.min(W,H)*0.026*sc) + 'px Georgia, serif';
-      ctx.fillText(B.gloss, bx, by + Math.min(W,H)*0.045*sc);
+      ctx.font = Math.round(Math.min(W,H)*0.026) + 'px Georgia, serif';
+      ctx.fillText(B.gloss, bx, by + Math.min(W,H)*0.045);
       ctx.restore();
     }
   }
@@ -306,7 +311,7 @@ function drawFirstGlyphHint(dt, now) {
   const g = state.glyph;
   if (!g || !INTRO.length || g.def.ch !== INTRO[0] || g.def.strokes.length !== 1) return;
   if (METRICS.cuts > 0 || state.mode !== 'play') return;
-  if (now - g.lastAct < 3500) return;
+  if (now - g.lastAct < FIRST_HINT_DELAY_MS) return;
   const cyc = 1600;
   const p = (now % cyc) / cyc;
   if (p > 0.75) return;

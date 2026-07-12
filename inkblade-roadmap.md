@@ -22,7 +22,20 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D085, 2026-07-12)
+## Current state (as of S1-D086, 2026-07-12)
+- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b7-20260712`). **M2g-b7
+  (S1-D086): the reveal banner now always centers on the character**
+  (John's follow-up: position mattered more than size — retires S1-D069's
+  arrival-anchor position, `state.banner.ax/ay` stay as tested data,
+  `smoke20` still passes), **pinyin shows throughout writing, not just
+  after lock** (English gloss still lock-only — that's the payoff), and
+  **a Ninja Fruit onboarding fix**: the opening character is pre-created
+  at boot so the "slash anywhere to begin" swipe is now a real first cut
+  attempt (whiff-or-hit), not a discarded trigger; first-glyph hint delay
+  dropped 3500ms→1000ms to match. Caught and fixed a real regression
+  during verification — `smoke20` T7 had been accidentally measuring the
+  OLD banner's text instead of the tree's own ink; recalibrated to the
+  tree's actual color, not just re-tuned blind. Full battery green.
 - Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b5-20260712`). **M2g-b5
   (S1-D085): the mobile HUD-clip bug root-caused and fixed properly**
   (`window.innerHeight`/`100vh` → `visualViewport` + `100dvh` +

@@ -64,6 +64,14 @@ async function boot() {
   loadEmbeddedPack();
   if (PACK_URL) await loadPackParam(PACK_URL);
   initWorld();
+  // Ninja Fruit mandate (John): "slash anywhere to begin" used to be a
+  // throwaway trigger — the swipe that dismissed the title was discarded,
+  // never evaluated as a cut. Pre-creating the opening glyph here means
+  // resolveSlash (06-combat.js) has real strokes to test that exact trail
+  // against the instant the title is dismissed — the trigger swipe IS the
+  // first attempt, whiff-or-hit, not a freebie. state.mode stays 'title'
+  // (still renders the title screen) until the player actually acts.
+  newGlyph(pickNext());
   requestAnimationFrame(frame);
   if (window.speechSynthesis) speechSynthesis.getVoices();
 }
