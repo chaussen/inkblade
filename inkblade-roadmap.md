@@ -22,9 +22,23 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D077, 2026-07-11)
-- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b2-20260711`), helpers
-  TARGET default. **M2g-b1 "the WebGL pilot" SHIPPED (S1-D075/D076),
+## Current state (as of S1-D078, 2026-07-12)
+- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b3-20260712`), helpers
+  TARGET default. **M2g-b3 (S1-D078): mobile HUD-clip fix + embedded
+  webfont, same checkpoint.** John's mobile-Chrome playtest report ("mobile
+  device chrome also does not show the character shelf at the bottom")
+  traced to the roster ledger sitting only 6px from the literal viewport
+  bottom (`H`) — desktop's fixed chrome never touched that margin, mobile
+  browsers reserve variable bottom-edge space `H` doesn't reliably exclude.
+  New `HUD_BOTTOM_MARGIN` (34px) gives real clearance. Related finding:
+  `CHAR_FONT` only named locally-installed Kai fonts, absent on mobile, so
+  title/streak/HUD/seal glyph text silently fell back to generic serif
+  there — fixed by embedding a subsetted Ma Shan Zheng webfont (607
+  codepoints, SIL OFL, `fonts/`) that `boot()` now awaits via `FontFace`
+  before the first frame, so every browser renders identical glyphs. Full
+  battery green (smoke5–22 + frozen 1–4, zero console errors, perf 16.84ms
+  @300, no regression).
+- **M2g-b1 "the WebGL pilot" SHIPPED (S1-D075/D076),
   checkpoint pending — an EXPERIMENT verdict (continue polishing the real
   3D camera, or park it and move to the sprite pack block).** Gated behind
   `?r3d=1`, default off — `r3d` unset is confirmed byte-identical to m2f
