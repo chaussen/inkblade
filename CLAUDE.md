@@ -52,7 +52,7 @@ Therefore:
 - The embedded default pack is core (23 chars). The 500-char basic tier only
   loads via `?pack=/packs/basic.json` (or `?pack=/packs/core.json,/packs/basic.json`)
   **served over HTTP** — from the repo root: `python3 -m http.server 8000`,
-  then `http://localhost:8000/inkblade-m2d.html?...` (swap in whatever
+  then `http://localhost:8000/inkblade-m2g.html?...` (swap in whatever
   `BUILD_ID` currently names).
 - `?reset=1` = fresh world (clears the persistent scroll). `?char=X` pins the
   stage to one character. `?seed=N` makes world randomness deterministic.
