@@ -42,7 +42,25 @@ function frame(now) {
   }
   requestAnimationFrame(frame);
 }
+// Embedded webfont load (S1-D078): CHAR_FONT's first name only renders
+// consistently if this resolves before the first frame — boot() awaits it.
+// Any failure (old browser, malformed data) just leaves the CSS fallback
+// stack in CHAR_FONT to do what it always did; never blocks boot.
+function loadFont() {
+  return new Promise(resolve => {
+    if (!window.FontFace) return resolve();
+    try {
+      const b64 = document.getElementById('font-inkblade').textContent.trim();
+      const face = new FontFace('Inkblade Kai', 'url(data:font/woff2;base64,' + b64 + ')');
+      face.load().then(
+        f => { document.fonts.add(f); resolve(); },
+        e => { console.warn('[S1] embedded font failed to load, using fallback stack:', e.message); resolve(); }
+      );
+    } catch (e) { console.warn('[S1] embedded font unavailable:', e.message); resolve(); }
+  });
+}
 async function boot() {
+  await loadFont();
   loadEmbeddedPack();
   if (PACK_URL) await loadPackParam(PACK_URL);
   initWorld();

@@ -177,7 +177,7 @@ function drawHUD() {
   const lo = Math.max(0, Math.min(curIdx - (win >> 1), n - win));
   window.__S1_HUD = { cellPx: cell, win, lockedCount, total: n, lo };
   const total = win * (cell + 8) - 8;
-  const y = H - cell - 14;
+  const y = H - cell - HUD_BOTTOM_MARGIN;
   ctx.save();
   // strip + counter centered as one group so the counter never overflows
   const counterFont = '600 ' + Math.max(12, cell * 0.34) + 'px Georgia, serif';
@@ -262,7 +262,7 @@ function drawHUD() {
   ctx.save();
   ctx.globalAlpha = 0.35; ctx.fillStyle = INK;
   ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-  ctx.fillText(BUILD_ID, W - 6, H - 4);
+  ctx.fillText(BUILD_ID, W - 6, H - 14);
   ctx.restore();
 }
 function roundRect(x, y, w, h, r) {

@@ -53,9 +53,20 @@ const GHOST    = 'rgba(70,62,48,0.16)';
 const GOLD     = '#c9992b';
 const CINNABAR = '#b2392a';
 const PAPER    = '#ece3cf';
-const CHAR_FONT = '"Kaiti SC","KaiTi","STKaiti","AR PL UKai CN",serif';
+// "Inkblade Kai" is an embedded webfont (S1-D078, loaded in 13-main.js boot)
+// so title/HUD/world glyph text renders identically on every browser — the
+// named system fonts after it are a defense-in-depth fallback only (they're
+// absent on most mobile browsers, which used to silently drop to generic
+// serif and look inconsistent with desktop).
+const CHAR_FONT = '"Inkblade Kai","Kaiti SC","KaiTi","STKaiti","AR PL UKai CN",serif';
 // Component wash tints — the character's own anatomy as segmentation (S1-D011)
 const WASHES = ['rgba(96,116,152,0.10)', 'rgba(118,134,84,0.10)', 'rgba(164,116,84,0.10)'];
+// HUD bottom clearance [S1-D078]: the roster ledger used to sit 6px from the
+// literal bottom of `H` (window.innerHeight) — fine on desktop's fixed chrome,
+// but mobile browsers reserve variable space at the bottom edge (toolbar,
+// Android gesture-nav strip) that `H` doesn't reliably exclude, so the ledger
+// rendered but was clipped/covered there. This is real margin, not padding.
+const HUD_BOTTOM_MARGIN = 34;
 
 // World persistence [S1-D026]. Key name is historical; the payload
 // carries the version (missing version field = implicit v1).

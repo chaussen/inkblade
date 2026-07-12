@@ -1,0 +1,31 @@
+InkbladeKai-subset.woff2 — S1-D078
+
+Source: Ma Shan Zheng (Regular), Google Fonts
+  https://raw.githubusercontent.com/google/fonts/main/ofl/mashanzheng/MaShanZheng-Regular.ttf
+License: SIL Open Font License 1.1 — vendored verbatim in OFL.txt (same directory).
+  Free to embed/redistribute/subset; not sold by itself.
+
+Why this font: engine text (title 墨刃, the 连 streak counter, and every
+CHAR_FONT canvas draw — HUD tiles, seal-render world elements) previously
+named only locally-installed Kai-style fonts ("Kaiti SC","KaiTi","STKaiti",
+"AR PL UKai CN"). None of those ship on Android/mobile Chrome, so mobile
+silently fell back to the browser's generic serif — visually inconsistent
+with desktop. Ma Shan Zheng is a widely-used brush/Kai-style substitute for
+the deprecated 华文楷体/KaiTi family and is legible at the sizes this game
+draws it. Embedding it (rather than a Google Fonts CDN link) keeps the game
+a dependency-free single file, consistent with the pack-embedding precedent
+(S1-D025) and works offline.
+
+Subsetting: full font is 5.8MB; this file only carries the glyphs the game
+can ever draw with CHAR_FONT — every char in packs/core.json + packs/basic.json,
+the small set of CJK literals in src/*.js (title, streak label, etc.), plus
+printable ASCII (the streak counter concatenates a digit: '连 3'). Regenerate
+if the char roster changes:
+
+  pip install fonttools brotli
+  python3 -m fontTools.subset MaShanZheng-Regular.ttf \
+    --output-file=InkbladeKai-subset.woff2 \
+    --text-file=<charset+ascii, one line, no dedup needed> \
+    --flavor=woff2 --layout-features='*' --no-hinting --desubroutinize
+
+tools/build.mjs base64-embeds this file into every build via {{FONT}}.

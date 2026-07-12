@@ -13,6 +13,11 @@ if (!/^S1-M\w+-b\d+-\d{8}$/.test(buildId)) throw new Error('malformed BUILD_ID: 
 const pack = read('packs/core.json');
 JSON.parse(pack); // sanity: the embedded pack must be valid JSON
 
+// Embedded CJK webfont (S1-D078): base64 into the shell so title/HUD/world
+// glyph text renders identically everywhere, not just on hosts with a local
+// Kai-style font installed. See fonts/SOURCE.txt for provenance/license.
+const fontB64 = readFileSync(new URL('fonts/InkbladeKai-subset.woff2', root)).toString('base64');
+
 const files = readdirSync(new URL('src', root)).filter(f => /^\d\d-.*\.js$/.test(f)).sort();
 if (!files.length) throw new Error('no src modules found');
 const scripts = files.map(f => `/* ==== src/${f} ==== */\n` + read('src/' + f)).join('\n');
@@ -24,6 +29,7 @@ const html = read('src/shell.html')
   .replaceAll('{{MILESTONE}}', buildId.match(/^S1-(M[^-]+)-b/)[1])
   .replace('{{STEP_NOTE}}', stepNote)
   .replace('{{PACK}}', () => pack.trim())
+  .replace('{{FONT}}', () => fontB64)
   .replace('{{SCRIPTS}}', () => scripts);
 
 const outName = 'inkblade-' + buildId.match(/^S1-(M[^-]+)-b/)[1].toLowerCase() + '.html';
