@@ -54,6 +54,12 @@ Therefore:
   **served over HTTP** — from the repo root: `python3 -m http.server 8000`,
   then `http://localhost:8000/inkblade-m2g.html?...` (swap in whatever
   `BUILD_ID` currently names).
+- **Also hosted on GitHub Pages** (repo is public): `.github/workflows/pages.yml`
+  redeploys on every push to master, copying whatever `BUILD_ID` names to a
+  stable `game.html` plus `packs/`. Live at
+  `https://chaussen.github.io/inkblade/` — that landing page (`site/index.html`,
+  edit it directly, not generated) has one-click links for reset/500-tier/seed/
+  a character picker, so query params rarely need hand-typing there.
 - `?reset=1` = fresh world (clears the persistent scroll). `?char=X` pins the
   stage to one character. `?seed=N` makes world randomness deterministic.
   `?e2=0` kills ignition (E2 is default-ON since S1-D057).

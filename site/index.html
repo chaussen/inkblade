@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>墨刃 Inkblade</title>
+<style>
+  :root{
+    --paper:#f4ecd8; --paper2:#ece1c8; --ink:#2b2622; --cinnabar:#b3402c;
+    --cinnabar-dark:#8f3123; --line:#d9cbab; --muted:#7a6f5c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:2rem 1rem 4rem; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    display:flex; justify-content:center;
+  }
+  main{width:100%; max-width:640px}
+  h1{font-size:2rem; margin:0 0 .1rem; letter-spacing:.02em}
+  h1 .sub{display:block; font-size:.95rem; font-weight:400; color:var(--muted); margin-top:.25rem}
+  h2{font-size:1rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:2rem 0 .6rem}
+  .card{
+    background:var(--paper2); border:1px solid var(--line); border-radius:10px;
+    padding:1rem 1.1rem; margin-bottom:.7rem;
+  }
+  .card p{margin:.2rem 0 .8rem; color:var(--muted); font-size:.9rem; line-height:1.4}
+  .row{display:flex; flex-wrap:wrap; gap:.6rem}
+  a.btn, button.btn{
+    display:inline-block; text-decoration:none; font-size:1rem; font-weight:600;
+    color:#fff; background:var(--cinnabar); border:none; border-radius:8px;
+    padding:.7rem 1.1rem; cursor:pointer; transition:background .15s;
+  }
+  a.btn:hover, button.btn:hover{background:var(--cinnabar-dark)}
+  a.btn.secondary, button.btn.secondary{
+    background:transparent; color:var(--cinnabar); border:1.5px solid var(--cinnabar);
+  }
+  a.btn.secondary:hover{background:var(--cinnabar); color:#fff}
+  select, input[type=number]{
+    font-size:1rem; padding:.55rem .6rem; border-radius:8px; border:1.5px solid var(--line);
+    background:#fff; color:var(--ink);
+  }
+  .inline-form{display:flex; flex-wrap:wrap; gap:.6rem; align-items:center}
+  details{margin-top:1.5rem}
+  summary{cursor:pointer; font-weight:600; color:var(--muted)}
+  table{border-collapse:collapse; width:100%; margin-top:.8rem; font-size:.85rem}
+  th,td{text-align:left; padding:.35rem .5rem; border-bottom:1px solid var(--line)}
+  th{color:var(--muted); font-weight:600}
+  code{background:var(--paper); padding:.1rem .35rem; border-radius:4px; font-size:.85em}
+  footer{margin-top:2.5rem; font-size:.8rem; color:var(--muted); text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <h1>墨刃 Inkblade
+    <span class="sub">write the character, plant the world</span>
+  </h1>
+
+  <h2>Quick start</h2>
+  <div class="card">
+    <p>Resumes whatever scroll you left off on this device/browser.</p>
+    <div class="row">
+      <a class="btn" href="game.html">▶ Continue</a>
+      <a class="btn secondary" href="game.html?reset=1">✦ Fresh scroll (23 chars)</a>
+    </div>
+  </div>
+
+  <h2>500-character library</h2>
+  <div class="card">
+    <p>The full basic tier — loads the extra chapter over HTTP (that's why this needs a real server/Pages, not a downloaded file).</p>
+    <div class="row">
+      <a class="btn" href="game.html?pack=/packs/core.json,/packs/basic.json">▶ Continue</a>
+      <a class="btn secondary" href="game.html?pack=/packs/core.json,/packs/basic.json&amp;reset=1">✦ Fresh scroll</a>
+    </div>
+  </div>
+
+  <h2>Jump to a character</h2>
+  <div class="card">
+    <p>Pins the stage to one character so you don't have to wait for it to come up. Starts a fresh 500-tier scroll.</p>
+    <form class="inline-form" action="game.html" method="get">
+      <input type="hidden" name="pack" value="/packs/core.json,/packs/basic.json">
+      <input type="hidden" name="reset" value="1">
+      <select name="char">
+        <option value="火">火 — fire (kindles + burns)</option>
+        <option value="木">木 — tree (flammable, regrows)</option>
+        <option value="马">马 — horse (living, flees fire)</option>
+        <option value="家">家 — dwelling (shelter, flammable)</option>
+        <option value="心">心 — heart</option>
+        <option value="花">花 — flower</option>
+        <option value="门">门 — gate</option>
+        <option value="电">电 — lightning bolt</option>
+        <option value="车">车 — cart</option>
+        <option value="风">风 — wind</option>
+        <option value="大">大 — big figure</option>
+        <option value="山">山 — mountain</option>
+      </select>
+      <button class="btn" type="submit">Go</button>
+    </form>
+  </div>
+
+  <h2>Seeded world</h2>
+  <div class="card">
+    <p>Same seed always plants the same world — handy for comparing builds or replaying a specific layout.</p>
+    <form class="inline-form" action="game.html" method="get">
+      <input type="hidden" name="pack" value="/packs/core.json,/packs/basic.json">
+      <input type="hidden" name="reset" value="1">
+      <input type="number" name="seed" value="42" min="0" step="1">
+      <button class="btn" type="submit">Go</button>
+    </form>
+  </div>
+
+  <details>
+    <summary>All URL parameters (for hand-editing links)</summary>
+    <table>
+      <tr><th>Param</th><th>Effect</th></tr>
+      <tr><td><code>reset=1</code></td><td>Clears the saved scroll, starts fresh</td></tr>
+      <tr><td><code>pack=/packs/core.json,/packs/basic.json</code></td><td>Loads the 500-char basic tier chapter (comma-list, first-wins merge)</td></tr>
+      <tr><td><code>char=X</code></td><td>Pins the stage to one character, e.g. <code>char=火</code></td></tr>
+      <tr><td><code>seed=N</code></td><td>Deterministic world randomness</td></tr>
+      <tr><td><code>e2=0</code></td><td>Kills ignition/fire-spread (E2 is on by default)</td></tr>
+    </table>
+    <p style="margin-top:.8rem">
+      <a class="btn secondary" href="game.html?pack=/packs/core.json,/packs/basic.json&amp;reset=1&amp;e2=0">Fresh scroll, ignition off</a>
+    </p>
+  </details>
+
+  <footer>Saves live in this browser's local storage, scoped to this site. Rebuilt automatically from <code>BUILD_ID</code> on every push to master.</footer>
+</main>
+</body>
+</html>
