@@ -44,12 +44,16 @@ Therefore:
 ## Running the game (so instructions stay honest)
 
 - Latest artifact = the file named in `BUILD_ID` (`inkblade-<milestone>.html`).
-  Older `inkblade-m*.html` files are frozen snapshots for the frozen suites —
-  opening them shows OLD behavior by design.
+  Only `inkblade-m0.html` / `inkblade-m05.html` / `inkblade-m075.html` are kept
+  as frozen snapshots (they're the fixed targets of frozen suites smoke1–4,
+  per `tests/README.md`) — opening them shows OLD behavior by design. Every
+  other superseded milestone build gets deleted once it's no longer the
+  current artifact; git history has the rest if one is ever needed again.
 - The embedded default pack is core (23 chars). The 500-char basic tier only
   loads via `?pack=/packs/basic.json` (or `?pack=/packs/core.json,/packs/basic.json`)
   **served over HTTP** — from the repo root: `python3 -m http.server 8000`,
-  then `http://localhost:8000/inkblade-m2a.html?...`.
+  then `http://localhost:8000/inkblade-m2d.html?...` (swap in whatever
+  `BUILD_ID` currently names).
 - `?reset=1` = fresh world (clears the persistent scroll). `?char=X` pins the
   stage to one character. `?seed=N` makes world randomness deterministic.
   `?e2=0` kills ignition (E2 is default-ON since S1-D057).
