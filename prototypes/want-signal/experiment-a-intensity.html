@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment A — escalating visual intensity.
+     Isolated prototype (per the brief's "own scene/branch" rule) — NOT part
+     of the shipped game, not built by tools/build.mjs, no BUILD_ID. Tests
+     one question only: can urgency alone, with zero added iconography, read
+     as an invitation rather than ambient decoration?
+
+     Scene: a grove clearing with one tree. The want ("the grove is dark —
+     write something that burns", OPEN-9's own example) is represented by
+     dusk creeping in and haze thickening — both driven by ONE continuous
+     "unmet-ness" parameter, no new sprite. Click anywhere to simulate the
+     player having answered it (standing in for writing 火/焱/etc. nearby —
+     this prototype has no glyph-writing loop).
+     Attention discipline: this experiment's signal lives in the RECEDED
+     window (visible at ~35% world alpha, matching writing-time visibility)
+     — the darkening must still read while the player's attention is
+     nominally on a glyph, not just in the post-lock bloom. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal A — escalating intensity</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:pointer}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;pointer-events:none;display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<script>
+'use strict';
+const PAPER='#ece3cf', INK='#1b1712', ASH='#8f8a7c', GOLD='#c9992b';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const SPEED = +(new URLSearchParams(location.search).get('speed')) || 1; // time multiplier for fast bench-testing
+const ONSET_DELAY_MS = 1200;
+const RAMP_MS = 12000; // unmet-ness 0->1 over this long, real-time-scaled by SPEED
+const RESOLVE_EASE_MS = 900;
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const start = performance.now();
+let onsetAt = null, resolvedAt = null, noticedAt = null, resolving = false;
+let unmet = 0; // 0..1, continuous
+const M = window.__WANT_METRICS = {
+  experiment: 'A-intensity',
+  wantOnsetTime: null, wantNoticedTime: null, wantResolvedTime: null,
+  wantIgnoredDuration: 0,
+};
+
+canvas.addEventListener('pointerdown', () => {
+  const now = performance.now();
+  if (onsetAt != null && noticedAt == null) { noticedAt = now; M.wantNoticedTime = now - onsetAt; }
+  if (onsetAt != null && resolvedAt == null && !resolving) {
+    resolving = true;
+    resolvedAt = now;
+    M.wantResolvedTime = now - onsetAt;
+  }
+});
+
+function drawTree(x, y, s, sat) {
+  // sat: 1 = healthy, 0 = fully desaturated/grey (the escalation itself)
+  const trunk = lerpColor('#5a4530', ASH, 1 - sat);
+  const canopy = lerpColor('#4f6b3a', ASH, 1 - sat);
+  ctx.strokeStyle = trunk; ctx.lineWidth = 6*s;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 70*s); ctx.stroke();
+  ctx.fillStyle = canopy;
+  ctx.beginPath(); ctx.ellipse(x, y-95*s, 46*s, 34*s, 0, 0, Math.PI*2); ctx.fill();
+}
+function lerpColor(a, b, t) {
+  const pa = hexToRgb(a), pb = hexToRgb(b);
+  const r = Math.round(pa[0]+(pb[0]-pa[0])*t), g = Math.round(pa[1]+(pb[1]-pa[1])*t), b2 = Math.round(pa[2]+(pb[2]-pa[2])*t);
+  return `rgb(${r},${g},${b2})`;
+}
+function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+
+const hazeParticles = Array.from({length: 40}, () => ({
+  x: Math.random(), y: Math.random(), r: 6+Math.random()*18, phase: Math.random()*Math.PI*2,
+}));
+
+function frame(now) {
+  const t = now - start;
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+
+  if (onsetAt == null && t > ONSET_DELAY_MS) { onsetAt = now; M.wantOnsetTime = now; }
+  if (onsetAt != null && resolvedAt == null) {
+    const elapsed = (now - onsetAt) * SPEED;
+    unmet = Math.min(1, elapsed / RAMP_MS);
+    if (unmet >= 1) M.wantIgnoredDuration = (elapsed - RAMP_MS);
+  } else if (resolvedAt != null) {
+    const easeT = Math.min(1, (now - resolvedAt) / RESOLVE_EASE_MS);
+    unmet = unmet * (1 - easeT); // just for the final visible frames; loop below also handles it
+    if (easeT >= 1) unmet = 0;
+  }
+
+  // ground band, receded to ~35% ink presence per attention discipline (this
+  // signal must read while writing-recession applies, not just post-lock)
+  ctx.save();
+  ctx.globalAlpha = 0.35 + 0.0; // world recession baseline; the SIGNAL itself modulates alpha *within* this envelope below
+  ctx.fillStyle = '#c9b98c';
+  ctx.fillRect(0, H*0.62, W, H*0.38);
+  ctx.restore();
+
+  drawTree(W*0.5, H*0.62, Math.min(W,H)/600, 1 - unmet*0.85);
+
+  // dusk creep: a darkening overlay whose alpha IS the want signal — the
+  // only new visual parameter this experiment adds
+  ctx.fillStyle = `rgba(20,16,10,${(unmet*0.42).toFixed(3)})`;
+  ctx.fillRect(0,0,W,H);
+
+  // thickening haze — continuous particle alpha/blur-by-overlap, no new sprite kind
+  for (const p of hazeParticles) {
+    const a = unmet * 0.28 * (0.6 + 0.4*Math.sin(t/900 + p.phase));
+    if (a <= 0.002) continue;
+    ctx.fillStyle = `rgba(90,86,78,${a.toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(p.x*W, H*0.5 + p.y*H*0.45, p.r*Math.min(W,H)/700*30, p.r*Math.min(W,H)/700*18, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    document.getElementById('dbg').textContent =
+      `unmet: ${unmet.toFixed(3)}\nonset: ${onsetAt?Math.round(onsetAt-start):'-'}ms\n` +
+      `noticed: ${M.wantNoticedTime?Math.round(M.wantNoticedTime):'-'}ms\n` +
+      `resolved: ${M.wantResolvedTime?Math.round(M.wantResolvedTime):'-'}ms\n` +
+      `ignoredDur: ${Math.round(M.wantIgnoredDuration)}ms\n(click anywhere = simulated response)`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

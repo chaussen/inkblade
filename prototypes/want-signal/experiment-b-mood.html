@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment B — idle-animation state change ("mood").
+     Isolated prototype, not part of the shipped game.
+
+     Scene: one walker with idle wander behavior. A want ("this walker is
+     cold — write something warm nearby") swaps its idle animation from
+     calm pacing to a distinct-but-not-alarming huddle/shiver as unmet-ness
+     ramps — the BEHAVIOR changes, not a color overlay bolted on top.
+     Click = simulated response (writing the answering glyph). The prototype
+     also exposes a manual "report as bug" button so a real tester can flag
+     signalMisreadAsBug live, since that read can't be auto-detected. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal B — mood swap</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:pointer}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;display:none}
+  #bugBtn{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+    font:13px sans-serif;padding:8px 14px;border-radius:8px;border:1px solid #b2392a;
+    background:#fff;color:#b2392a;cursor:pointer;display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<button id="bugBtn">This looks like a glitch, not a signal (report)</button>
+<script>
+'use strict';
+const PAPER='#ece3cf', INK='#1b1712', CINNABAR='#b2392a';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const SPEED = +(new URLSearchParams(location.search).get('speed')) || 1;
+const ONSET_DELAY_MS = 1200;
+const RAMP_MS = 10000;
+const RESOLVE_EASE_MS = 900;
+
+document.getElementById('bugBtn').style.display = DEBUG ? 'block' : 'none';
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const start = performance.now();
+let onsetAt = null, resolvedAt = null, noticedAt = null, resolving = false;
+let mood = 0; // 0 = calm pacing, 1 = fully huddled/shivering
+const M = window.__WANT_METRICS = {
+  experiment: 'B-mood',
+  wantOnsetTime: null, wantNoticedTime: null, wantResolvedTime: null,
+  wantIgnoredDuration: 0, signalMisreadAsBug: false,
+};
+document.getElementById('bugBtn').addEventListener('click', () => { M.signalMisreadAsBug = true; });
+
+canvas.addEventListener('pointerdown', () => {
+  const now = performance.now();
+  if (onsetAt != null && noticedAt == null) { noticedAt = now; M.wantNoticedTime = now - onsetAt; }
+  if (onsetAt != null && resolvedAt == null && !resolving) { resolving = true; resolvedAt = now; M.wantResolvedTime = now - onsetAt; }
+});
+
+// idle wander state (calm baseline, unrelated to the want signal)
+let wx = 0.5, wt = 0;
+
+function frame(now) {
+  const t = now - start;
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#c9b98c'; ctx.globalAlpha = 0.35; ctx.fillRect(0, H*0.62, W, H*0.38); ctx.globalAlpha = 1;
+
+  if (onsetAt == null && t > ONSET_DELAY_MS) { onsetAt = now; M.wantOnsetTime = now; }
+  if (onsetAt != null && resolvedAt == null) {
+    const elapsed = (now - onsetAt) * SPEED;
+    mood = Math.min(1, elapsed / RAMP_MS);
+    if (mood >= 1) M.wantIgnoredDuration = (elapsed - RAMP_MS);
+  } else if (resolvedAt != null) {
+    const easeT = Math.min(1, (now - resolvedAt) / RESOLVE_EASE_MS);
+    mood = mood * (1 - easeT);
+  }
+
+  // idle wander (calm): slow side-to-side drift, always running regardless of mood
+  wt += 16;
+  const baseX = 0.5 + Math.sin(wt/3000) * 0.12;
+  const groundY = H*0.72;
+
+  // CALM idle: gentle bob, upright, even gait
+  // HUDDLED idle (mood=1): hunched (squashed height), tight fast jitter, arms-in
+  const calmBobY = Math.sin(wt/280) * 4;
+  const shiverJitterX = (Math.random()-0.5) * 6 * mood;
+  const shiverJitterY = (Math.random()-0.5) * 3 * mood;
+  const squash = 1 - mood*0.22; // huddled = shorter
+  const px = baseX*W + shiverJitterX;
+  const py = groundY + calmBobY*(1-mood) + shiverJitterY;
+
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.scale(1 + mood*0.08, squash); // widen+squash = huddle silhouette
+  const s = Math.min(W,H)*0.05;
+  // body
+  ctx.fillStyle = INK; ctx.globalAlpha = 0.85;
+  ctx.beginPath(); ctx.ellipse(0, -s*0.9, s*0.55, s*0.9, 0, 0, Math.PI*2); ctx.fill();
+  // head
+  ctx.beginPath(); ctx.arc(0, -s*1.9 + mood*s*0.35, s*0.38, 0, Math.PI*2); ctx.fill(); // head droops down when huddled
+  // arms tuck inward as mood rises (calm: away from body; huddled: wrapped in)
+  const armSpread = s*0.7*(1-mood) + s*0.15*mood;
+  ctx.strokeStyle = INK; ctx.lineWidth = s*0.16; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-s*0.5,-s*1.1); ctx.lineTo(-armSpread,-s*0.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(s*0.5,-s*1.1); ctx.lineTo(armSpread,-s*0.6); ctx.stroke();
+  ctx.restore();
+
+  // ground contact shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.beginPath(); ctx.ellipse(px, groundY+4, s*0.6, s*0.15, 0, 0, Math.PI*2); ctx.fill();
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    document.getElementById('dbg').textContent =
+      `mood (0=calm,1=huddled): ${mood.toFixed(3)}\nonset: ${onsetAt?Math.round(onsetAt-start):'-'}ms\n` +
+      `noticed: ${M.wantNoticedTime?Math.round(M.wantNoticedTime):'-'}ms\n` +
+      `resolved: ${M.wantResolvedTime?Math.round(M.wantResolvedTime):'-'}ms\n` +
+      `ignoredDur: ${Math.round(M.wantIgnoredDuration)}ms\nmisreadAsBug: ${M.signalMisreadAsBug}\n(click anywhere = simulated response)`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

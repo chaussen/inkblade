@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment D — propagating ripple (differentiated reaction,
+     no direct signal). Isolated prototype, not part of the shipped game.
+
+     Scene: a fire that periodically flares (like the real game's
+     flareEveryMs), with three objects at fixed distance inside its
+     reaction radius: a flammable prop, a living walker, a sheltered
+     dwelling. On each flare, each reacts DIFFERENTLY per its own tags —
+     flammable flinches/crackles, living recoils/startles, sheltered stays
+     visibly calm (a faint protective glow, not a flinch). There is no
+     dedicated "want" indicator at all — legibility is tested entirely by
+     whether the differentiation itself reads as informative. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal D — propagating ripple</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:pointer}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<script>
+'use strict';
+const PAPER='#ece3cf', INK='#1b1712', CINNABAR='#b2392a', GOLD='#c9992b';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const SPEED = +(new URLSearchParams(location.search).get('speed')) || 1;
+const FLARE_EVERY_MS = 4500;
+const FLARE_DUR_MS = 900;
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const start = performance.now();
+let lastFlareAt = null, firstFlareAt = null, noticedAt = null, respondedAt = null;
+const M = window.__WANT_METRICS = {
+  experiment: 'D-ripple',
+  wantOnsetTime: null, wantNoticedTime: null, wantResolvedTime: null,
+  wantIgnoredDuration: 0, flareCount: 0,
+};
+
+const objs = [
+  { tag: 'flammable', x: 0.30, y: 0.60, label: 'flammable prop' },
+  { tag: 'living',    x: 0.68, y: 0.55, label: 'living walker' },
+  { tag: 'shelter',   x: 0.50, y: 0.78, label: 'sheltered dwelling' },
+];
+
+canvas.addEventListener('pointerdown', () => {
+  const now = performance.now();
+  if (firstFlareAt != null && noticedAt == null) { noticedAt = now; M.wantNoticedTime = now - firstFlareAt; }
+  if (firstFlareAt != null && respondedAt == null) { respondedAt = now; M.wantResolvedTime = now - firstFlareAt; }
+});
+
+function frame(now) {
+  const t = now - start;
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#c9b98c'; ctx.globalAlpha = 0.35; ctx.fillRect(0, H*0.42, W, H*0.58); ctx.globalAlpha = 1;
+
+  if (lastFlareAt == null || (now - lastFlareAt)*SPEED > FLARE_EVERY_MS) {
+    lastFlareAt = now;
+    if (firstFlareAt == null) { firstFlareAt = now; M.wantOnsetTime = now; }
+    M.flareCount++;
+  }
+  const sinceFlaresAt = (now - lastFlareAt) * SPEED;
+  const flareT = Math.min(1, sinceFlaresAt / FLARE_DUR_MS);
+  const flareActive = flareT < 1;
+  if (flareT >= 1 && respondedAt == null && firstFlareAt != null) {
+    M.wantIgnoredDuration = now - firstFlareAt;
+  }
+
+  // the fire (center) — brighter during a flare
+  const fx = 0.5*W, fy = 0.42*H, fs = Math.min(W,H)*0.045;
+  const flareGlow = flareActive ? (1 - flareT) : 0;
+  ctx.fillStyle = CINNABAR; ctx.globalAlpha = 0.8 + flareGlow*0.2;
+  ctx.beginPath(); ctx.ellipse(fx, fy, fs*(1+flareGlow*0.4), fs*1.3*(1+flareGlow*0.4), 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = GOLD; ctx.globalAlpha = 0.6 + flareGlow*0.4;
+  ctx.beginPath(); ctx.ellipse(fx, fy-fs*0.3, fs*0.5, fs*0.8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  const s = Math.min(W,H)*0.045;
+  for (const o of objs) {
+    const ox = o.x*W, oy = o.y*H;
+    ctx.save();
+    if (o.tag === 'flammable') {
+      // FLINCH: quick shake + brief flash, only during the flare window
+      const shake = flareActive ? Math.sin(now/18) * 5 * (1-flareT) : 0;
+      ctx.translate(ox+shake, oy);
+      ctx.fillStyle = flareActive ? lerp('#8a6a3a', GOLD, (1-flareT)*0.6) : '#8a6a3a';
+      ctx.beginPath(); ctx.moveTo(0,-s*1.4); ctx.lineTo(s*0.6,s*0.6); ctx.lineTo(-s*0.6,s*0.6); ctx.closePath(); ctx.fill();
+    } else if (o.tag === 'living') {
+      // RECOIL: jump back away from the fire + tiny cower (squash+shift), fades out after flare
+      const dirX = Math.sign(ox - fx) || 1;
+      const recoil = flareActive ? (1-flareT) * 18 : 0;
+      ctx.translate(ox + dirX*recoil, oy + (flareActive ? (1-flareT)*4 : 0));
+      ctx.scale(1, flareActive ? (1 - (1-flareT)*0.15) : 1);
+      ctx.fillStyle = INK; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.ellipse(0, -s*0.7, s*0.45, s*0.7, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, -s*1.5, s*0.3, 0, Math.PI*2); ctx.fill();
+    } else {
+      // SHELTERED: no flinch at all — a faint steady protective glow is the
+      // ONLY tell, and it does not spike with the flare (calm by design)
+      ctx.translate(ox, oy);
+      ctx.fillStyle = 'rgba(180,150,90,0.18)';
+      ctx.beginPath(); ctx.arc(0, 0, s*1.6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#6b5638';
+      ctx.beginPath(); ctx.moveTo(-s*0.8,s*0.5); ctx.lineTo(0,-s*0.9); ctx.lineTo(s*0.8,s*0.5); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    document.getElementById('dbg').textContent =
+      `flareActive: ${flareActive}\nflareCount: ${M.flareCount}\n` +
+      `firstFlare: ${firstFlareAt?Math.round(firstFlareAt-start):'-'}ms\n` +
+      `noticed: ${M.wantNoticedTime?Math.round(M.wantNoticedTime):'-'}ms\n` +
+      `responded: ${M.wantResolvedTime?Math.round(M.wantResolvedTime):'-'}ms\n` +
+      `ignoredDur: ${Math.round(M.wantIgnoredDuration)}ms\n(click anywhere = simulated response)`;
+  }
+  requestAnimationFrame(frame);
+}
+function lerp(a,b,t){ const pa=hexToRgb(a),pb=hexToRgb(b);
+  return `rgb(${Math.round(pa[0]+(pb[0]-pa[0])*t)},${Math.round(pa[1]+(pb[1]-pa[1])*t)},${Math.round(pa[2]+(pb[2]-pa[2])*t)})`; }
+function hexToRgb(h){ h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

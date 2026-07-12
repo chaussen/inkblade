@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<!-- Want-Signal Experiment C — resonance pulse (family hint, not literal answer).
+     Isolated prototype, not part of the shipped game.
+
+     Scene: a want-source (a small dark unlit hearth) with several nearby
+     empty cells. Cells belonging to the CATEGORY that would help (here:
+     "water" — any water-tagged glyph, not specifically 水) pulse a slow
+     low-amplitude blue-family glow. One decoy cell outside the hinted
+     family renders with NO pulse, to test whether the color-family read is
+     legible or just "something is here." Clicking a pulsing cell = correct
+     response; clicking the decoy = wrongFamilyAttempt. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Want-Signal C — resonance pulse</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e9dfc9}
+  #c{display:block;width:100vw;height:100vh;cursor:pointer}
+  #dbg{position:fixed;top:8px;left:8px;font:11px monospace;color:#1b1712;
+       background:rgba(236,227,207,0.85);padding:6px 9px;border-radius:6px;
+       white-space:pre;display:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="dbg"></div>
+<script>
+'use strict';
+const PAPER='#ece3cf', INK='#1b1712';
+// blue family — the hinted category. First-pass color (96,140,190) barely
+// read as blue against the warm paper backdrop even at full pulse (looked
+// grey); this more saturated, less-desaturated-toward-tan value is the
+// fix — logged as a finding, not just a silent tweak (see prototypes/
+// want-signal/README.md).
+const WATER_FAMILY = 'rgba(50,110,190,ALPHA)';
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const SPEED = +(new URLSearchParams(location.search).get('speed')) || 1;
+const ONSET_DELAY_MS = 1000;
+const RAMP_MS = 5000; // pulse fades in (not urgency-escalating like A — it's a steady low-amplitude hint once onset completes)
+
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W=0,H=0,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth;H=innerHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', resize); resize();
+
+const start = performance.now();
+let onsetAt = null, resolvedAt = null, noticedAt = null;
+let presence = 0; // fade-in of the pulse system itself, 0..1
+const M = window.__WANT_METRICS = {
+  experiment: 'C-resonance',
+  wantOnsetTime: null, wantNoticedTime: null, wantResolvedTime: null,
+  wantIgnoredDuration: 0, wrongFamilyAttempt: 0,
+};
+
+// hearth at center; 3 eligible (hinted) cells + 1 decoy (unhinted, no pulse)
+const cellSize = 0.09; // ×min(W,H)
+const cells = [
+  { x: 0.30, y: 0.55, hinted: true },
+  { x: 0.62, y: 0.48, hinted: true },
+  { x: 0.70, y: 0.66, hinted: true },
+  { x: 0.42, y: 0.72, hinted: false }, // decoy — no pulse, wrong family
+];
+
+function cellHit(mx, my) {
+  const s = Math.min(W,H) * cellSize;
+  for (const c of cells) {
+    const cx = c.x*W, cy = c.y*H;
+    if (Math.abs(mx-cx) < s*0.7 && Math.abs(my-cy) < s*0.7) return c;
+  }
+  return null;
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  const now = performance.now();
+  if (onsetAt != null && noticedAt == null) { noticedAt = now; M.wantNoticedTime = now - onsetAt; }
+  const hit = cellHit(e.clientX, e.clientY);
+  if (!hit) return;
+  if (hit.hinted) {
+    if (onsetAt != null && resolvedAt == null) { resolvedAt = now; M.wantResolvedTime = now - onsetAt; }
+  } else {
+    M.wrongFamilyAttempt++;
+  }
+});
+
+function frame(now) {
+  const t = now - start;
+  ctx.fillStyle = PAPER; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#c9b98c'; ctx.globalAlpha = 0.35; ctx.fillRect(0, H*0.4, W, H*0.6); ctx.globalAlpha = 1;
+
+  if (onsetAt == null && t > ONSET_DELAY_MS) { onsetAt = now; M.wantOnsetTime = now; }
+  if (onsetAt != null && resolvedAt == null) {
+    presence = Math.min(1, (now - onsetAt) / RAMP_MS);
+    if (presence >= 1) M.wantIgnoredDuration = (now - onsetAt) - RAMP_MS;
+  } else if (resolvedAt != null) {
+    presence = Math.max(0, presence - (now - resolvedAt) / 700);
+  }
+
+  // the want-source: an unlit hearth (dark seal, no fire) — the thing the pulse radiates FROM
+  const hx = 0.5*W, hy = 0.42*H, hs = Math.min(W,H)*0.05;
+  ctx.fillStyle = INK; ctx.globalAlpha = 0.7;
+  ctx.beginPath(); ctx.ellipse(hx, hy, hs, hs*0.7, 0, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  const s = Math.min(W,H) * cellSize;
+  for (const c of cells) {
+    const cx = c.x*W, cy = c.y*H;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(70,62,48,0.3)'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,4]);
+    ctx.strokeRect(cx-s*0.6, cy-s*0.6, s*1.2, s*1.2);
+    ctx.setLineDash([]);
+    if (c.hinted) {
+      const pulse = 0.55 + 0.45*Math.sin((now*SPEED)/650); // raised floor — same legibility fix
+      const a = presence * pulse;
+      ctx.fillStyle = WATER_FAMILY.replace('ALPHA', a.toFixed(3));
+      ctx.beginPath(); ctx.arc(cx, cy, s*0.75*(0.85+0.15*pulse), 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  if (DEBUG) {
+    document.getElementById('dbg').style.display = 'block';
+    document.getElementById('dbg').textContent =
+      `presence: ${presence.toFixed(3)}\nonset: ${onsetAt?Math.round(onsetAt-start):'-'}ms\n` +
+      `noticed: ${M.wantNoticedTime?Math.round(M.wantNoticedTime):'-'}ms\n` +
+      `resolved: ${M.wantResolvedTime?Math.round(M.wantResolvedTime):'-'}ms\n` +
+      `ignoredDur: ${Math.round(M.wantIgnoredDuration)}ms\nwrongFamilyAttempt: ${M.wrongFamilyAttempt}\n(click a glowing cell = correct; click the plain cell = wrong-family)`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
