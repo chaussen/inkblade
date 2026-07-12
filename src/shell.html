@@ -10,11 +10,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>墨刃 Inkblade — {{MILESTONE}}</title>
 <style>
+  :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
   html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#e9dfc9; }
-  #c { display:block; width:100vw; height:100vh; touch-action:none; cursor:crosshair; }
+  /* 100vh (and window.innerHeight, read in 03-canvas.js) are the "large
+     viewport" on mobile — they DON'T shrink for a browser's own address
+     bar / bottom toolbar, so content sized against them can sit partly
+     underneath that UI. 100dvh is the standards-based fix: it tracks the
+     REAL visible viewport live. Layered as a fallback, not a replacement —
+     if a browser doesn't support dvh the whole declaration is dropped and
+     the 100vh above still applies. */
+  #c { display:block; width:100vw; height:100vh; height:100dvh; touch-action:none; cursor:crosshair; }
 </style>
 </head>
 <body>

@@ -177,7 +177,7 @@ function drawHUD() {
   const lo = Math.max(0, Math.min(curIdx - (win >> 1), n - win));
   window.__S1_HUD = { cellPx: cell, win, lockedCount, total: n, lo };
   const total = win * (cell + 8) - 8;
-  const y = H - cell - HUD_BOTTOM_MARGIN;
+  const y = H - cell - HUD_BOTTOM_MARGIN - SAFE_BOTTOM;
   ctx.save();
   // strip + counter centered as one group so the counter never overflows
   const counterFont = '600 ' + Math.max(12, cell * 0.34) + 'px Georgia, serif';
@@ -227,7 +227,7 @@ function drawHUD() {
   if (state.banner) {
     state.banner.t += 16;
     const bt = state.banner.t;
-    const a = bt < 300 ? bt/300 : (bt > 2100 ? Math.max(0, 1 - (bt-2100)/400) : 1);
+    const a = bt < 300 ? bt/300 : (bt > BANNER_HOLD_MS ? Math.max(0, 1 - (bt-BANNER_HOLD_MS)/BANNER_FADE_MS) : 1);
     if (a <= 0) { state.banner = null; }
     else {
       // the name appears where the thing appears (S1-D069): anchored beside
@@ -236,7 +236,7 @@ function drawHUD() {
       const B = state.banner;
       let bx = W / 2, by = GY + S + Math.min(H * 0.055, 40), sc = 1;
       if (B.ax != null) {
-        sc = 0.72;
+        sc = BANNER_ANCHORED_SCALE;
         // R3D (S1-D075): re-project the live element every frame so the
         // banner tracks a moving camera correctly; the 2D formula (ax/ay/kf,
         // a fixed snapshot + a linear camera-shift) is UNCHANGED when R3D
@@ -244,8 +244,12 @@ function drawHUD() {
         const pos = (R3D_ON && r3dReady() && B.elRef) ? elScreenPos(B.elRef) : null;
         const px = pos ? pos.x * W : (B.ax * W + CAM.px * (B.kf || 0));
         const py = pos ? pos.y * H + Math.min(H * 0.05, 32) : (B.ay * H + Math.min(H * 0.05, 32));
-        bx = Math.max(70, Math.min(W - 70, px));
-        by = Math.max(44, Math.min(H - Math.min(W, H) * 0.17, py));
+        // clamp margins scale with sc — a bigger banner needs more clearance
+        // from the edges to avoid clipping (tied to the size change above,
+        // not re-tuned independently)
+        const mx = 70 * (sc / 0.72), myTop = 44 * (sc / 0.72);
+        bx = Math.max(mx, Math.min(W - mx, px));
+        by = Math.max(myTop, Math.min(H - Math.min(W, H) * 0.19, py));
       }
       ctx.save();
       ctx.globalAlpha = a;
@@ -262,7 +266,7 @@ function drawHUD() {
   ctx.save();
   ctx.globalAlpha = 0.35; ctx.fillStyle = INK;
   ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-  ctx.fillText(BUILD_ID, W - 6, H - 14);
+  ctx.fillText(BUILD_ID, W - 6, H - 14 - SAFE_BOTTOM);
   ctx.restore();
 }
 function roundRect(x, y, w, h, r) {

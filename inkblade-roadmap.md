@@ -22,7 +22,19 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D084, 2026-07-12)
+## Current state (as of S1-D085, 2026-07-12)
+- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b5-20260712`). **M2g-b5
+  (S1-D085): the mobile HUD-clip bug root-caused and fixed properly**
+  (`window.innerHeight`/`100vh` → `visualViewport` + `100dvh` +
+  `env(safe-area-inset-bottom)` — the actual APIs for this, not more
+  margin-number tuning after two prior attempts), plus a bigger (+32%)
+  and longer (+68%) pinyin/gloss arrival banner. Anchor position
+  unchanged (that's the locked S1-D071 verdict) — flagged to John that
+  repositioning is a distinct, bigger ask if that's what he actually
+  wants. Full battery green.
+- **Breadth-threshold playtest: "can't see much effect" — parked per
+  John's instruction.** `prototypes/breadth-threshold/` stands as built,
+  no further action pending his call.
 - **Pure-emergence breadth-threshold experiment built (S1-D084)** —
   `prototypes/breadth-threshold/`. NOT a resolution of any real prior
   decision: the brief it came from cited S1-D034–037 for content that

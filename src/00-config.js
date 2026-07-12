@@ -120,6 +120,15 @@ const TRANSIT_COALESCE_MS = 300;
 const TRANSIT_FLIGHT_MS   = 620;
 const TRANSIT_STAGGER_MS  = 90;
 const TRANSIT_ARC_LIFT    = 0.16; // ×H — how high the droplet's arc rises
+// Pinyin/gloss banner (John's mandate, mobile playtest): the anchored-at-
+// arrival banner (S1-D069/D071) shrank to 0.72x and held only ~2.5s total —
+// too small and too brief to actually read on a real device. Legibility
+// wins over matching the un-anchored legacy size exactly; anchor POSITION
+// stays put (that placement was itself an approved verdict, S1-D071) —
+// only size and duration change here.
+const BANNER_ANCHORED_SCALE = 0.95; // was 0.72, hardcoded inline
+const BANNER_HOLD_MS = 3400;        // was 2100
+const BANNER_FADE_MS = 500;         // was 400
 // The world breathes [LEAN — S1-D072]: a motion-parallax camera. Depth's
 // missing cue was MOTION — near matter slides more than far matter under a
 // slow idle drift plus a pointer-following pan. Render-only: el.x, saves,

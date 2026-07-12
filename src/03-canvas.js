@@ -3,6 +3,7 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 let W = 0, H = 0, DPR = 1, S = 0;
 let GX = 0, GY = 0;
+let SAFE_BOTTOM = 0; // real bottom clearance (notch/home-indicator/gesture-nav), read from CSS env()
 let paperTex = null;
 let worldLayer = null, wx = null; // offscreen world layer (attention recession composites it, S1-D027)
 let eventLayer = null, ex = null; // live-heat overlay — composites at ≥EVENT_MIN_ALPHA (S1-D045)
@@ -23,9 +24,27 @@ const SEED_PARAM = QUERY.get('seed');
 const E2_ON = QUERY.get('e2') !== null ? QUERY.get('e2') === '1' : E2_ENABLED;
 window.__S1_FLAGS.e2 = E2_ON;
 
+// window.innerWidth/innerHeight are the "large viewport" on mobile — they
+// don't shrink for the browser's own address bar/toolbar, so H used to be
+// reliably bigger than what's actually on screen (the mobile HUD-clip
+// bug, twice: margin tuning alone couldn't fix a wrong H). visualViewport
+// is the API built for exactly this — it reports the real visible area
+// live, including toolbar/keyboard changes. Fall back to inner*/100vh's
+// behavior only if a browser genuinely lacks it (very old mobile Chrome).
+function viewportSize() {
+  const vv = window.visualViewport;
+  return vv ? { w: vv.width, h: vv.height } : { w: window.innerWidth, h: window.innerHeight };
+}
+function readSafeBottom() {
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom');
+  const n = parseFloat(v);
+  return isFinite(n) ? n : 0;
+}
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight;
+  const vp = viewportSize();
+  W = vp.w; H = vp.h;
+  SAFE_BOTTOM = readSafeBottom();
   canvas.width = W * DPR; canvas.height = H * DPR;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   S = Math.min(W, H) * 0.60;
@@ -85,6 +104,14 @@ function makePaper() {
   p.fillStyle = g; p.fillRect(0, 0, W, H);
 }
 window.addEventListener('resize', resize);
+// visualViewport fires its OWN resize (toolbar show/hide, keyboard) and
+// scroll (the visible region can shift without changing size) — window's
+// resize event alone misses both on mobile, which is what let H drift
+// stale in the first place.
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', resize);
+  window.visualViewport.addEventListener('scroll', resize);
+}
 resize();
 
 function toScreen(pt) { return [GX + pt[0] / 100 * S, GY + pt[1] / 100 * S]; }
