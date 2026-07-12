@@ -6,9 +6,15 @@ let GX = 0, GY = 0;
 let paperTex = null;
 let worldLayer = null, wx = null; // offscreen world layer (attention recession composites it, S1-D027)
 let eventLayer = null, ex = null; // live-heat overlay — composites at ≥EVENT_MIN_ALPHA (S1-D045)
-const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const QUERY = new URLSearchParams(location.search);
+// ?motion=1 override (S1-D077): a playtest lever — OS-level prefers-reduced-
+// motion silently zeroes the whole camera system (S1-D072/D075), which is
+// the right accessibility default but can make a motion-dependent pilot
+// checkpoint look completely inert to a tester who has the OS setting on
+// without either of you knowing why. ?motion=1 forces animation on.
+const reduceMotion = QUERY.get('motion') === '1' ? false
+  : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 const FORCED = QUERY.get('char');
 const PACK_URL = QUERY.get('pack');
 const SEED_PARAM = QUERY.get('seed');

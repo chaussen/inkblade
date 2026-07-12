@@ -22,7 +22,65 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D067, 2026-07-11)
+## Current state (as of S1-D077, 2026-07-11)
+- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b2-20260711`), helpers
+  TARGET default. **M2g-b1 "the WebGL pilot" SHIPPED (S1-D075/D076),
+  checkpoint pending — an EXPERIMENT verdict (continue polishing the real
+  3D camera, or park it and move to the sprite pack block).** Gated behind
+  `?r3d=1`, default off — `r3d` unset is confirmed byte-identical to m2f
+  (full battery green proves it). Raw WebGL (no dependency): real
+  perspective camera + z-buffer occlusion + distance fog; billboards
+  textured by reusing the EXISTING 2D brush renderers via an offscreen
+  stamp canvas (content-bbox cropped); sky + the approved 2D backdrop
+  composite underneath unchanged; E2 ignition glow stays live per-frame via
+  a `drawBurnFx` position override. Logged limitations: no 3D-space ambient
+  particles, fire flicker is texture-refresh-rate not per-frame, no contact
+  shadows, camera framing hand-tuned.
+- **M2g-b2 (S1-D077): camera-unresponsive fix, same checkpoint.** John's
+  mid-playtest report ("pointer does not affect camera at all," tried
+  mobile finger + mouse) surfaced three real gaps: touch has no hover (any
+  finger-drag on the fullscreen canvas becomes a writing trail immediately,
+  so the pointer-follow listener never fired for a phone); OS `prefers-
+  reduced-motion` silently zeroed the WHOLE camera with no way to tell why;
+  the R3D camera's eye+center moved almost together, reading as barely-
+  there even on a working mouse. Fixes: `?motion=1` override (accessibility
+  default preserved without it); a `pointerdown` nudge (touch/click now get
+  an immediate aim-toward-there cue); the camera reformulated as a real
+  eye-orbit around a near-fixed look-at point. Verified directly (touch tap,
+  motion override, hover) — a near tree now visibly shifts ~120px across
+  the pointer's range (was a few px). Full battery re-green (smoke5–22 +
+  frozen 1–4; perf 16.53ms @300, no regression). smoke22 (6 tests, incl. a
+  forced-WebGL-unavailable fallback proving the pilot can never crash the
+  game).
+- **M2f-b1 "the world breathes" verdict (S1-D074, LOCKED): "just
+  acceptable."** Read per the plan's own fork as authorization for the
+  WebGL pilot rather than a hard stop. `inkblade-m2f.html` stands as the
+  parallax-camera snapshot.
+- **M2e-b1 "the ink travels" APPROVED by John (S1-D071, LOCKED)** —
+  `inkblade-m2e.html` frozen as the approved snapshot. Lock transition:
+  strokes coalesce to a gold droplet, arc into the world shrinking into
+  depth, the object blooms from the splash, banner rises AT the arrival
+  beside the object. Transit matter sim-exempt, never persists; ?seed=
+  determinism byte-identical; plant latency ≈920ms ≈ the old +900ms.
+- **Checkpoint-3 verdict (S1-D068, LOCKED): M2d-b1 ACCEPTED.** Core
+  gameplay loop is fixed; 3D + visuals are cosmetic; chunk C stops bespoke
+  batches — remaining 277 seals get faces when the swappable sprite pack
+  block exists. **THE FUTURE GOAL (next MAJOR milestone after the cosmetic
+  chunk): object↔object interactions — the sandbox world web** (reframes
+  M2b's headline; tags-on-every-kind discipline continues as groundwork).
+- Approved cosmetic order (exploration doc
+  `inkblade-3d-transition-visuals-exploration.md`, this branch): (1) M2e
+  lock transition — SHIPPED + APPROVED (S1-D071) → (2) M2f motion-parallax
+  camera — SHIPPED, verdict "just acceptable" (S1-D074) → (3) M2g WebGL
+  pilot — SHIPPED, **checkpoint pending (continue or park)** → (4) sprite
+  pack block + seal coverage — waits on the M2g verdict either way (it
+  ships regardless of which 3D approach wins; plan entry required).
+- Session note: work lives on branch
+  `claude/game-3d-rendering-exploration-39t6no` (remote-session mandate);
+  merge to master brings m2e/m2f/m2g + smoke20–22 + charter/roadmap
+  entries together.
+
+## Previous state (as of S1-D067, 2026-07-11)
 - Artifact: `inkblade-m2d.html` (BUILD_ID `S1-M2d-b1-20260710`), helpers
   TARGET default. **Chunk C batch 1 SHIPPED (S1-D066/D067), checkpoint
   pending — John's quality verdict gates scaling.** 7 bespoke kinds (大
@@ -109,11 +167,24 @@ top-down for anything marked here; nothing below is real until logged there.
 | M2c-b1 | S1-M2c-b1-20260710 | **Chunk B: the scroll gains depth + the legible ledger.** Perspective convergence (render-only), depth scale 0.42/1.45 (3.45×), two-stage mist, batched contact shadows, sky/ground paper furniture, windowed roster ledger with counter (fixes the 2px-cells-at-500 bug). smoke18 added; smoke12 perf calibration hardened to min-of-2 sampling | S1-D061–D062 |
 | M2c-b2 | S1-M2c-b2-20260710 | **The illustrated valley (answers the "hollow" verdict).** Always-present backdrop on the world layer: 3 ridgeline silhouettes, 4 drifting clouds, 56 perspective-scaled ground tufts/pebbles, fixed seed 42, `__S1_SCENE`; empty-world early-return removed. smoke18 T6 added; perf: absolute budget passed WITH backdrop (17.41ms @300) | S1-D063–D065 |
 | M2d-b1 | S1-M2d-b1-20260710 | **Chunk C batch 1: every character earns a face.** 大→bigfig dedupe, 6 more bespoke kinds (gate/horse/heart/wind/bolt/cart), banner/dwelling/skylight families + flora flower, radicals 口讠言纟宀日扌辶 mapped; basic seals 377→277; interaction tags live (rest-by-hut, hut burns+regrows); pipeline charsExtra; smoke19 | S1-D066–D067 |
+| M2e-b1 | S1-M2e-b1-20260711 | **The ink travels (lock transition).** Character→object made legible: strokes coalesce → droplet arcs into the world shrinking into depth → object blooms from the splash; banner moves to arrival, anchored beside the object; transit matter sim-exempt + never persisted; seed determinism byte-identical; smoke20. **APPROVED (S1-D071)** | S1-D068–D071 |
+| M2f-b1 | S1-M2f-b1-20260711 | **The world breathes (motion-parallax camera).** Idle drift + pointer pan, eased, per-depth-layer shift 0.18→1.0 (sky exempt, shadows/backdrop/transit/banner ride along); trail-gated, reduced-motion pinned; foreground occluder band (7 single-fill clumps, parallax 1.18) completes the depth sandwich; smoke21 (drift-proof layer contract). **Verdict: "just acceptable" (S1-D074)** | S1-D072–D074 |
+| M2g-b1 | S1-M2g-b1-20260711 | **The WebGL pilot (experiment).** `?r3d=1`, default off, r3d-unset confirmed byte-identical to m2f. Raw WebGL (no dependency): real perspective camera + z-buffer occlusion + fog; billboards textured by reusing the existing 2D brush renderers (offscreen stamp, content-bbox cropped); sky/backdrop composite underneath unchanged; E2 ignition glow stays live via a drawBurnFx position override; graceful no-crash fallback if WebGL is unavailable. smoke22 | S1-D074–D076 |
 
 ## Planned
 ### Chunk B — canvas/UI redesign + 3D legibility — SHIPPED (S1-D061/D062, M2c-b1; playtest checkpoint pending)
 
-### Chunk C — visual symbol expansion — NEXT: first batch, then checkpoint (S1-D059(3); plan entry before code)
+### The sandbox interaction web — THE NEXT MAJOR MILESTONE (S1-D068(3))
+Object↔object interactions are the only true game-loop enhancement left
+(John, S1-D068): fire+wood, person+shelter, water+fire, wind+flame,
+horse+cart... The E1/E2 tag machinery (living/heat/flammable/shelter/wet)
+IS the seed of this web — the milestone generalizes it into a data-driven
+interaction table (tag×tag → reaction) instead of bespoke rules. Waits for
+the cosmetic chunk to finish; every kind shipped meanwhile must carry tags
+(S1-D066 pattern) so the web has matter to react to. M2b's demand-world
+wants (OPEN-9) may ride on top once the web exists.
+
+### Chunk C — visual symbol expansion — batch 1 SHIPPED + ACCEPTED (S1-D068); scaling DEFERRED to the sprite pack block (cosmetic step 3)
 Confirmed: only 13 `world.kind` families exist; 489/500 basic-tier chars (98%)
 render with no visual identity (plain seal fallback); 大/山 literally share one
 kind (`peak`). John wants every character visually unique and asked whether

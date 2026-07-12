@@ -101,6 +101,43 @@ const SHADOW_ALPHA = 0.12;
 // stays visible under the writing veil. Figure-ground for structures/agents
 // (S1-D019) is unchanged — only light burns through.
 const EVENT_MIN_ALPHA = 0.85;
+// The ink travels [LEAN — S1-D069]: on lock the glyph's strokes coalesce
+// into a droplet that flies to the planted element; the element reveals on
+// arrival. COALESCE+FLIGHT ≈ the old +900ms plant delay, so world timing
+// (grow-in, suite waits) is unchanged. Stagger spaces group members' drops.
+const TRANSIT_COALESCE_MS = 300;
+const TRANSIT_FLIGHT_MS   = 620;
+const TRANSIT_STAGGER_MS  = 90;
+const TRANSIT_ARC_LIFT    = 0.16; // ×H — how high the droplet's arc rises
+// The world breathes [LEAN — S1-D072]: a motion-parallax camera. Depth's
+// missing cue was MOTION — near matter slides more than far matter under a
+// slow idle drift plus a pointer-following pan. Render-only: el.x, saves,
+// sim distances never move. The pan target freezes while a trail is active
+// (writing is never disturbed); prefers-reduced-motion pins the camera.
+const CAM_DRIFT       = 0.008; // ×W — idle sway amplitude
+const CAM_POINTER     = 0.020; // ×W — max pointer pan at the near layer
+const CAM_EASE_MS     = 450;   // exponential ease toward the target
+const PARALLAX_FAR    = 0.18;  // layer factor at GROUND_FAR…
+const PARALLAX_NEAR   = 1.0;   // …to the near edge (sky/horizon shift 0)
+const PARALLAX_FG     = 1.18;  // the foreground band slides fastest
+const FG_CLUMPS       = 7;     // near-field occluders (grass clumps/stones)
+// The WebGL pilot [LEAN — S1-D075]: raw WebGL (no dependency), gated behind
+// ?r3d=1. World-space mapping reuses depthQ (el.y→depth) and el.x (→world
+// X) unchanged — presentation-only, same as the 2D camera before it.
+const R3D_HALF_W      = 3.4;    // world X half-extent
+const R3D_DEPTH       = 7.5;    // world Z span (far..near)
+const R3D_EYE_H       = 4.4;    // camera height above the ground plane
+const R3D_EYE_BACK    = 3.2;    // camera pulled back beyond the near edge
+const R3D_FOV         = 52 * Math.PI / 180;
+const R3D_NEAR        = 0.1, R3D_FAR = 30;
+const R3D_FOG_NEAR    = 4.5, R3D_FOG_FAR = 11.5;
+const R3D_PAN_SCALE   = 0.09;    // CAM.px → world units the eye swings sideways (an orbit, not a translate)
+const R3D_PX_WORLD    = 0.015;   // world units per stamp-canvas pixel, ×el.s (tight content bbox, not the full canvas)
+const R3D_SCALE_REF   = 0.145;  // calibrates elScreenPos's depthK-equivalent
+const R3D_STAMP       = 192;    // sprite texture size, px
+const R3D_STAMP_S     = 150;    // "S" fed to the reused 2D renderers for the stamp
+const R3D_STAMP_ANCHOR = 0.66;  // ground row, as a fraction from the stamp's top
+const R3D_REFRESH_MS  = 140;    // sprite texture refresh cadence
 function depthQ(el){
   return Math.max(0, Math.min(1, (el.y - GROUND_FAR) / (GROUND_NEAR - GROUND_FAR)));
 }

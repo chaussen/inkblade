@@ -182,8 +182,9 @@ function beginResolve(locked) {
     const isNew = !state.locked[def.ch];
     if (!isNew) METRICS.world.relocks++;
     state.locked[def.ch] = true;
-    setTimeout(() => spawnWorldFor(def, isNew), 900);
-    state.banner = { pinyin: def.pinyin, gloss: def.gloss, t: 0 };
+    // the ink travels (S1-D069): matter is chosen NOW, revealed when the
+    // droplet lands; the banner names the thing where it appears
+    beginTransit(def, spawnWorldFor(def, isNew));
     sfxLock();
     setTimeout(() => speak(def.ch), 220);
     setTimeout(() => spawnFx(def), 300);
@@ -225,6 +226,12 @@ function sparks(pos, color, n, tiny) {
   }
 }
 function addParticle(pool, p, cap) {
+  // the WebGL pilot's offscreen sprite stamp (S1-D075) calls the real 2D
+  // draw functions to build textures — several of them spawn particles as
+  // a side effect (falling leaves, aftermath smoke); without this guard the
+  // stamp pass would spawn real particles at nonsensical stamp-local coords
+  // every texture refresh. One choke point instead of touching every caller.
+  if (RASTERIZING_SPRITE) return;
   pool.push(p);
   if (pool.length > cap) pool.shift();
 }

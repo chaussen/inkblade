@@ -47,26 +47,37 @@ function placeEl(k, s, isNew){
 function spawnWorldFor(def, isNew){
   const wp = def.world;
   const kindKey = wp && (wp.kind || wp.class); // tier 1 = bespoke kind; tier 2 = class family
-  if (!kindKey) { plantSeal(def, isNew); saveWorld(); return; } // seal fallback (C3: no lock without a mark)
-  const P = wp.params || {};
-  const v = () => 0.8 + worldRand() * 0.45; // per-instance body variance
-  const s0 = (P.scale || 1) * (P.vary === false ? 1 : v());
-  const base = placeEl(kindKey, s0, isNew);
-  if (wp.tier === 2) base.p = P; // per-char skin params, persisted with the element
-  for (const dx of (P.offsets || [])) {
-    const m = placeEl(kindKey, (P.memberScale || 0.9) * v(), isNew);
-    m.x = clamp01(base.x + dx);
-    // a group shares its base's depth (±jitter) — 林 is one grove, not
-    // trees scattered across the field
-    const [gy1, gy2] = bandFor(kindKey);
-    m.y = Math.max(gy1, Math.min(gy2, base.y + (worldRand() - 0.5) * 0.03));
-    if (wp.tier === 2) m.p = P;
+  const els = [];
+  if (!kindKey) { els.push(plantSeal(def, isNew)); } // seal fallback (C3: no lock without a mark)
+  else {
+    const P = wp.params || {};
+    const v = () => 0.8 + worldRand() * 0.45; // per-instance body variance
+    const s0 = (P.scale || 1) * (P.vary === false ? 1 : v());
+    const base = placeEl(kindKey, s0, isNew);
+    if (wp.tier === 2) base.p = P; // per-char skin params, persisted with the element
+    els.push(base);
+    for (const dx of (P.offsets || [])) {
+      const m = placeEl(kindKey, (P.memberScale || 0.9) * v(), isNew);
+      m.x = clamp01(base.x + dx);
+      // a group shares its base's depth (±jitter) — 林 is one grove, not
+      // trees scattered across the field
+      const [gy1, gy2] = bandFor(kindKey);
+      m.y = Math.max(gy1, Math.min(gy2, base.y + (worldRand() - 0.5) * 0.03));
+      if (wp.tier === 2) m.p = P;
+      els.push(m);
+    }
   }
+  // the ink travels (S1-D069): matter is chosen now, revealed on arrival —
+  // transit els are skipped by render and sim; saveWorld's explicit field
+  // pick omits the flag, so a mid-flight reload completes the plant.
+  for (const el of els) el.transit = true;
   saveWorld();
+  return els;
 }
 function plantSeal(def, isNew){
   const el = placeEl('seal', 1, isNew);
   el.ch = def.ch; // the seal bears the character's form (C3)
+  return el;
 }
 
 /* ---------------- ecology E1 (S1-D020) ---------------- *
@@ -87,7 +98,8 @@ function isLiveHeat(el){
   return !!(ECOLOGY && el.life && kindHasTag(el.k, 'heat') && ECOLOGY.fire.heatPhases.includes(el.life.phase));
 }
 function heatSources(){
-  return state.world.els.filter(isLiveHeat);
+  // ink in flight gives no heat — the world reacts to landed matter only (S1-D069)
+  return state.world.els.filter(el => !el.transit && isLiveHeat(el));
 }
 function updateWorld(dt, now){
   if (!ECOLOGY || !state.world.els.length) return;
@@ -95,6 +107,7 @@ function updateWorld(dt, now){
   const fires = heatSources();
   const aura = ECOLOGY.heatAuraR || 0;
   for (const el of state.world.els){
+    if (el.transit) continue; // in flight — clocks and reactions start at arrival (S1-D069)
     if (el.life) updateFireLife(el, dt);
     if (el.burn) updateBurnLife(el, dt);
     if (kindHasTag(el.k, 'living')) updateAgent(el, dt, fires);
@@ -139,7 +152,7 @@ function updateIgnition(dt, fires){
   const IG = ECOLOGY && ECOLOGY.ignition;
   if (!IG || !ECOLOGY.regrow || !fires.length) return;
   for (const el of state.world.els){
-    if (el.burn || el.life || !kindHasTag(el.k, 'flammable')) continue;
+    if (el.transit || el.burn || el.life || !kindHasTag(el.k, 'flammable')) continue;
     // dwell accumulates as a rate so mixed flame/ember exposure adds honestly;
     // embers kindle slower and closer (S1-D049d — the smolder-catch stays legible)
     let rate = 0;

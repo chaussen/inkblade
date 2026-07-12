@@ -18,20 +18,97 @@ const ELEMENT_DRAW = {
   wind: drawWindEl, bolt: drawBoltEl, cart: drawCartEl,
   banner: drawBannerEl, dwelling: drawDwellingEl, skylight: drawSkylightEl,
 };
+/* -------- the world breathes (S1-D072): motion-parallax camera -------- *
+ * Idle drift + pointer pan, eased; each depth layer shifts proportionally
+ * (near slides most, sky not at all). Render-only — worldScreenX, el.x,
+ * saves, and every sim distance are untouched. The pan target freezes
+ * while a trail is active so writing is never disturbed; reduced-motion
+ * pins the camera at 0. */
+const CAM = { px: 0, target: 0 };
+window.__S1_CAM = CAM; // test-readable (smoke21)
+function camAim(e){
+  CAM.target = Math.max(-1, Math.min(1, (e.clientX / W - 0.5) * 2));
+}
+window.addEventListener('pointermove', e => {
+  if (trail || reduceMotion) return; // never steer the camera mid-slash
+  camAim(e);
+}, { passive: true });
+// Touch has no hover — pointermove only fires DURING contact, and any touch
+// drag on the fullscreen canvas immediately becomes a writing trail (05-
+// input.js sets it on pointerdown), so the listener above never fires for a
+// finger (S1-D077, found by playtest: "pointer does not affect camera at
+// all" on mobile). A pointerdown nudge — before trail is assigned — gives
+// touch (and a plain mouse click) at least an aim-toward-there cue; it
+// can't hover-orbit, but it isn't inert either.
+window.addEventListener('pointerdown', e => {
+  if (reduceMotion) return;
+  camAim(e);
+}, { passive: true, capture: true });
+function updateCamera(dt, now){
+  if (reduceMotion){ CAM.px = 0; return; }
+  const drift = (Math.sin(now / 4200) + 0.35 * Math.sin(now / 1530)) * CAM_DRIFT * W;
+  const want = CAM.target * CAM_POINTER * W + drift;
+  CAM.px += (want - CAM.px) * Math.min(1, dt / CAM_EASE_MS);
+}
+// Per-layer shift for a world element (0 for the exempt sky/horizon).
+function camShiftFor(el){
+  if (DEPTH_EXEMPT[el.k]) return 0;
+  return CAM.px * (PARALLAX_FAR + depthQ(el) * (PARALLAX_NEAR - PARALLAX_FAR));
+}
+// The ash/sprout/sapling/base draw decision (S1-D054), factored out so the
+// WebGL pilot's offscreen sprite stamp (S1-D075) can reuse the EXACT SAME
+// "what does this element currently look like" logic the 2D path uses —
+// one definition, two consumers, never drifting apart. No glow/particles
+// here (drawBurnFx is a separate call the 2D loop makes only for live
+// burning/embers/smoke phases) — a stamp texture shouldn't carry FX.
+function drawGroundMatter(el, draw, now, pe){
+  const bp = el.burn && el.burn.phase;
+  if (bp === 'ash') { drawBurnAsh(el, now, pe); return; }
+  if (bp === 'sprout') { drawBurnSprout(el, now, pe); return; }
+  if (bp === 'sapling'){
+    const q = ECOLOGY && ECOLOGY.regrow ? Math.min(1, el.burn.t / ECOLOGY.regrow.saplingMs) : 1;
+    const young = { ...el, s: el.s * (0.35 + 0.65 * q) };
+    if (draw) draw(young, now, pe); else { el.sealFallback = true; drawSealEl(el, now, pe); }
+    return;
+  }
+  if (draw) draw(el, now, pe);
+  else { el.sealFallback = true; drawSealEl(el, now, pe); } // unknown kind self-heals to a seal
+}
 function drawWorld(dt, now){
   // the backdrop means an empty world is still a place (S1-D063/D064) —
   // the old empty-world early-return is gone
   METRICS.perf.worldLayer = state.world.els.length > 0 || state.worldParticles.length > 0;
+  updateCamera(dt, now);
   const worldCtx = wx;
   worldCtx.clearRect(0, 0, W, H);
   ex.clearRect(0, 0, W, H);
   drawBackdrop(now);
+  // the WebGL pilot (S1-D075, ?r3d=1) takes over ground-matter rendering —
+  // default path (r3d unset, or GL init failed) is drawGroundElements2D,
+  // byte-identical to the pre-pilot build
+  if (R3D_ON && r3dReady()) drawGroundR3D(now);
+  else drawGroundElements2D(now);
+  wx = worldCtx;
+  drawMist();
+  drawForeground();
+  drawWorldParticles(dt);
+  ctx.save();
+  ctx.globalAlpha = attention.worldAlpha;
+  ctx.drawImage(worldLayer, 0, 0, W, H);
+  // fire is light: live events hold ≥EVENT_MIN_ALPHA under the veil
+  ctx.globalAlpha = Math.max(attention.worldAlpha, EVENT_MIN_ALPHA);
+  ctx.drawImage(eventLayer, 0, 0, W, H);
+  ctx.restore();
+}
+function drawGroundElements2D(now){
+  const worldCtx = wx;
   // painter's algorithm down the depth axis (S1-D041): sky first, then
   // ground far→near so near occludes far — y is depth
   const els = [...state.world.els].sort((a, b) =>
     (ZI[a.k] === 0 ? -1 : a.y) - (ZI[b.k] === 0 ? -1 : b.y));
   drawContactShadows(els, now);
   for (const el of els){
+    if (el.transit) continue; // ink in flight — it hasn't landed yet (S1-D069)
     const age = el.born ? now - el.born : 1e9;
     if (age < 0) continue; // planted between frames; rAF timestamp lags performance.now()
     const p = Math.max(0, Math.min(1, age / 700));
@@ -40,9 +117,10 @@ function drawWorld(dt, now){
     wx = isLiveHeat(el) ? ex : worldCtx;
     const k = depthK(el);
     wx.save();
-    // perspective convergence (S1-D061): shift the whole element to its
-    // converged screen x — renderers keep drawing at el.x*W and inherit it
-    const cdx = (worldScreenX(el) - el.x) * W;
+    // perspective convergence (S1-D061) + camera parallax (S1-D072): shift
+    // the whole element to its converged, camera-shifted screen x —
+    // renderers keep drawing at el.x*W and inherit both
+    const cdx = (worldScreenX(el) - el.x) * W + camShiftFor(el);
     if (cdx) wx.translate(cdx, 0);
     if (k !== 1){
       // scale the whole element (line weights included) about its ground anchor
@@ -55,17 +133,8 @@ function drawWorld(dt, now){
     // while it burns, its matter stays on the world layer and its fire is
     // drawn as light on the burn-through overlay.
     const bp = el.burn && el.burn.phase;
-    if (bp === 'ash') drawBurnAsh(el, now, pe);
-    else if (bp === 'sprout') drawBurnSprout(el, now, pe);
-    else if (bp === 'sapling'){
-      const q = ECOLOGY && ECOLOGY.regrow ? Math.min(1, el.burn.t / ECOLOGY.regrow.saplingMs) : 1;
-      const young = { ...el, s: el.s * (0.35 + 0.65 * q) };
-      if (draw) draw(young, now, pe); else { el.sealFallback = true; drawSealEl(el, now, pe); }
-    } else {
-      if (draw) draw(el, now, pe);
-      else { el.sealFallback = true; drawSealEl(el, now, pe); } // unknown kind self-heals to a seal
-      if (bp) drawBurnFx(el, now, pe);
-    }
+    drawGroundMatter(el, draw, now, pe);
+    if (bp && bp !== 'ash' && bp !== 'sprout' && bp !== 'sapling') drawBurnFx(el, now, pe);
     if (el.fresh && age < 900){
       const q = age / 900;
       wx.save();
@@ -76,16 +145,6 @@ function drawWorld(dt, now){
     }
     wx.restore();
   }
-  wx = worldCtx;
-  drawMist();
-  drawWorldParticles(dt);
-  ctx.save();
-  ctx.globalAlpha = attention.worldAlpha;
-  ctx.drawImage(worldLayer, 0, 0, W, H);
-  // fire is light: live events hold ≥EVENT_MIN_ALPHA under the veil
-  ctx.globalAlpha = Math.max(attention.worldAlpha, EVENT_MIN_ALPHA);
-  ctx.drawImage(eventLayer, 0, 0, W, H);
-  ctx.restore();
 }
 /* -------- the illustrated valley (S1-D063/D064) -------- *
  * An always-present backdrop so the world reads as a PLACE, not a void:
@@ -126,26 +185,38 @@ function buildBackdrop(){
     const f = PERSP_FAR + q * (1 - PERSP_FAR);
     tufts.push({ x: 0.5 + (r() - 0.5) * 0.96 * f, y, q, kind: r() < 0.75 ? 'grass' : 'pebble', seed: Math.floor(r() * 1e6) });
   }
-  BACKDROP = { ridges, clouds, tufts };
-  window.__S1_SCENE = { ridges: ridges.length, clouds: clouds.length, tufts: tufts.length };
+  // foreground occluder band (S1-D072): a few large near-field clumps that
+  // slide FASTEST and stand in front of near matter — the depth sandwich.
+  // Non-overlapping by construction; each draws as ONE single-fill path
+  // (the S1-D062 batched-shadow trick), so self-overlap can never darken
+  // below the ink-probe thresholds.
+  const fg = [];
+  for (let i = 0; i < FG_CLUMPS; i++){
+    const x = (i + 0.15 + r() * 0.7) / FG_CLUMPS; // one per lane — never overlapping
+    fg.push({ x, y: 0.965 + r() * 0.045, s: 0.8 + r() * 0.5,
+              kind: r() < 0.7 ? 'grass' : 'stone', seed: Math.floor(r() * 1e6) });
+  }
+  BACKDROP = { ridges, clouds, tufts, fg };
+  window.__S1_SCENE = { ridges: ridges.length, clouds: clouds.length, tufts: tufts.length, fg: fg.length };
 }
 function drawBackdrop(now){
   if (!BACKDROP) buildBackdrop();
   const B = BACKDROP;
   wx.save();
-  // ridgelines, far to near
+  // ridgelines, far to near — each slides a touch under the camera (S1-D072)
   for (let i = B.ridges.length - 1; i >= 0; i--){
     const rd = B.ridges[i];
+    const shift = CAM.px * (0.10 - i * 0.03);
     wx.fillStyle = 'rgba(122,132,152,' + rd.alpha + ')';
     wx.beginPath();
-    wx.moveTo(-4, GROUND_FAR * H + 6);
-    for (const [px, py] of rd.pts) wx.lineTo(px * W, py * H);
-    wx.lineTo(W + 4, GROUND_FAR * H + 6);
+    wx.moveTo(-24, GROUND_FAR * H + 6);
+    for (const [px, py] of rd.pts) wx.lineTo(px * W + shift, py * H);
+    wx.lineTo(W + 24, GROUND_FAR * H + 6);
     wx.closePath(); wx.fill();
   }
   // clouds — brighter than the paper, drifting slowly (a child can watch one cross)
   for (const c of B.clouds){
-    const cx = ((c.x + now * c.speed) % 1.2 - 0.1) * W;
+    const cx = ((c.x + now * c.speed) % 1.2 - 0.1) * W + CAM.px * 0.06;
     const cy = c.y * H, cs = S * 0.09 * c.s;
     wx.fillStyle = 'rgba(252,249,240,0.55)';
     for (let j = 0; j < c.puffs; j++){
@@ -154,9 +225,9 @@ function drawBackdrop(now){
       wx.beginPath(); wx.ellipse(cx + ox, cy + (j % 2 ? cs * 0.10 : 0), rr, rr * 0.62, 0, 0, Math.PI * 2); wx.fill();
     }
   }
-  // ground tufts + pebbles, perspective-scaled
+  // ground tufts + pebbles, perspective-scaled, camera-shifted by depth
   for (const t of B.tufts){
-    const X = t.x * W, Y = t.y * H;
+    const X = t.x * W + CAM.px * (PARALLAX_FAR + t.q * (PARALLAX_NEAR - PARALLAX_FAR)), Y = t.y * H;
     const k = DEPTH_SCALE_FAR + t.q * (DEPTH_SCALE_NEAR - DEPTH_SCALE_FAR);
     if (t.kind === 'grass'){
       const h = S * 0.016 * k;
@@ -174,6 +245,45 @@ function drawBackdrop(now){
   }
   wx.restore();
 }
+// Foreground occluder band (S1-D072): large near-field clumps drawn OVER
+// the element pass, sliding fastest under the camera — matter now has
+// things both behind and in front of it. Each clump is ONE single-fill
+// path at low alpha (self-overlap can't double-darken, so the blended tone
+// stays far above every ink-probe threshold — silk, not ink).
+function drawForeground(){
+  if (!BACKDROP) return;
+  wx.save();
+  for (const f of BACKDROP.fg){
+    const X = f.x * W + CAM.px * PARALLAX_FG;
+    const Y = f.y * H;
+    const r = rng(f.seed);
+    if (f.kind === 'grass'){
+      const h = S * 0.10 * f.s;
+      wx.fillStyle = 'rgba(108,122,86,0.32)';
+      wx.beginPath();
+      const n = 5;
+      for (let i = 0; i < n; i++){
+        const a = (i / (n - 1) - 0.5) * 1.3 + (r() - 0.5) * 0.25;
+        const bh = h * (0.6 + r() * 0.5);
+        const bx = X + a * bh * 0.9, bw = h * 0.045;
+        wx.moveTo(X - bw + i * bw * 0.4, Y);
+        wx.quadraticCurveTo(X + a * bh * 0.4, Y - bh * 0.65, bx, Y - bh);
+        wx.quadraticCurveTo(X + a * bh * 0.5 + bw, Y - bh * 0.55, X + bw + i * bw * 0.4, Y);
+        wx.closePath();
+      }
+      wx.fill();
+    } else {
+      const w2 = S * 0.05 * f.s;
+      wx.fillStyle = 'rgba(138,130,114,0.34)';
+      wx.beginPath();
+      wx.moveTo(X - w2, Y);
+      wx.quadraticCurveTo(X - w2 * 0.7, -w2 * 0.75 + Y, X - w2 * 0.1, Y - w2 * (0.8 + r() * 0.2));
+      wx.quadraticCurveTo(X + w2 * 0.65, Y - w2 * 0.7, X + w2, Y);
+      wx.closePath(); wx.fill();
+    }
+  }
+  wx.restore();
+}
 // Contact shadows (S1-D061): a soft ground ellipse anchors matter to the
 // plane — under everything except sky/horizon, heat (fire is light), and wet
 // matter (a pool casts nothing). All shadows are ONE batched path filled at a
@@ -185,12 +295,12 @@ function drawContactShadows(els, now){
   wx.fillStyle = 'rgba(60,52,40,1)';
   wx.beginPath();
   for (const el of els){
-    if (DEPTH_EXEMPT[el.k] || kindHasTag(el.k, 'heat') || kindHasTag(el.k, 'wet')) continue;
+    if (el.transit || DEPTH_EXEMPT[el.k] || kindHasTag(el.k, 'heat') || kindHasTag(el.k, 'wet')) continue;
     const age = el.born ? now - el.born : 1e9;
     if (age < 0) continue;
     const pe = 1 - Math.pow(1 - Math.max(0, Math.min(1, age / 700)), 3);
     const k = depthK(el);
-    const sx = worldScreenX(el) * W, sy = el.y * H + S * 0.004 * k;
+    const sx = worldScreenX(el) * W + camShiftFor(el), sy = el.y * H + S * 0.004 * k;
     const rx = S * 0.05 * el.s * k * pe, ry = S * 0.013 * el.s * k * pe;
     if (rx < 1) continue;
     wx.moveTo(sx + rx, sy);
@@ -408,9 +518,11 @@ function drawFireAftermath(el, now, s, X, Y){
  * Burning matter is drawn by its own renderer; these add the fire ON it
  * (light → the `ex` overlay, S1-D045) and replace it through the regrowth
  * walk. Pure geometry, clocks read from pack data. */
-function drawBurnFx(el, now, p){
+function drawBurnFx(el, now, p, pos){
   const B = el.burn, F = ECOLOGY ? ECOLOGY.fire : null;
-  const X = el.x * W, Y = el.y * H, s = el.s * p;
+  // pos override (S1-D075): lets the WebGL pilot reposition this glow onto
+  // a billboard's true projected screen point — the 2D path never passes it
+  const X = pos ? pos.X : el.x * W, Y = pos ? pos.Y : el.y * H, s = pos ? pos.s : el.s * p;
   const g0 = wx; wx = ex; // fire is light: it burns through the veil
   wx.save();
   if (B.phase === 'burning'){
