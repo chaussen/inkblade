@@ -285,6 +285,13 @@ function drawTitle() {
   ctx.fillText('Slash the strokes. True order has power.', W/2, H*0.62);
   ctx.globalAlpha = 0.45 + 0.25 * Math.sin(perfT/400);
   ctx.fillText('— slash anywhere to begin —', W/2, H*0.70);
+  // Data-source credit (OPEN-12/S1-D035 compliance, S1-D080): title screen
+  // only — idle, never the play surface — one small unobtrusive line, per
+  // the Arphic Public License's attribution requirement. Y kept clear of
+  // the 0.955H-0.995H band smoke21 T5 asserts is furniture-only ink=0.
+  ctx.globalAlpha = 0.35;
+  ctx.font = Math.round(Math.min(W,H)*0.014) + 'px Georgia, serif';
+  ctx.fillText('Character data: Make Me a Hanzi / Arphic Technology — Arphic Public License', W/2, H*0.90);
   ctx.restore();
 }
 // First-glyph gesture hint (S1-D007): comet on the curriculum's opening

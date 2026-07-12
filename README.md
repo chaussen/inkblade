@@ -137,6 +137,18 @@ A ghost glyph appears (its strokes visible as pale targets)
   at build time; nothing is fetched at runtime except optional chapter
   packs.
 
+## Data sources & licensing
+
+Character stroke-order/geometry data is derived by `pipeline/` from
+[Make Me a Hanzi](https://github.com/skishore/makemeahanzi) (Copyright ©
+2016 Shaunak Kishore), itself built on Arphic Technology Co., Ltd.'s font
+data under the 1999 Arphic Public License — a free, FSF-recognized
+copyleft license, not the separate non-commercial 2010 revision. The
+license attaches to the pack data the pipeline emits, not to the engine
+(which contains zero character data). Full license text, attribution, and
+compliance notes: `LICENSE-ARPHIC.txt` (repo root); the embedded webfont
+has its own license in `fonts/OFL.txt`.
+
 ## Query parameters
 
 | Param | Effect |

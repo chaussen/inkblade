@@ -22,9 +22,48 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D078, 2026-07-12)
-- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b3-20260712`), helpers
-  TARGET default. **M2g-b3 (S1-D078): mobile HUD-clip fix + embedded
+## Current state (as of S1-D082, 2026-07-12)
+- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b4-20260712`), helpers
+  TARGET default. **M2g-b4 (S1-D080): OPEN-12 licensing compliance —
+  `LICENSE-ARPHIC.txt` at repo root, a small title-screen-only in-app
+  credit, a README data-sources paragraph.** Caught and fixed a real
+  regression during verification: the credit line's first position landed
+  inside smoke21 T5's zero-ink assertion band; moved clear, re-verified
+  green. Same checkpoint, compliance housekeeping not new gameplay.
+- **Registry reconciliation (S1-D079) + two audits (S1-D080/D081) + four
+  want-signal prototypes (S1-D082), same day.** An external "chat" planning
+  session proposed decisions numbered S1-D028–D030 unaware the project had
+  shipped to S1-D078 across ~15 more milestones — those IDs collided with
+  real unrelated entries, so nothing was copied in as-numbered. Reconciled
+  against actual history instead: OPEN-11/12/13/14 were already closed
+  (S1-D034/035/037/049+059) months before this batch, chat unaware;
+  OPEN-8 was substantively decided at S1-D011 but the registry row was
+  never updated to say so (fixed); OPEN-6 (PvP parking) upgraded LEAN→LOCKED
+  (was already parked via ancient S1-D006); OPEN-5 (same-type stroke
+  disambiguation) is the one item genuinely still open — adopted plan:
+  pull real telemetry from the live GitHub Pages build instead of
+  scheduling a synthetic session. Separately audited (not implemented) the
+  attached code-handoff's Object-Interaction Track A: water family is
+  buildable now (水/川/etc., tag `wet`), wind needs one data-only tag added
+  first (风 ships with zero tags), cold has no glyph at all (skipped per
+  the handoff's own rule) — and found the handoff's assumption of an
+  existing generic tag-reaction pipeline is false (R1-R4 are bespoke
+  per-behavior functions, not a data table), so R5-R9 would be real new
+  engineering, not config. Not built — genuine new player-facing behavior
+  stacked on an already-pending checkpoint is exactly what the playtest
+  mandate exists to prevent. **Then prototyped OPEN-9's four want-signal
+  candidates** (`prototypes/want-signal/`, isolated from the shipped game —
+  no BUILD_ID, not part of `tools/build.mjs`): escalating intensity, idle
+  mood swap, resonance pulse, propagating ripple. All four functionally
+  verified (zero console errors, instrumentation fires correctly); two real
+  findings surfaced by building rather than just designing — intensity has
+  no ceiling in its first pass (can hide its own referent), and the
+  resonance pulse's first color choice didn't read as blue against this
+  game's warm palette (fixed in-prototype). Go/No-Go response-rate metrics
+  need real human testers, not headless verification — full findings in
+  `prototypes/want-signal/README.md`. No OPEN-9 closure; human verdict
+  still required.
+- **M2g-b3 (S1-D078): mobile HUD-clip fix + embedded
   webfont, same checkpoint.** John's mobile-Chrome playtest report ("mobile
   device chrome also does not show the character shelf at the bottom")
   traced to the roster ledger sitting only 6px from the literal viewport
