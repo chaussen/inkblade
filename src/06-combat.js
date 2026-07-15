@@ -14,6 +14,12 @@ function worldDensityFor(g) {
   return { total: state.world.els.length, overGlyph: over };
 }
 function newGlyph(def) {
+  // the previous glyph's meaning reveal must never bleed into this one's
+  // stage spot — it renders at the same center the new glyph is about to
+  // occupy (12-render.js drawHUD), so force it gone rather than trust its
+  // own hold/fade timer to have finished first (John's mandate: the reveal
+  // was covering the next character on slower relocks).
+  state.banner = null;
   const comps = def.comps.map((r, ci) => ({
     range: r, idx: ci, done: false, gold: false, pulse: 0,
   }));

@@ -22,7 +22,17 @@ top-down for anything marked here; nothing below is real until logged there.
    script with timings, and the verdict needed. Parallel unblocked work OK;
    never stack unplaytested player-facing changes.
 
-## Current state (as of S1-D086, 2026-07-12)
+## Current state (as of S1-D087, 2026-07-15)
+- Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b11-20260715`). **M2g-b8..b11
+  (S1-D087): pinyin/meaning redesign, round 4** — big red printing-serif
+  pinyin is now the ONE pinyin display, living in the always-on caption
+  right above the glyph (writing + resolve/transit hold); the post-lock
+  reveal shows ONLY the meaning, centered literally where the character
+  was; `newGlyph()` force-clears the reveal so it can't cover the next
+  character; caption pulled tight against the glyph top (`GY-9px`) per
+  John's live screenshot feedback that it read as detached. Full battery
+  green — see charter S1-D087 for the four-step iteration. **PLAYTEST
+  CHECKPOINT PENDING** — not yet confirmed on John's own hands/device.
 - Artifact: `inkblade-m2g.html` (BUILD_ID `S1-M2g-b7-20260712`). **M2g-b7
   (S1-D086): the reveal banner now always centers on the character**
   (John's follow-up: position mattered more than size — retires S1-D069's

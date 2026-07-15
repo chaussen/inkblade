@@ -98,18 +98,18 @@ function drawGlyph(dt, now) {
   // Pinyin caption, always visible while writing (John's mandate: this is a
   // writing AND reading game — pronunciation costs nothing pedagogically,
   // it's not stroke order and leaks no sequence, S1-D003/D008 stand
-  // untouched). Sits ABOVE the glyph so it never collides with the lock
-  // reveal banner below it (BANNER_HOLD_MS now outlives ATTN_HOLD_MS, so a
-  // new glyph's caption and the previous glyph's reveal banner can be on
-  // screen at once — different positions, never the same pixels). Meaning
-  // (English gloss) still reveals only at lock — that's the payoff, not a
-  // spoiler.
+  // untouched). Sits ABOVE the glyph the whole time this glyph is on stage
+  // (writing AND the resolve/transit hold after lock — state.glyph isn't
+  // swapped for the next one until advance() fires). John's mandate, round
+  // 4: this IS the one pinyin display now — big, red, printing-press serif
+  // (the style the post-lock reveal introduced) — the reveal banner below
+  // no longer repeats it, it only shows the meaning once the glyph is gone.
   ctx.save();
-  ctx.globalAlpha = g.appearT * 0.6;
+  ctx.globalAlpha = g.appearT * 0.95;
   ctx.textAlign = 'center';
-  ctx.fillStyle = INK;
-  ctx.font = '600 ' + Math.round(Math.min(W,H)*0.032) + 'px ' + CHAR_FONT;
-  ctx.fillText(g.def.pinyin, W / 2, GY - Math.min(H * 0.045, 32));
+  ctx.fillStyle = CINNABAR;
+  ctx.font = '800 ' + Math.round(Math.min(W,H)*0.078) + 'px Georgia, "Songti SC", serif';
+  ctx.fillText(g.def.pinyin, W / 2, GY - Math.min(H * 0.012, 9));
   ctx.restore();
   if (g.breathe > 0) g.breathe -= dt;
   if (g.comet > 0) { drawComet(g, dt); g.comet -= dt; }
@@ -246,26 +246,45 @@ function drawHUD() {
     const a = bt < 300 ? bt/300 : (bt > BANNER_HOLD_MS ? Math.max(0, 1 - (bt-BANNER_HOLD_MS)/BANNER_FADE_MS) : 1);
     if (a <= 0) { state.banner = null; }
     else {
-      // Reveal banner: always centered with the character (John's mandate —
-      // this is a writing AND reading game; pinyin/meaning need to be read,
-      // not shrunk and pushed out near the small planted object). Retires
-      // S1-D069's arrival-anchor POSITION — the transit droplet still
-      // visibly delivers the ink to the object, this text just no longer
-      // tries to live next to it too. B.ax/ay/elRef (07-fx.js) stay as data
-      // — smoke20 T4 asserts the banner still anchors correctly to the
-      // arrived element — just unused for text placement here now.
+      // Primary reveal: meaning only, on the character's own spot (John's
+      // mandate, round 4 — pinyin moved to the always-on caption above the
+      // glyph, 12-render.js drawGlyph, so this no longer repeats it). This
+      // is now the moment the meaning is paid out, standing in literally
+      // where the character just was. newGlyph() (06-combat.js) force-
+      // clears state.banner the instant the next glyph appears, so this
+      // never outlives its welcome and covers the new character.
       const B = state.banner;
-      const bx = W / 2, by = GY + S + Math.min(H * 0.055, 40);
+      const bx = W / 2, by = GY + S / 2;
       ctx.save();
       ctx.globalAlpha = a;
       ctx.textAlign = 'center';
       ctx.fillStyle = INK;
-      ctx.font = '600 ' + Math.round(Math.min(W,H)*0.05) + 'px ' + CHAR_FONT;
-      ctx.fillText(B.pinyin, bx, by);
-      ctx.globalAlpha = a * 0.7;
-      ctx.font = Math.round(Math.min(W,H)*0.026) + 'px Georgia, serif';
-      ctx.fillText(B.gloss, bx, by + Math.min(W,H)*0.045);
+      ctx.font = '700 ' + Math.round(Math.min(W,H)*0.06) + 'px Georgia, serif';
+      ctx.fillText(B.gloss, bx, by);
       ctx.restore();
+      // Secondary echo: small label beside the object it just became
+      // (S1-D069/D071's anchored position, revived at sub-primary scale).
+      // The center reveal above is now the one true "read this" moment —
+      // this is just a quiet reminder once the eye drifts to the planted
+      // thing, not competing with it for attention.
+      if (B.ax != null) {
+        const pos = (R3D_ON && r3dReady() && B.elRef) ? elScreenPos(B.elRef) : null;
+        const px = pos ? pos.x * W : (B.ax * W + CAM.px * (B.kf || 0));
+        const py = pos ? pos.y * H + Math.min(H * 0.05, 32) : (B.ay * H + Math.min(H * 0.05, 32));
+        const mx = 60, myTop = 36;
+        const ex = Math.max(mx, Math.min(W - mx, px));
+        const ey = Math.max(myTop, Math.min(H - Math.min(W, H) * 0.19, py));
+        ctx.save();
+        ctx.globalAlpha = a * 0.8;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = INK;
+        ctx.font = '600 ' + Math.round(Math.min(W,H)*0.03) + 'px ' + CHAR_FONT;
+        ctx.fillText(B.pinyin, ex, ey);
+        ctx.globalAlpha = a * 0.6;
+        ctx.font = Math.round(Math.min(W,H)*0.017) + 'px Georgia, serif';
+        ctx.fillText(B.gloss, ex, ey + Math.min(W,H)*0.03);
+        ctx.restore();
+      }
     }
   }
   ctx.save();
