@@ -272,15 +272,21 @@ top-down for anything marked here; nothing below is real until logged there.
 ## Planned
 ### Chunk B — canvas/UI redesign + 3D legibility — SHIPPED (S1-D061/D062, M2c-b1; playtest checkpoint pending)
 
-### The sandbox interaction web — THE NEXT MAJOR MILESTONE (S1-D068(3))
-Object↔object interactions are the only true game-loop enhancement left
-(John, S1-D068): fire+wood, person+shelter, water+fire, wind+flame,
-horse+cart... The E1/E2 tag machinery (living/heat/flammable/shelter/wet)
-IS the seed of this web — the milestone generalizes it into a data-driven
-interaction table (tag×tag → reaction) instead of bespoke rules. Waits for
-the cosmetic chunk to finish; every kind shipped meanwhile must carry tags
-(S1-D066 pattern) so the web has matter to react to. M2b's demand-world
-wants (OPEN-9) may ride on top once the web exists.
+### The sandbox interaction web — THE NEXT MAJOR MILESTONE (S1-D068(3)) — **DESIGNED (S1-D088)**
+Full design: `inkblade-interaction-web-design.md` (2026-07-17, John's
+creative-license brief). Three layers: **L1** the generic tag×tag resolver
+(six closed engine verbs — emit/aura/move/pose/phase/clock — every
+interaction a pack-data row; the missing pipeline S1-D081 identified),
+**L2** duets (haul 马+车, procession, passThrough, glimmerPath 月+水),
+**L3** 会意 resonance — adjacent planted characters that form a real
+compound (人+木→休, 日+月→明, 木+木→林…) condense a wordless shimmer that
+becomes the next glyph offer; locking it fuses the meaning at the site.
+**L3 is the adopted OPEN-9 answer: wants are etymology.** One bounded
+overrule: wind carries fire exactly one hop (amends S1-D049c at build
+time). Build order b1 resolver → b2 duets → b3 resonance → b4 R1–R3
+fold-in, every build a checkpoint. Code waits on the pending S1-D087
+playtest verdict; every kind shipped meanwhile still must carry tags
+(S1-D066 pattern).
 
 ### Chunk C — visual symbol expansion — batch 1 SHIPPED + ACCEPTED (S1-D068); scaling DEFERRED to the sprite pack block (cosmetic step 3)
 Confirmed: only 13 `world.kind` families exist; 489/500 basic-tier chars (98%)
